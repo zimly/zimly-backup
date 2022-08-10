@@ -24,6 +24,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".EditActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Zimzync">
+            <intent-filter>
+                <action android:name="android.intent.action.EDIT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -1,8 +1,8 @@
 package io.zeitmaschine.zimzync
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -46,7 +46,7 @@ fun EditRemote(remote: Remote) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(all = 16.dp)
-        ) {
+    ) {
 
         TextField(
             modifier = Modifier.fillMaxWidth(),
@@ -72,10 +72,8 @@ fun EditRemote(remote: Remote) {
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
-            Toast
-                .makeText(current, "OnClick", Toast.LENGTH_LONG)
-                .show()
-        })
+                current.startActivity(Intent(current, MainActivity::class.java))
+            })
         {
             Text(text = "Save")
         }

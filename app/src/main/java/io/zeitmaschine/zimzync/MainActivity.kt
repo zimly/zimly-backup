@@ -1,8 +1,8 @@
 package io.zeitmaschine.zimzync
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -34,7 +34,9 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     floatingActionButtonPosition = FabPosition.End,
                     floatingActionButton = {
-                        FloatingActionButton(onClick = { /* ... */ }) {
+                        FloatingActionButton(onClick = {
+                            startActivity(Intent(this, EditActivity::class.java))
+                        }) {
                             Icon(Icons.Filled.Add, "Add Remote")
                         }
                     },
@@ -57,9 +59,7 @@ fun RemoteList(remotes: List<Remote>) {
                     .fillMaxWidth()
                     .padding(24.dp)
                     .clickable(onClick = {
-                        Toast
-                            .makeText(current, "OnClick", Toast.LENGTH_LONG)
-                            .show()
+                        current.startActivity(Intent(current, EditActivity::class.java))
                     })
             ) {
                 Column {
