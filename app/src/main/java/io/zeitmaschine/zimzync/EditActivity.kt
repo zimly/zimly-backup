@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,26 +49,28 @@ fun EditRemote(remote: Remote) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(all = 16.dp)
     ) {
-
+        val urlState = remember { mutableStateOf(remote.url) }
+        val keyState = remember { mutableStateOf(remote.url) }
+        val secretState = remember { mutableStateOf(remote.url) }
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("URL") },
-            value = remote.url,
-            onValueChange = { value -> remote.url = value },
+            value = urlState.value,
+            onValueChange = { value -> urlState.value = value },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Key") },
-            value = remote.key,
-            onValueChange = { value -> remote.key = value },
+            value = keyState.value,
+            onValueChange = { value -> keyState.value = value },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Secret") },
-            value = remote.secret,
-            onValueChange = { value -> remote.secret = value },
+            value = secretState.value,
+            onValueChange = { value -> secretState.value = value },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         Button(
