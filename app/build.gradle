@@ -87,5 +87,6 @@ protobuf {
 }
 
 dependencies {
+    implementation "androidx.datastore:datastore:1.0.0"
     implementation 'com.google.protobuf:protobuf-kotlin:3.21.5'
 }
