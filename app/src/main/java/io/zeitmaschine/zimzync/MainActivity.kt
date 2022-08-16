@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import java.time.format.DateTimeFormatter
 
@@ -76,7 +77,7 @@ class MainViewModel: ViewModel() {
 }
 
 @Composable
-fun RemoteScreen(viewModel: MainViewModel = MainViewModel()) {
+fun RemoteScreen(viewModel: MainViewModel = viewModel()) {
     val uiState = viewModel.uiState
     RemoteComponent(remotes = uiState.remotes)
 }
