@@ -16,10 +16,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import java.time.format.DateTimeFormatter
 
@@ -41,16 +45,45 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     content = {
-                        RemoteList(list)
+                        RemoteScreen()
                     })
             }
         }
     }
 }
+data class MainUiState(
+    val remotes: List<Remote> = listOf(
+        Remote("test1", "s1.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test2", "s2.zeitmaschine.io", "zm"),
+        Remote("test3", "s3.zeitmaschine.io", "zm"),
+        Remote("test4", "s4.zeitmaschine.io", "zm"),
+        Remote("test5", "s5.zeitmaschine.io", "zm")
+    )
+)
 
+class MainViewModel: ViewModel() {
+    var uiState by mutableStateOf(MainUiState())
+}
 
 @Composable
-fun RemoteList(remotes: List<Remote>) {
+fun RemoteScreen(viewModel: MainViewModel = MainViewModel()) {
+    val uiState = viewModel.uiState
+    RemoteComponent(remotes = uiState.remotes)
+}
+
+@Composable
+fun RemoteComponent(remotes: List<Remote>) {
+
     val current = LocalContext.current
     LazyColumn {
         items(remotes) { remote ->
@@ -73,30 +106,11 @@ fun RemoteList(remotes: List<Remote>) {
     }
 }
 
-
-private val list = listOf(
-    Remote("test1", "s1.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test2", "s2.zeitmaschine.io", "zm"),
-    Remote("test3", "s3.zeitmaschine.io", "zm"),
-    Remote("test4", "s4.zeitmaschine.io", "zm"),
-    Remote("test5", "s5.zeitmaschine.io", "zm")
-)
-
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     ZimzyncTheme {
-        val remotes = list
-        RemoteList(remotes)
+        val remotes = emptyList<Remote>()
+        RemoteComponent(remotes)
     }
 }
