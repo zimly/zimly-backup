@@ -10,3 +10,7 @@ message Remote {
   string secret = 4;
   int64 date = 5;
 }
+
+message Remotes {
+  repeated Remote remotes = 1;
+}

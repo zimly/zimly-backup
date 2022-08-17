@@ -9,25 +9,25 @@ import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
 import java.io.OutputStream
 
-object RemoteSerializer : Serializer<Remote> {
-    override val defaultValue: Remote = Remote.getDefaultInstance()
+object RemotesSerializer : Serializer<Remotes> {
+    override val defaultValue: Remotes = Remotes.getDefaultInstance()
 
-    override suspend fun readFrom(input: InputStream): Remote {
+    override suspend fun readFrom(input: InputStream): Remotes {
         try {
-            return Remote.parseFrom(input)
+            return Remotes.parseFrom(input)
         } catch (exception: InvalidProtocolBufferException) {
             throw CorruptionException("Cannot read proto.", exception)
         }
     }
 
     override suspend fun writeTo(
-        t: Remote,
+        t: Remotes,
         output: OutputStream
     ) = t.writeTo(output)
 }
 
-val Context.remoteDataStore: DataStore<Remote> by dataStore(
+val Context.remoteDataStore: DataStore<Remotes> by dataStore(
     fileName = "remote.pb",
-    serializer = RemoteSerializer,
+    serializer = RemotesSerializer,
 )
 
