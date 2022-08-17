@@ -46,21 +46,21 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     content = {
-                        RemoteScreen(LocalContext.current.testDataStore)
+                        RemoteScreen(LocalContext.current.remoteDataStore)
                     })
             }
         }
     }
 }
 
-class MainViewModel(dataStore: DataStore<Test>) : ViewModel() {
+class MainViewModel(dataStore: DataStore<Remote>) : ViewModel() {
     val remotes = dataStore.data
 }
 
 
 @Composable
 fun RemoteScreen(
-    dataStore: DataStore<Test>,
+    dataStore: DataStore<Remote>,
     // https://programmer.ink/think/a-new-way-to-create-a-viewmodel-creationextras.html
     viewModel: MainViewModel = viewModel(factory = viewModelFactory {
         initializer {
@@ -68,7 +68,7 @@ fun RemoteScreen(
         }
     })
 ) {
-    val remote = viewModel.remotes.collectAsState(initial = test {
+    val remote = viewModel.remotes.collectAsState(initial = remote {
         name = "hawrefups"
         url = "test.com"
         key = "test.com"
@@ -79,7 +79,7 @@ fun RemoteScreen(
 }
 
 @Composable
-fun RemoteComponent(remotes: List<Test>) {
+fun RemoteComponent(remotes: List<Remote>) {
 
     val current = LocalContext.current
     LazyColumn {
@@ -108,7 +108,7 @@ fun RemoteComponent(remotes: List<Test>) {
 @Composable
 fun DefaultPreview() {
     ZimzyncTheme {
-        val remotes = emptyList<Test>()
+        val remotes = emptyList<Remote>()
         RemoteComponent(remotes)
     }
 }

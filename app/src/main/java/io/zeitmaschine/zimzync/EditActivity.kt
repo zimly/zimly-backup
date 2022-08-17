@@ -32,7 +32,7 @@ class EditActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Scaffold(
                     content = {
-                        EditRemote(remote = test {
+                        EditRemote(remote = remote {
                             name = ""
                             url = ""
                             key = ""
@@ -48,7 +48,7 @@ class EditActivity : ComponentActivity() {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun EditRemote(remote: Test) {
+fun EditRemote(remote: Remote) {
     val current = LocalContext.current
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -96,7 +96,7 @@ fun EditRemote(remote: Test) {
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
-        EditRemote(remote = test {
+        EditRemote(remote = remote {
             name = ""
             url = ""
             key = ""
