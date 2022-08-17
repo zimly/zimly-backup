@@ -4,7 +4,9 @@ option java_package = "io.zeitmaschine.zimzync";
 option java_multiple_files = true;
 
 message Test {
-  string url = 1;
-  string key = 2;
-  string secret = 3;
+  string name = 1;
+  string url = 2;
+  string key = 3;
+  string secret = 4;
+  int64 date = 5;
 }

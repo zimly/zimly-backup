@@ -16,17 +16,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
-import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -46,44 +46,40 @@ class MainActivity : ComponentActivity() {
                         }
                     },
                     content = {
-                        RemoteScreen()
+                        RemoteScreen(LocalContext.current.testDataStore)
                     })
             }
         }
     }
 }
-data class MainUiState(
-    val remotes: List<Remote> = listOf(
-        Remote("test1", "s1.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test2", "s2.zeitmaschine.io", "zm"),
-        Remote("test3", "s3.zeitmaschine.io", "zm"),
-        Remote("test4", "s4.zeitmaschine.io", "zm"),
-        Remote("test5", "s5.zeitmaschine.io", "zm")
-    )
-)
 
-class MainViewModel: ViewModel() {
-    var uiState by mutableStateOf(MainUiState())
+class MainViewModel(dataStore: DataStore<Test>) : ViewModel() {
+    val remotes = dataStore.data
+}
+
+
+@Composable
+fun RemoteScreen(
+    dataStore: DataStore<Test>,
+    // https://programmer.ink/think/a-new-way-to-create-a-viewmodel-creationextras.html
+    viewModel: MainViewModel = viewModel(factory = viewModelFactory {
+        initializer {
+            MainViewModel(dataStore)
+        }
+    })
+) {
+    val remote = viewModel.remotes.collectAsState(initial = test {
+        name = "hawrefups"
+        url = "test.com"
+        key = "test.com"
+        secret = "test.com"
+        date = 123456
+    }).value
+    RemoteComponent(remotes = listOf(remote))
 }
 
 @Composable
-fun RemoteScreen(viewModel: MainViewModel = viewModel()) {
-    val uiState = viewModel.uiState
-    RemoteComponent(remotes = uiState.remotes)
-}
-
-@Composable
-fun RemoteComponent(remotes: List<Remote>) {
+fun RemoteComponent(remotes: List<Test>) {
 
     val current = LocalContext.current
     LazyColumn {
@@ -100,8 +96,9 @@ fun RemoteComponent(remotes: List<Remote>) {
                     Text(remote.name)
                     Text(remote.url)
                 }
-                if (remote.lastSynced != null)
-                    Text(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(remote.lastSynced?.toInstant()))
+                if (remote.date != null) {
+                    Text(remote.date.toString())
+                }
             }
         }
     }
@@ -111,7 +108,7 @@ fun RemoteComponent(remotes: List<Remote>) {
 @Composable
 fun DefaultPreview() {
     ZimzyncTheme {
-        val remotes = emptyList<Remote>()
+        val remotes = emptyList<Test>()
         RemoteComponent(remotes)
     }
 }

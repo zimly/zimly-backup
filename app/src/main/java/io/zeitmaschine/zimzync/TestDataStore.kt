@@ -28,6 +28,6 @@ object TestSerializer : Serializer<Test> {
 
 val Context.testDataStore: DataStore<Test> by dataStore(
     fileName = "test.pb",
-    serializer = TestSerializer
+    serializer = TestSerializer,
 )
 
