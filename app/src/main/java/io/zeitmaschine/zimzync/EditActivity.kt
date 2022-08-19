@@ -29,15 +29,17 @@ class EditActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ZimzyncTheme {
+                val current = LocalContext.current
+
                 // A surface container using the 'background' color from the theme
                 Scaffold(
-                    content = {
+                        content = {
                         EditRemote(remote = remote {
                             name = ""
                             url = ""
                             key = ""
                             secret = ""
-                        })
+                        }, saveEntry = { current.startActivity(Intent(current, MainActivity::class.java)) })
                     },
                 )
             }
@@ -48,15 +50,22 @@ class EditActivity : ComponentActivity() {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun EditRemote(remote: Remote) {
-    val current = LocalContext.current
+fun EditRemote(remote: Remote, saveEntry: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(all = 16.dp)
     ) {
+        val nameState = remember { mutableStateOf(remote.name) }
         val urlState = remember { mutableStateOf(remote.url) }
-        val keyState = remember { mutableStateOf(remote.url) }
-        val secretState = remember { mutableStateOf(remote.url) }
+        val keyState = remember { mutableStateOf(remote.key) }
+        val secretState = remember { mutableStateOf(remote.secret) }
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Name") },
+            value = nameState.value,
+            onValueChange = { value -> nameState.value = value },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+        )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("URL") },
@@ -80,9 +89,7 @@ fun EditRemote(remote: Remote) {
         )
         Button(
             modifier = Modifier.align(Alignment.End),
-            onClick = {
-                current.startActivity(Intent(current, MainActivity::class.java))
-            })
+            onClick = saveEntry)
         {
             Text(text = "Save")
         }
@@ -96,11 +103,13 @@ fun EditRemote(remote: Remote) {
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
+        val current = LocalContext.current
+
         EditRemote(remote = remote {
             name = ""
             url = ""
             key = ""
             secret = ""
-        })
+        }, saveEntry = { current.startActivity(Intent(current, MainActivity::class.java)) })
     }
 }
