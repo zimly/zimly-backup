@@ -68,7 +68,13 @@ class MainViewModel(private val dataStore: DataStore<Remotes>) : ViewModel() {
     suspend fun addEntry() {
         dataStore.updateData { currentRemotes ->
             currentRemotes.toBuilder()
-                .addRemotes(remote { name = "stu stuu" })
+                .addRemotes(remote {
+                    name = "stu stuu"
+                    url = "s3.zeitmaschine.io"
+                    key = "key"
+                    secret = "s3cret"
+                    date = System.currentTimeMillis()
+                })
                 .build()
         }
     }
