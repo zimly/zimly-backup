@@ -1,6 +1,5 @@
 package io.zeitmaschine.zimzync
 
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
@@ -57,17 +55,15 @@ fun RemoteScreen(
         initializer {
             MainViewModel(dataStore)
         }
-    })
+    }),
+    editEntry: () -> Unit
 ) {
     val remotes = viewModel.remotes.collectAsState(initial = emptyList())
-    val current = LocalContext.current
-    RemoteComponent(remotes = remotes.value, addEntry = {
-        current.startActivity(Intent(current, EditActivity::class.java))
-    })
+    RemoteComponent(remotes = remotes.value, editEntry)
 }
 
 @Composable
-fun RemoteComponent(remotes: List<Remote>, addEntry: () -> Unit) {
+fun RemoteComponent(remotes: List<Remote>, editEntry: () -> Unit) {
 
     LazyColumn {
         items(remotes) { remote ->
@@ -75,7 +71,7 @@ fun RemoteComponent(remotes: List<Remote>, addEntry: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
-                    .clickable(onClick = addEntry)
+                    .clickable(onClick = editEntry)
             ) {
                 Column {
                     Text(remote.name)
@@ -94,8 +90,7 @@ fun RemoteComponent(remotes: List<Remote>, addEntry: () -> Unit) {
 fun DefaultPreview() {
     ZimzyncTheme {
         val remotes = emptyList<Remote>()
-        val current = LocalContext.current
 
-        RemoteComponent(remotes = remotes) { current.startActivity(Intent(current, EditActivity::class.java)) }
+        RemoteComponent(remotes = remotes, editEntry = {})
     }
 }
