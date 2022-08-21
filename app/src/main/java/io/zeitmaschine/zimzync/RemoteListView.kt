@@ -36,7 +36,7 @@ class MainViewModel(private val dataStore: DataStore<Remotes>) : ViewModel() {
         dataStore.updateData { currentRemotes ->
             currentRemotes.toBuilder()
                 .addRemotes(remote {
-                    name = "stu stuu"
+                    name = "stu-stuu"
                     url = "s3.zeitmaschine.io"
                     key = "key"
                     secret = "s3cret"
@@ -56,14 +56,14 @@ fun RemoteScreen(
             MainViewModel(dataStore)
         }
     }),
-    editEntry: () -> Unit
+    editEntry: (String) -> Unit
 ) {
     val remotes = viewModel.remotes.collectAsState(initial = emptyList())
     RemoteComponent(remotes = remotes.value, editEntry)
 }
 
 @Composable
-fun RemoteComponent(remotes: List<Remote>, editEntry: () -> Unit) {
+fun RemoteComponent(remotes: List<Remote>, editEntry: (String) -> Unit) {
 
     LazyColumn {
         items(remotes) { remote ->
@@ -71,7 +71,7 @@ fun RemoteComponent(remotes: List<Remote>, editEntry: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
-                    .clickable(onClick = editEntry)
+                    .clickable(onClick = { editEntry(remote.name) })
             ) {
                 Column {
                     Text(remote.name)

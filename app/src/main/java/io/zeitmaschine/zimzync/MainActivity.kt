@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 
 class MainActivity : ComponentActivity() {
@@ -33,19 +34,19 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             content = {
-                                RemoteScreen(LocalContext.current.remoteDataStore, editEntry = { navController.navigate("remote-editor") })
+                                RemoteScreen(LocalContext.current.remoteDataStore, editEntry = { remoteId -> navController.navigate("remote-editor?remoteId=$remoteId") })
                             })
                     }
 
-                    composable("remote-editor") {
+                    composable("remote-editor?remoteId={remoteId}", arguments = listOf(navArgument("remoteId") { nullable = true })
+                    ) { backStackEntry ->
                         Scaffold(
                             content = {
-                                EditRemote(remote = remote {
-                                    name = ""
-                                    url = ""
-                                    key = ""
-                                    secret = ""
-                                }, saveEntry = { navController.navigate("remotes-list") })
+                                EditRemote(
+                                    dataStore = LocalContext.current.remoteDataStore,
+                                    remoteId = backStackEntry.arguments?.getString("remoteId"),
+                                    saveEntry = { navController.navigate("remotes-list") }
+                                )
                             },
                         )
                     }
