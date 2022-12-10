@@ -39,14 +39,17 @@ class EditorModel(private val dataStore: DataStore<Remotes>, remoteId: String?) 
             }
         }
     }
+
     fun get(where: (Remote) -> Boolean): Flow<Remote?> {
         return dataStore.data
             .map { remotes -> remotes.remotesList }
             .map { r -> r.first(where) }
     }
 
+    // FIXME? https://www.rrtutors.com/tutorials/implement-room-database-in-jetpack-compose
     suspend fun saveEntry(remote: Remote) {
         dataStore.updateData { currentRemotes ->
+            // val existingRemotes = currentRemotes.toBuilder().remotesList
             currentRemotes.toBuilder()
                 .addRemotes(remote)
                 .build()
@@ -55,24 +58,33 @@ class EditorModel(private val dataStore: DataStore<Remotes>, remoteId: String?) 
 }
 
 @Composable
-fun EditRemote(dataStore: DataStore<Remotes>,
-               viewModel: EditorModel = viewModel(factory = viewModelFactory {
-                   initializer {
-                       EditorModel(dataStore, remoteId)
-                   }
-               }),
-               remoteId: String?, saveEntry: () -> Unit) {
+fun EditRemote(
+    dataStore: DataStore<Remotes>,
+    viewModel: EditorModel = viewModel(factory = viewModelFactory {
+        initializer {
+            EditorModel(dataStore, remoteId)
+        }
+    }),
+    remoteId: String?, saveEntry: (remote: Remote) -> Unit
+) {
 
     val remote = viewModel.remote.collectAsState(initial = remote {})
 
-    remote.value?.let { EditorCompose(it, saveEntry) }
+    remote.value?.let {
+        EditorCompose(remote = it) { remote ->
+            viewModel.viewModelScope.launch {
+                viewModel.saveEntry(remote)
+            }
+            saveEntry(remote)
+        }
+    }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EditorCompose(
     remote: Remote,
-    saveEntry: () -> Unit
+    saveEntry: (remote: Remote) -> Unit
 ) {
 
     Column(
@@ -109,7 +121,9 @@ private fun EditorCompose(
         )
         Button(
             modifier = Modifier.align(Alignment.End),
-            onClick = saveEntry
+            onClick = {
+                saveEntry(remote)
+            }
         )
         {
             Text(text = "Save")

@@ -15,36 +15,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 class MainViewModel(private val dataStore: DataStore<Remotes>) : ViewModel() {
     val remotes = dataStore.data.map { remotes -> remotes.remotesList }
-
-    init {
-        viewModelScope.launch {
-            addEntry()
-        }
-    }
-
-    suspend fun addEntry() {
-        dataStore.updateData { currentRemotes ->
-            currentRemotes.toBuilder()
-                .addRemotes(remote {
-                    name = "stu-stuu"
-                    url = "s3.zeitmaschine.io"
-                    key = "key"
-                    secret = "s3cret"
-                    date = System.currentTimeMillis()
-                })
-                .build()
-        }
-    }
 }
 
 @Composable
