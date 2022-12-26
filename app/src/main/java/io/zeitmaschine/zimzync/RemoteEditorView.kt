@@ -9,8 +9,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -27,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class EditorModel(private val dataStore: DataStore<Remotes>, remoteId: String?) : ViewModel() {
 
@@ -35,7 +35,7 @@ class EditorModel(private val dataStore: DataStore<Remotes>, remoteId: String?) 
     init {
         viewModelScope.launch {
             remoteId?.let {
-                remote = get { remote -> remote.name.equals(remoteId) }
+                remote = get { remote -> remote.id.equals(remoteId) }
             }
         }
     }
@@ -49,10 +49,18 @@ class EditorModel(private val dataStore: DataStore<Remotes>, remoteId: String?) 
     // FIXME? https://www.rrtutors.com/tutorials/implement-room-database-in-jetpack-compose
     suspend fun saveEntry(remote: Remote) {
         dataStore.updateData { currentRemotes ->
-            // val existingRemotes = currentRemotes.toBuilder().remotesList
-            currentRemotes.toBuilder()
-                .addRemotes(remote)
-                .build()
+            var i = currentRemotes.remotesList.indexOfFirst { r -> r.id.equals(remote.id) }
+            if (i > -1) {
+                currentRemotes.toBuilder()
+                    .removeRemotes(i)
+                    .addRemotes(remote)
+                    .build()
+            } else {
+                currentRemotes.toBuilder()
+                    .addRemotes(remote)
+                    .build()
+            }
+
         }
     }
 }
@@ -68,7 +76,9 @@ fun EditRemote(
     remoteId: String?, saveEntry: (remote: Remote) -> Unit
 ) {
 
-    val remote = viewModel.remote.collectAsState(initial = remote {})
+
+    val remote: State<Remote?> = viewModel.remote.collectAsState(initial = remote {})
+
 
     remote.value?.let {
         EditorCompose(remote = it) { remote ->
@@ -87,6 +97,11 @@ private fun EditorCompose(
     saveEntry: (remote: Remote) -> Unit
 ) {
 
+    var eName by remember { mutableStateOf(remote.name) }
+    var eUrl by remember { mutableStateOf(remote.url) }
+    var eKey by remember { mutableStateOf(remote.key) }
+    var eSecret by remember { mutableStateOf(remote.secret) }
+
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(all = 16.dp)
@@ -94,35 +109,55 @@ private fun EditorCompose(
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Name") },
-            value = remote.name,
-            onValueChange = {},
+            value = eName,
+            onValueChange = { eName = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("URL") },
-            value = remote.url,
-            onValueChange = {},
+            value = eUrl,
+            onValueChange = { eUrl = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Key") },
-            value = remote.key,
-            onValueChange = {},
+            value = eKey,
+            onValueChange = { eKey = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Secret") },
-            value = remote.secret,
-            onValueChange = {},
+            value = eSecret,
+            onValueChange = { eSecret = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
-                saveEntry(remote)
+
+                var now = System.currentTimeMillis()
+                var eCreated: Long = if (remote.created == 0L) {
+                    now
+                } else {
+                    remote.created
+                }
+                var eId = remote.id
+                // new entry
+                if (remote.id.equals("")) {
+                    eId = UUID.randomUUID().toString()
+                }
+                saveEntry( remote {
+                    id = eId
+                    name = eName
+                    url = eUrl
+                    key = eKey
+                    secret = eSecret
+                    created = eCreated
+                    modified = now
+                })
             }
         )
         {
@@ -136,6 +171,6 @@ private fun EditorCompose(
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
-        EditorCompose(remote = remote {}, saveEntry = {})
+        EditorCompose(remote = remote {}) {}
     }
 }

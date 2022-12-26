@@ -49,14 +49,11 @@ fun RemoteComponent(remotes: List<Remote>, editEntry: (String) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
-                    .clickable(onClick = { editEntry(remote.name) })
+                    .clickable(onClick = { editEntry(remote.id) })
             ) {
                 Column {
                     Text(remote.name)
                     Text(remote.url)
-                }
-                if (remote.date != null) {
-                    Text(remote.date.toString())
                 }
             }
         }

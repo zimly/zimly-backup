@@ -4,11 +4,13 @@ option java_package = "io.zeitmaschine.zimzync";
 option java_multiple_files = true;
 
 message Remote {
-  string name = 1;
-  string url = 2;
-  string key = 3;
-  string secret = 4;
-  int64 date = 5;
+  string id = 1;
+  string name = 2;
+  string url = 3;
+  string key = 4;
+  string secret = 5;
+  int64 created = 6;
+  int64 modified = 7;
 }
 
 message Remotes {
