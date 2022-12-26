@@ -50,6 +50,19 @@ class MainActivity : ComponentActivity() {
                             },
                         )
                     }
+
+                    composable("remote-sync?remoteId={remoteId}", arguments = listOf(navArgument("remoteId") { nullable = false })
+                    ) { backStackEntry ->
+                        Scaffold(
+                            content = {
+                                SyncRemote(
+                                    dataStore = LocalContext.current.remoteDataStore,
+                                    remoteId = backStackEntry.arguments?.getString("remoteId")
+                                )
+                            }
+                        )
+                    }
+
                 }
             }
         }

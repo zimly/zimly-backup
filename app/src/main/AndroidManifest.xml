@@ -3,7 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="io.zeitmaschine.zimzync">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- usesCleartextTraffic: for non ssl communication with minio -->
     <application
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
