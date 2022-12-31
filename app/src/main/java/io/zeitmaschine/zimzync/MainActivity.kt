@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             content = {
-                                RemoteScreen(LocalContext.current.remoteDataStore, editEntry = { remoteId -> navController.navigate("remote-editor?remoteId=$remoteId") })
+                                RemoteScreen(LocalContext.current.remoteDataStore, openSync = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") })
                             })
                     }
 

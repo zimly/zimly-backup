@@ -34,14 +34,14 @@ fun RemoteScreen(
             MainViewModel(dataStore)
         }
     }),
-    editEntry: (String) -> Unit
+    openSync: (String) -> Unit
 ) {
     val remotes = viewModel.remotes.collectAsState(initial = emptyList())
-    RemoteComponent(remotes = remotes.value, editEntry)
+    RemoteComponent(remotes = remotes.value, openSync)
 }
 
 @Composable
-fun RemoteComponent(remotes: List<Remote>, editEntry: (String) -> Unit) {
+fun RemoteComponent(remotes: List<Remote>, openSync: (String) -> Unit) {
 
     LazyColumn {
         items(remotes) { remote ->
@@ -49,7 +49,7 @@ fun RemoteComponent(remotes: List<Remote>, editEntry: (String) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
-                    .clickable(onClick = { editEntry(remote.id) })
+                    .clickable(onClick = { openSync(remote.id) })
             ) {
                 Column {
                     Text(remote.name)
@@ -66,6 +66,6 @@ fun DefaultPreview() {
     ZimzyncTheme {
         val remotes = emptyList<Remote>()
 
-        RemoteComponent(remotes = remotes, editEntry = {})
+        RemoteComponent(remotes = remotes, openSync = {})
     }
 }
