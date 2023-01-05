@@ -1,5 +1,8 @@
 package io.zeitmaschine.zimzync
 
+import android.content.Context
+import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -10,6 +13,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
@@ -27,6 +31,10 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 class SyncModel(private val dataStore: DataStore<Remotes>, remoteId: String?) : ViewModel() {
+
+    companion object {
+        val TAG: String? = SyncModel::class.simpleName
+    }
 
     lateinit var remote: Flow<Remote?>
 
@@ -56,13 +64,13 @@ fun sync(url: String, key: String, secret: String, bucket: String) {
 
         val found = mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
         if (!found) {
-            System.out.println("Bucket doesn't exists.");
+            Log.i(SyncModel.TAG, "Bucket doesn't exists.");
         } else {
-            System.out.println("Bucket already exists.");
+            Log.i(SyncModel.TAG, "Bucket already exists.");
         }
-        mc.listBuckets().forEach { bucket -> System.out.println(bucket.name()) }
+        mc.listBuckets().forEach { bucket -> Log.i(SyncModel.TAG, bucket.name()) }
     } catch (e: Exception) {
-        System.out.println(e.message)
+        Log.i(SyncModel.TAG, "${e.message}")
     }
 
 }
@@ -76,22 +84,16 @@ fun SyncRemote(
         }
     }), remoteId: String?
 ) {
-
     val remote: State<Remote?> = viewModel.remote.collectAsState(initial = remote {})
 
     remote.value?.let {
-        SyncCompose(remote = it) {
-            viewModel.viewModelScope.launch {
-                {} // TODO
-            }
-        }
-    }
+        SyncCompose(remote = it, context = LocalContext.current)}
 }
 
 @Composable
 private fun SyncCompose(
     remote: Remote,
-    sync: () -> Unit // TODO
+    context: Context
 ) {
 
     Column(
@@ -105,6 +107,7 @@ private fun SyncCompose(
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
+                context.startService(Intent(context, SyncService::class.java))
                 sync(remote.url, remote.key, remote.secret, "test-bucket")
             }
         )
@@ -132,8 +135,6 @@ fun SyncPreview() {
                 secret = s3
                 created = System.currentTimeMillis()
                 modified = System.currentTimeMillis()
-        }) {
-            sync(s1, s2, s3, bucket)
-        }
+        }, context = LocalContext.current)
     }
 }
