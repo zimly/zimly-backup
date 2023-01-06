@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.room.Room
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.map
 import java.util.*
@@ -28,6 +29,9 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db").build()
+        val remoteDao = db.remoteDao()
+
         setContent {
             ZimzyncTheme {
                 val startDest = if (isPermissionGranted()) "remotes-list" else "grant-permission"
