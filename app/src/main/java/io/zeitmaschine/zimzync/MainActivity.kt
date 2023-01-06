@@ -20,9 +20,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
+import kotlinx.coroutines.flow.map
+import java.util.*
 
 class MainActivity : ComponentActivity() {
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "FlowOperatorInvokedInComposition")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,14 +88,21 @@ class MainActivity : ComponentActivity() {
                         "remote-sync?remoteId={remoteId}",
                         arguments = listOf(navArgument("remoteId") { nullable = false })
                     ) { backStackEntry ->
-                        Scaffold(
-                            content = {
-                                SyncRemote(
-                                    dataStore = LocalContext.current.remoteDataStore,
-                                    remoteId = backStackEntry.arguments?.getString("remoteId")
-                                )
-                            }
-                        )
+                        Scaffold {
+                            val remoteId = backStackEntry.arguments?.getString("remoteId")
+                            // TODO fix this Datastore mess
+                            val todo = LocalContext.current.remoteDataStore.data
+                                .map { remotes -> remotes.remotesList }
+                                .map { remotes -> remotes.first { remote -> remote.id.equals(remoteId) } }
+                            SyncRemote(
+                                remote = remote {
+                                    id = UUID.randomUUID().toString()
+                                    url = "zm.io"
+                                    key = "ke"
+                                    secret = "sec"
+                                }
+                            )
+                        }
                     }
 
                 }
