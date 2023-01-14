@@ -19,16 +19,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
-    var uiState: MutableStateFlow<List<Remote>> = MutableStateFlow(emptyList())
+    private var internal: MutableStateFlow<List<Remote>> = MutableStateFlow(emptyList())
+    // Expose read-only flow
+    var uiState: Flow<List<Remote>> = internal.asStateFlow()
+
     init {
         viewModelScope.launch {
-            var remotes = fetchAll()
-            uiState.value = remotes
+            internal.update { fetchAll() }
         }
     }
     private suspend fun fetchAll(): List<Remote> {
@@ -48,7 +53,7 @@ fun RemoteScreen(
     }),
     openSync: (Int) -> Unit
 ) {
-    val remotes = viewModel.uiState.collectAsState()
+    val remotes = viewModel.uiState.collectAsState(initial = emptyList())
     RemoteComponent(remotes = remotes.value, openSync = openSync)
 }
 
