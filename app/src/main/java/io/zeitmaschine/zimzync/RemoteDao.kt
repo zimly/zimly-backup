@@ -1,21 +1,25 @@
 package io.zeitmaschine.zimzync
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Query
+import androidx.room.*
 
 @Dao
 interface RemoteDao {
 
     @Query("SELECT * FROM remote")
-    fun getAll(): List<Remote>
+    suspend fun getAll(): List<Remote>
 
     @Query("SELECT * FROM remote WHERE uid IN (:remoteIds)")
-    fun loadAllByIds(remoteIds: IntArray): List<Remote>
+    suspend fun loadAllByIds(remoteIds: IntArray): List<Remote>
 
     @Query("SELECT * FROM remote WHERE uid = :remoteId")
-    fun loadById(remoteId: Int): Remote
+    suspend fun loadById(remoteId: Int): Remote
 
     @Delete
-    fun delete(remote: Remote)
+    suspend fun delete(remote: Remote)
+
+    @Update
+    suspend fun update(remote: Remote)
+
+    @Insert
+    suspend fun insert(remote: Remote)
 }

@@ -9,39 +9,48 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
-class MainViewModel(private val dataStore: DataStore<Remotes>) : ViewModel() {
-    val remotes = dataStore.data.map { remotes -> remotes.remotesList }
+class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
+
+    var remotes: List<Remote> = emptyList()
+
+    init {
+        viewModelScope.launch {
+            remotes = fetchAll()
+        }
+    }
+    private suspend fun fetchAll(): List<Remote> {
+        return dataStore.getAll()
+    }
+
 }
 
 @Composable
 fun RemoteScreen(
-    dataStore: DataStore<Remotes>,
+    remoteDao: RemoteDao,
     // https://programmer.ink/think/a-new-way-to-create-a-viewmodel-creationextras.html
     viewModel: MainViewModel = viewModel(factory = viewModelFactory {
         initializer {
-            MainViewModel(dataStore)
+            MainViewModel(remoteDao)
         }
     }),
-    openSync: (String) -> Unit
+    openSync: (Int) -> Unit
 ) {
-    val remotes = viewModel.remotes.collectAsState(initial = emptyList())
-    RemoteComponent(remotes = remotes.value, openSync)
+    RemoteComponent(remotes = viewModel.remotes, openSync = openSync)
 }
 
 @Composable
-fun RemoteComponent(remotes: List<Remote>, openSync: (String) -> Unit) {
+fun RemoteComponent(remotes: List<Remote>, openSync: (Int) -> Unit) {
 
     LazyColumn {
         items(remotes) { remote ->
@@ -49,7 +58,7 @@ fun RemoteComponent(remotes: List<Remote>, openSync: (String) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(24.dp)
-                    .clickable(onClick = { openSync(remote.id) })
+                    .clickable(onClick = { if (remote.uid != null) openSync(remote.uid) })
             ) {
                 Column {
                     Text(remote.name)

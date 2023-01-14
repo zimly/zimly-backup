@@ -15,71 +15,53 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.datastore.core.DataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class EditorModel(private val dataStore: DataStore<Remotes>, remoteId: String?) : ViewModel() {
+class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
 
-    var remote: Flow<Remote?> = flowOf(Remote.getDefaultInstance())
+    private var remote: Remote = Remote(null, "", "", "", "")
+    var uiState: StateFlow<Remote> = MutableStateFlow(remote)
 
     init {
         viewModelScope.launch {
             remoteId?.let {
-                remote = get { remote -> remote.id.equals(remoteId) }
+                remote = dao.loadById(remoteId)
+                uiState = MutableStateFlow(remote)
             }
         }
     }
-
-    fun get(where: (Remote) -> Boolean): Flow<Remote?> {
-        return dataStore.data
-            .map { remotes -> remotes.remotesList }
-            .map { r -> r.first(where) }
-    }
-
     // FIXME? https://www.rrtutors.com/tutorials/implement-room-database-in-jetpack-compose
     suspend fun saveEntry(remote: Remote) {
-        dataStore.updateData { currentRemotes ->
-            var i = currentRemotes.remotesList.indexOfFirst { r -> r.id.equals(remote.id) }
-            if (i > -1) {
-                currentRemotes.toBuilder()
-                    .removeRemotes(i)
-                    .addRemotes(remote)
-                    .build()
-            } else {
-                currentRemotes.toBuilder()
-                    .addRemotes(remote)
-                    .build()
-            }
-
+        if (remote.uid == null) {
+           dao.insert(remote)
+        } else {
+            dao.update(remote)
         }
     }
 }
 
 @Composable
 fun EditRemote(
-    dataStore: DataStore<Remotes>,
+    remoteDao: RemoteDao,
+    remoteId: Int?,
     viewModel: EditorModel = viewModel(factory = viewModelFactory {
         initializer {
-            EditorModel(dataStore, remoteId)
+            EditorModel(remoteDao, remoteId)
         }
     }),
-    remoteId: String?, saveEntry: (remote: Remote) -> Unit
+    saveEntry: (remote: Remote) -> Unit
 ) {
 
-
-    val remote: State<Remote?> = viewModel.remote.collectAsState(initial = remote {})
-
-
+    val remote: State<Remote?> = viewModel.uiState.collectAsState()
     remote.value?.let {
         EditorCompose(remote = it) { remote ->
             viewModel.viewModelScope.launch {
@@ -87,6 +69,7 @@ fun EditRemote(
             }
             saveEntry(remote)
         }
+
     }
 }
 
@@ -97,6 +80,7 @@ private fun EditorCompose(
     saveEntry: (remote: Remote) -> Unit
 ) {
 
+    var eId by remember { mutableStateOf(remote.uid) }
     var eName by remember { mutableStateOf(remote.name) }
     var eUrl by remember { mutableStateOf(remote.url) }
     var eKey by remember { mutableStateOf(remote.key) }
@@ -137,27 +121,8 @@ private fun EditorCompose(
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
-
-                var now = System.currentTimeMillis()
-                var eCreated: Long = if (remote.created == 0L) {
-                    now
-                } else {
-                    remote.created
-                }
-                var eId = remote.id
-                // new entry
-                if (remote.id.equals("")) {
-                    eId = UUID.randomUUID().toString()
-                }
-                saveEntry( remote {
-                    id = eId
-                    name = eName
-                    url = eUrl
-                    key = eKey
-                    secret = eSecret
-                    created = eCreated
-                    modified = now
-                })
+                // TODO
+                saveEntry( Remote(null, "name", "urö", "key", "secret"))
             }
         )
         {
@@ -171,6 +136,6 @@ private fun EditorCompose(
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
-        EditorCompose(remote = remote {}) {}
+        EditorCompose(remote = Remote(null, "name", "urö", "key", "secret")) {}
     }
 }

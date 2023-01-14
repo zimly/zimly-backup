@@ -18,6 +18,7 @@
         android:maxSdkVersion="32" />
 
     <!-- usesCleartextTraffic: for non ssl communication with minio -->
+    <!-- ??  enableOnBackInvokedCallback ?? -->
     <application
         android:usesCleartextTraffic="true"
         android:allowBackup="true"

@@ -3,6 +3,7 @@ package io.zeitmaschine.zimzync
 import android.util.Log
 import io.minio.BucketExistsArgs
 import io.minio.MinioClient
+import io.minio.credentials.MinioClientConfigProvider.McConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -11,12 +12,20 @@ sealed class Result<out R> {
     data class Error(val exception: Exception) : Result<Nothing>()
 }
 
-class MinioRepository(private val url: String, private val key: String, private val secret: String, private val bucket: String) {
+class MinioRepository(url: String, key: String, secret: String, private val bucket: String) {
 
-    private val mc: MinioClient = MinioClient.builder()
-        .endpoint(url)
-        .credentials(key, secret)
-        .build()
+    private lateinit var mc: MinioClient
+    init {
+        try {
+            mc = MinioClient.builder()
+                .endpoint(url)
+                .credentials(key, secret)
+                .build()
+        } catch (e: Exception) {
+            Log.e(SyncModel.TAG, "${e.message}")
+        }
+    }
+
 
     suspend fun listBuckets(): Result<List<String>>{
 

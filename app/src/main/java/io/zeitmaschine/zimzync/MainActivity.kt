@@ -29,7 +29,8 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db").build()
+        val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db")
+            .build()
         val remoteDao = db.remoteDao()
 
         setContent {
@@ -61,27 +62,43 @@ class MainActivity : ComponentActivity() {
                             floatingActionButtonPosition = FabPosition.End,
                             floatingActionButton = {
                                 FloatingActionButton(onClick = {
-                                    navController.navigate("remote-editor")
+                                    navController.navigate("remote-editor/create")
                                 }) {
                                     Icon(Icons.Filled.Add, "Add Remote")
                                 }
                             },
                             content = {
                                 RemoteScreen(
-                                    LocalContext.current.remoteDataStore,
+                                    remoteDao,
                                     openSync = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") })
                             })
                     }
 
                     composable(
-                        "remote-editor?remoteId={remoteId}",
+                        "remote-editor/edit/{remoteId}",
                         arguments = listOf(navArgument("remoteId") { nullable = true })
                     ) { backStackEntry ->
+                        val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
                         Scaffold(
                             content = {
                                 EditRemote(
-                                    dataStore = LocalContext.current.remoteDataStore,
-                                    remoteId = backStackEntry.arguments?.getString("remoteId"),
+                                    remoteDao = remoteDao,
+                                    remoteId = remoteId,
+                                    saveEntry = { navController.navigate("remotes-list") }
+                                )
+                            },
+                        )
+                    }
+
+                    composable(
+                        "remote-editor/create",
+                        arguments = listOf(navArgument("remoteId") { nullable = true })
+                    ) {
+                        Scaffold(
+                            content = {
+                                EditRemote(
+                                    remoteDao = remoteDao,
+                                    remoteId = null,
                                     saveEntry = { navController.navigate("remotes-list") }
                                 )
                             },
@@ -93,19 +110,11 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("remoteId") { nullable = false })
                     ) { backStackEntry ->
                         Scaffold {
-                            val remoteId = backStackEntry.arguments?.getString("remoteId")
-                            // TODO fix this Datastore mess
-                            val todo = LocalContext.current.remoteDataStore.data
-                                .map { remotes -> remotes.remotesList }
-                                .map { remotes -> remotes.first { remote -> remote.id.equals(remoteId) } }
-                            SyncRemote(
-                                remote = remote {
-                                    id = UUID.randomUUID().toString()
-                                    url = "zm.io"
-                                    key = "ke"
-                                    secret = "sec"
-                                }
-                            )
+                            val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+
+                            remoteId?.let {
+                                SyncRemote(remoteDao, remoteId)
+                            }
                         }
                     }
 
