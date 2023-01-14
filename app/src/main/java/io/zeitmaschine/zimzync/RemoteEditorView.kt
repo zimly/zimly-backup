@@ -122,7 +122,7 @@ private fun EditorCompose(
             modifier = Modifier.align(Alignment.End),
             onClick = {
                 // TODO
-                saveEntry( Remote(null, "name", "urö", "key", "secret"))
+                saveEntry(Remote(eId, eName, eUrl, eKey, eSecret))
             }
         )
         {

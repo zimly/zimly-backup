@@ -63,7 +63,6 @@ fun SyncRemote(
     val remote = viewModel.uiState.collectAsState()
 
     SyncCompose(remote.value) { viewModel.viewModelScope.launch { viewModel.sync() } }
-
 }
 
 @Composable
@@ -84,7 +83,7 @@ private fun SyncCompose(
             modifier = Modifier.align(Alignment.End),
             onClick = {
                 //context.startService(Intent(context, SyncService::class.java))
-                sync
+                sync()
             }
         )
         {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -18,15 +19,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
-    var remotes: List<Remote> = emptyList()
-
+    var uiState: StateFlow<List<Remote>> = MutableStateFlow(emptyList())
     init {
         viewModelScope.launch {
-            remotes = fetchAll()
+            var remotes = fetchAll()
+            uiState = MutableStateFlow(remotes)
         }
     }
     private suspend fun fetchAll(): List<Remote> {
@@ -46,7 +49,8 @@ fun RemoteScreen(
     }),
     openSync: (Int) -> Unit
 ) {
-    RemoteComponent(remotes = viewModel.remotes, openSync = openSync)
+    val remotes = viewModel.uiState.collectAsState()
+    RemoteComponent(remotes = remotes.value, openSync = openSync)
 }
 
 @Composable
