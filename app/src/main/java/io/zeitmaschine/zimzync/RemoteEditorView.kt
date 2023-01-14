@@ -22,20 +22,18 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
 
     private var remote: Remote = Remote(null, "", "", "", "")
-    var uiState: StateFlow<Remote> = MutableStateFlow(remote)
+    var uiState: MutableStateFlow<Remote> = MutableStateFlow(remote)
 
     init {
         viewModelScope.launch {
             remoteId?.let {
                 remote = dao.loadById(remoteId)
-                uiState = MutableStateFlow(remote)
+                uiState.value = remote
             }
         }
     }

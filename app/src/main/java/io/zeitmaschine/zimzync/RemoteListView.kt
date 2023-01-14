@@ -20,16 +20,15 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
-    var uiState: StateFlow<List<Remote>> = MutableStateFlow(emptyList())
+    var uiState: MutableStateFlow<List<Remote>> = MutableStateFlow(emptyList())
     init {
         viewModelScope.launch {
             var remotes = fetchAll()
-            uiState = MutableStateFlow(remotes)
+            uiState.value = remotes
         }
     }
     private suspend fun fetchAll(): List<Remote> {

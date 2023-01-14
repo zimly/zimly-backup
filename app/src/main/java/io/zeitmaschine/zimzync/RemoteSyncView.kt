@@ -19,7 +19,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class SyncModel(private val dao: RemoteDao, remoteId: Int) : ViewModel() {
@@ -30,12 +29,12 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int) : ViewModel() {
 
     private var remote: Remote = Remote(null, "", "", "", "")
     lateinit var minio: MinioRepository
-    var uiState: StateFlow<Remote> = MutableStateFlow(remote)
+    var uiState: MutableStateFlow<Remote> = MutableStateFlow(remote)
 
     init {
         viewModelScope.launch {
             remote = dao.loadById(remoteId)
-            uiState = MutableStateFlow(remote)
+            uiState.value = remote
             minio = MinioRepository(remote.url, remote.key, remote.secret, "test")
         }
     }
