@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 
 class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
 
-    private var remote: Remote = Remote(null, "", "", "", "")
+    private var remote: Remote = Remote(null, "", "", "", "", "")
     var uiState: MutableStateFlow<Remote> = MutableStateFlow(remote)
 
     init {
@@ -78,11 +78,12 @@ private fun EditorCompose(
     saveEntry: (remote: Remote) -> Unit
 ) {
 
-    var eId by remember { mutableStateOf(remote.uid) }
-    var eName by remember { mutableStateOf(remote.name) }
-    var eUrl by remember { mutableStateOf(remote.url) }
-    var eKey by remember { mutableStateOf(remote.key) }
-    var eSecret by remember { mutableStateOf(remote.secret) }
+    var uid by remember { mutableStateOf(remote.uid) }
+    var name by remember { mutableStateOf(remote.name) }
+    var url by remember { mutableStateOf(remote.url) }
+    var key by remember { mutableStateOf(remote.key) }
+    var secret by remember { mutableStateOf(remote.secret) }
+    var bucket by remember { mutableStateOf(remote.secret) }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -91,36 +92,44 @@ private fun EditorCompose(
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Name") },
-            value = eName,
-            onValueChange = { eName = it },
+            value = name,
+            onValueChange = { name = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("URL") },
-            value = eUrl,
-            onValueChange = { eUrl = it },
+            value = url,
+            onValueChange = { url = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Key") },
-            value = eKey,
-            onValueChange = { eKey = it },
+            value = key,
+            onValueChange = { key = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Secret") },
-            value = eSecret,
-            onValueChange = { eSecret = it },
+            value = secret,
+            onValueChange = { secret = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Bucket") },
+            value = bucket,
+            onValueChange = { bucket = it },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        )
+
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
                 // TODO
-                saveEntry(Remote(eId, eName, eUrl, eKey, eSecret))
+                saveEntry(Remote(uid, name, url, key, secret, bucket))
             }
         )
         {
@@ -134,6 +143,6 @@ private fun EditorCompose(
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
-        EditorCompose(remote = Remote(null, "name", "urö", "key", "secret")) {}
+        EditorCompose(remote = Remote(null, "name", "urö", "key", "secret", "bucket")) {}
     }
 }

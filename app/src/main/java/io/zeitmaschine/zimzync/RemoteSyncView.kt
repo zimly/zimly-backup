@@ -27,15 +27,15 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int) : ViewModel() {
         val TAG: String? = SyncModel::class.simpleName
     }
 
-    private var remote: Remote = Remote(null, "", "", "", "")
-    lateinit var minio: MinioRepository
+    private var remote: Remote = Remote(null, "", "", "", "", "")
+    private lateinit var minio: MinioRepository
     var uiState: MutableStateFlow<Remote> = MutableStateFlow(remote)
 
     init {
         viewModelScope.launch {
             remote = dao.loadById(remoteId)
             uiState.value = remote
-            minio = MinioRepository(remote.url, remote.key, remote.secret, "test")
+            minio = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
         }
     }
 
@@ -100,7 +100,8 @@ fun SyncPreview() {
         name = "zeitmaschine.io",
         url = "http://10.0.2.2:9000",
         key = "test",
-        secret = "testtest"
+        secret = "testtest",
+        bucket = "testbucket"
     )
 
 
