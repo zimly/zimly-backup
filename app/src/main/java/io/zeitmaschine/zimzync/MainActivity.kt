@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
                             val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                             remoteId?.let {
-                                SyncRemote(remoteDao, remoteId)
+                                SyncRemote(remoteDao, remoteId, application = application)
                             }
                         }
                     }

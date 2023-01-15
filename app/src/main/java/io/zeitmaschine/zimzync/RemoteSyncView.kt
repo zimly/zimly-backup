@@ -1,5 +1,6 @@
 package io.zeitmaschine.zimzync
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,13 +23,17 @@ import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-class SyncModel(private val dao: RemoteDao, remoteId: Int) : ViewModel() {
+class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Application) :
+    AndroidViewModel(application) {
 
     companion object {
         val TAG: String? = SyncModel::class.simpleName
     }
 
+    private val contentResolver by lazy { application.contentResolver }
+
     private var remote: Remote = Remote(null, "", "", "", "", "")
+    private var photos: MediaRepository = MediaRepository(contentResolver)
     private lateinit var minio: MinioRepository
     var uiState: MutableStateFlow<Remote> = MutableStateFlow(remote)
 
@@ -46,6 +52,15 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int) : ViewModel() {
             else -> Log.e(TAG, "FML")// Show error in UI
         }
     }
+
+    suspend fun photos() {
+        // Display result of the minio request to the user
+        when (val result = photos.getPhotos()) {
+            is Result.Success<List<String>> -> result.data.forEach { photo -> Log.i(TAG, photo) }
+            else -> Log.e(TAG, "FML")// Show error in UI
+        }
+    }
+
 }
 
 
@@ -53,21 +68,26 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int) : ViewModel() {
 fun SyncRemote(
     dao: RemoteDao,
     remoteId: Int,
+    application: Application,
     viewModel: SyncModel = viewModel(factory = viewModelFactory {
         initializer {
-            SyncModel(dao, remoteId)
+            SyncModel(dao, remoteId, application)
         }
     }),
 ) {
     val remote = viewModel.uiState.collectAsState()
 
-    SyncCompose(remote.value) { viewModel.viewModelScope.launch { viewModel.sync() } }
+    SyncCompose(
+        remote = remote.value,
+        sync = { viewModel.viewModelScope.launch { viewModel.sync() } },
+        photos = { viewModel.viewModelScope.launch { viewModel.photos() } })
 }
 
 @Composable
 private fun SyncCompose(
     remote: Remote,
-    sync: () -> Unit
+    sync: () -> Unit,
+    photos: () -> Unit
 ) {
 
     Column(
@@ -81,12 +101,20 @@ private fun SyncCompose(
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
-                //context.startService(Intent(context, SyncService::class.java))
                 sync()
             }
         )
         {
             Text(text = "Sync")
+        }
+        Button(
+            modifier = Modifier.align(Alignment.End),
+            onClick = {
+                photos()
+            }
+        )
+        {
+            Text(text = "Photos")
         }
     }
 }
@@ -107,7 +135,7 @@ fun SyncPreview() {
 
     ZimzyncTheme {
         SyncCompose(
-            remote, sync = {}
+            remote, sync = {}, photos = {}
         )
     }
 }
