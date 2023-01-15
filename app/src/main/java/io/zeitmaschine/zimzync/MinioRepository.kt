@@ -2,6 +2,7 @@ package io.zeitmaschine.zimzync
 
 import android.util.Log
 import io.minio.BucketExistsArgs
+import io.minio.ListObjectsArgs
 import io.minio.MinioClient
 import io.minio.credentials.MinioClientConfigProvider.McConfig
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,24 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         }
     }
 
+    suspend fun listObjects(): Result<Boolean>{
+
+        // Move the execution of the coroutine to the I/O dispatcher
+        return withContext(Dispatchers.IO) {
+            // Blocking network request code
+            try {
+                // Create a minioClient with the MinIO server playground, its access key and secret key.
+
+                mc.listObjects(ListObjectsArgs.builder().bucket(bucket).build())
+                    .forEach { obj -> Log.i(SyncModel.TAG, obj.get().objectName()) };
+
+                return@withContext Result.Success(true)
+            } catch (e: Exception) {
+                Log.i(SyncModel.TAG, "${e.message}")
+                return@withContext Result.Error(e)
+            }
+        }
+    }
 
     suspend fun listBuckets(): Result<List<String>>{
 

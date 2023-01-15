@@ -45,9 +45,8 @@ class MediaRepository(private val contentResolver: ContentResolver) {
             )?.use { cursor ->
                 Log.i(TAG, "${cursor.count}")
                 while (cursor.moveToNext()) {
-                    Log.i(TAG, "${cursor.columnNames}")
-
                     val name = cursor.getString(2);
+                    Log.i(TAG, name)
                     photos.add(name)
                 }
             }

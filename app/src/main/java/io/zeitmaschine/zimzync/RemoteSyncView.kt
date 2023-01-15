@@ -47,8 +47,8 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
 
     suspend fun sync() {
         // Display result of the minio request to the user
-        when (val result = minio.listBuckets()) {
-            is Result.Success<List<String>> -> Log.d(TAG, result.data.first())// Happy path
+        when (val result = minio.listObjects()) {
+            is Result.Success<Boolean> -> Log.d(TAG, "win")// Happy path
             else -> Log.e(TAG, "FML")// Show error in UI
         }
     }
@@ -96,6 +96,7 @@ private fun SyncCompose(
     ) {
         Text(remote.name)
         Text(remote.url)
+        Text(remote.bucket)
         Text(remote.key)
         Text(remote.secret)
         Button(
@@ -116,6 +117,16 @@ private fun SyncCompose(
         {
             Text(text = "Photos")
         }
+        Button(
+            modifier = Modifier.align(Alignment.End),
+            onClick = {
+                photos()
+            }
+        )
+        {
+            Text(text = "Edit")
+        }
+
     }
 }
 
