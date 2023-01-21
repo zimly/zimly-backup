@@ -14,6 +14,9 @@ sealed class Result<out R> {
 }
 
 class MinioRepository(url: String, key: String, secret: String, private val bucket: String) {
+    companion object {
+        val TAG: String? = MinioRepository::class.simpleName
+    }
 
     private lateinit var mc: MinioClient
     init {
@@ -23,7 +26,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
                 .credentials(key, secret)
                 .build()
         } catch (e: Exception) {
-            Log.e(SyncModel.TAG, "${e.message}")
+            Log.e(TAG, "${e.message}")
         }
     }
 
@@ -36,11 +39,11 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
                 // Create a minioClient with the MinIO server playground, its access key and secret key.
 
                 mc.listObjects(ListObjectsArgs.builder().bucket(bucket).build())
-                    .forEach { obj -> Log.i(SyncModel.TAG, obj.get().objectName()) };
+                    .forEach { obj -> Log.i(TAG, obj.get().objectName()) };
 
                 return@withContext Result.Success(true)
             } catch (e: Exception) {
-                Log.i(SyncModel.TAG, "${e.message}")
+                Log.i(TAG, "${e.message}")
                 return@withContext Result.Error(e)
             }
         }
