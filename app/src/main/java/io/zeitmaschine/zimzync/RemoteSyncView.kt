@@ -53,15 +53,20 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
     suspend fun sync() {
         // Display result of the minio request to the user
         when (val result = minio.listObjects()) {
-            is Result.Success<Boolean> -> Log.d(TAG, "win")// Happy path
-            else -> Log.e(TAG, "FML")// Show error in UI
+            is Result.Success<List<S3Object>> -> {
+                internal.update { it.copy(remoteCount = result.data.count())}
+            }
+            is Result.Error -> Log.e(TAG, "Failed to list bucket objects.", result.exception)// Show error in UI
         }
     }
 
     suspend fun photos() {
         // Display result of the minio request to the user
         when (val result = photos.getPhotos()) {
-            is Result.Success<List<String>> -> result.data.forEach { photo -> Log.i(TAG, photo) }
+            is Result.Success<List<String>> -> {
+                internal.update { it.copy(localCount = result.data.count()) }
+                Log.i(TAG, "${internal.value.localCount}")
+            }
             else -> Log.e(TAG, "FML")// Show error in UI
         }
     }
@@ -117,6 +122,8 @@ private fun SyncCompose(
         Text(state.value.bucket)
         Text(state.value.key)
         Text(state.value.secret)
+        Text("${state.value.remoteCount}")
+        Text("${state.value.localCount}")
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
@@ -152,14 +159,7 @@ private fun SyncCompose(
 @Preview(showBackground = true)
 @Composable
 fun SyncPreview() {
-    val remote = Remote(
-        uid = 123,
-        name = "zeitmaschine.io",
-        url = "http://10.0.2.2:9000",
-        key = "test",
-        secret = "testtest",
-        bucket = "testbucket"
-    )
+
     val uiState = SyncModel.UiState(
         name = "zeitmaschine.io",
         url = "http://10.0.2.2:9000",

@@ -13,6 +13,10 @@ sealed class Result<out R> {
     data class Error(val exception: Exception) : Result<Nothing>()
 }
 
+data class S3Object (
+    var name: String = "",
+)
+
 class MinioRepository(url: String, key: String, secret: String, private val bucket: String) {
     companion object {
         val TAG: String? = MinioRepository::class.simpleName
@@ -30,7 +34,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         }
     }
 
-    suspend fun listObjects(): Result<Boolean>{
+    suspend fun listObjects(): Result<List<S3Object>>{
 
         // Move the execution of the coroutine to the I/O dispatcher
         return withContext(Dispatchers.IO) {
@@ -38,10 +42,10 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
             try {
                 // Create a minioClient with the MinIO server playground, its access key and secret key.
 
-                mc.listObjects(ListObjectsArgs.builder().bucket(bucket).build())
-                    .forEach { obj -> Log.i(TAG, obj.get().objectName()) };
+                val objs: List<S3Object> = mc.listObjects(ListObjectsArgs.builder().bucket(bucket).build())
+                    .map { res -> S3Object(res.get().objectName()) }
 
-                return@withContext Result.Success(true)
+                return@withContext Result.Success(objs)
             } catch (e: Exception) {
                 Log.i(TAG, "${e.message}")
                 return@withContext Result.Error(e)
