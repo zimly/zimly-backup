@@ -1,5 +1,6 @@
 package io.zeitmaschine.zimzync
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,30 +23,80 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
 
-    private var remote: Remote = Remote(null, "", "", "", "", "")
-    var uiState: MutableStateFlow<Remote> = MutableStateFlow(remote)
+    // https://stackoverflow.com/questions/69689843/jetpack-compose-state-hoisting-previews-and-viewmodels-best-practices
+    // TODO ???? https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate
+    // Internal mutable state
+    private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
+
+    // Expose Ui State
+    val state: StateFlow<UiState> = internal.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            remoteId?.let {
-                remote = dao.loadById(remoteId)
-                uiState.value = remote
+        remoteId?.let {
+            viewModelScope.launch {
+                val remote = dao.loadById(remoteId)
+                internal.value.uid = remote.uid
+                internal.value.name = remote.name
+                internal.value.url = remote.url
+                internal.value.key = remote.key
+                internal.value.secret = remote.secret
             }
         }
     }
-    // FIXME? https://www.rrtutors.com/tutorials/implement-room-database-in-jetpack-compose
-    suspend fun saveEntry(remote: Remote) {
+
+    fun setName(name: String) {
+        internal.update { it.copy(name = name) }
+    }
+
+    fun setUrl(url: String) {
+        internal.update { it.copy(url = url) }
+    }
+
+    fun setKey(key: String) {
+        internal.update { it.copy(key = key) }
+    }
+
+    fun setSecret(secret: String) {
+        internal.update { it.copy(secret = secret) }
+    }
+
+    fun setBucket(bucket: String) {
+        internal.update { it.copy(bucket = bucket) }
+    }
+
+
+    suspend fun save() {
+        val remote = Remote(
+            internal.value.uid,
+            internal.value.name,
+            internal.value.url,
+            internal.value.key,
+            internal.value.secret,
+            internal.value.bucket
+        )
         if (remote.uid == null) {
-           dao.insert(remote)
+            dao.insert(remote)
         } else {
             dao.update(remote)
         }
     }
 }
+
+data class UiState(
+    var uid: Int? = null,
+    var name: String = "",
+    var url: String = "",
+    var key: String = "",
+    var secret: String = "",
+    var bucket: String = ""
+)
 
 @Composable
 fun EditRemote(
@@ -56,34 +107,37 @@ fun EditRemote(
             EditorModel(remoteDao, remoteId)
         }
     }),
-    saveEntry: (remote: Remote) -> Unit
+    saveEntry: () -> Unit
 ) {
 
-    val remote: State<Remote?> = viewModel.uiState.collectAsState()
-    remote.value?.let {
-        EditorCompose(remote = it) { remote ->
-            viewModel.viewModelScope.launch {
-                viewModel.saveEntry(remote)
-            }
-            saveEntry(remote)
+    val state = viewModel.state.collectAsState()
+    EditorCompose(
+        state,
+        setName = viewModel::setName,
+        setUrl = viewModel::setUrl,
+        setKey = viewModel::setKey,
+        setSecret = viewModel::setSecret,
+        setBucket = viewModel::setBucket
+    ) {
+        viewModel.viewModelScope.launch {
+            viewModel.save()
+            saveEntry()
         }
-
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EditorCompose(
-    remote: Remote,
-    saveEntry: (remote: Remote) -> Unit
+    state: State<UiState>,
+    setName: (name: String) -> Unit,
+    setUrl: (url: String) -> Unit,
+    setKey: (key: String) -> Unit,
+    setSecret: (secret: String) -> Unit,
+    setBucket: (secret: String) -> Unit,
+    save: () -> Unit,
 ) {
 
-    var uid by remember { mutableStateOf(remote.uid) }
-    var name by remember { mutableStateOf(remote.name) }
-    var url by remember { mutableStateOf(remote.url) }
-    var key by remember { mutableStateOf(remote.key) }
-    var secret by remember { mutableStateOf(remote.secret) }
-    var bucket by remember { mutableStateOf(remote.secret) }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -92,44 +146,43 @@ private fun EditorCompose(
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Name") },
-            value = name,
-            onValueChange = { name = it },
+            value = state.value.name,
+            onValueChange = { setName(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("URL") },
-            value = url,
-            onValueChange = { url = it },
+            value = state.value.url,
+            onValueChange = { setUrl(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Key") },
-            value = key,
-            onValueChange = { key = it },
+            value = state.value.key,
+            onValueChange = { setKey(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Secret") },
-            value = secret,
-            onValueChange = { secret = it },
+            value = state.value.secret,
+            onValueChange = { setSecret(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Bucket") },
-            value = bucket,
-            onValueChange = { bucket = it },
+            value = state.value.bucket,
+            onValueChange = { setBucket(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
 
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
-                // TODO
-                saveEntry(Remote(uid, name, url, key, secret, bucket))
+                save()
             }
         )
         {
@@ -139,10 +192,20 @@ private fun EditorCompose(
 }
 
 
+@SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
-        EditorCompose(remote = Remote(null, "name", "urö", "key", "secret", "bucket")) {}
+        val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
+
+        EditorCompose(
+            internal.collectAsState(),
+            setName = { name -> internal.update { it.copy(name = name) } },
+            setUrl = { url -> internal.update { it.copy(url = url) } },
+            setKey = { key -> internal.update { it.copy(key = key) } },
+            setSecret = { secret -> internal.update { it.copy(secret = secret) } },
+            setBucket = { bucket -> internal.update { it.copy(bucket = bucket) } },
+        ) {}
     }
 }

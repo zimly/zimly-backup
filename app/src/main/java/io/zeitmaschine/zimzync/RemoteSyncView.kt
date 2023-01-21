@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -69,6 +68,7 @@ fun SyncRemote(
     dao: RemoteDao,
     remoteId: Int,
     application: Application,
+    edit: (Int) -> Unit,
     viewModel: SyncModel = viewModel(factory = viewModelFactory {
         initializer {
             SyncModel(dao, remoteId, application)
@@ -80,6 +80,7 @@ fun SyncRemote(
     SyncCompose(
         remote = remote.value,
         sync = { viewModel.viewModelScope.launch { viewModel.sync() } },
+        edit = { edit(remoteId) },
         photos = { viewModel.viewModelScope.launch { viewModel.photos() } })
 }
 
@@ -87,7 +88,8 @@ fun SyncRemote(
 private fun SyncCompose(
     remote: Remote,
     sync: () -> Unit,
-    photos: () -> Unit
+    photos: () -> Unit,
+    edit: () -> Unit
 ) {
 
     Column(
@@ -120,7 +122,7 @@ private fun SyncCompose(
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
-                photos()
+                edit()
             }
         )
         {
@@ -146,7 +148,7 @@ fun SyncPreview() {
 
     ZimzyncTheme {
         SyncCompose(
-            remote, sync = {}, photos = {}
+            remote, sync = {}, photos = {}, edit = {}
         )
     }
 }

@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
 
                     composable(
                         "remote-editor/edit/{remoteId}",
-                        arguments = listOf(navArgument("remoteId") { nullable = true })
+                        arguments = listOf(navArgument("remoteId") { nullable = false })
                     ) { backStackEntry ->
                         val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
                         Scaffold(
@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
                             val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                             remoteId?.let {
-                                SyncRemote(remoteDao, remoteId, application = application)
+                                SyncRemote(remoteDao, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") })
                             }
                         }
                     }
