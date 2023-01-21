@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Application) :
@@ -31,15 +35,17 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
 
     private val contentResolver by lazy { application.contentResolver }
 
-    private var remote: Remote = Remote(null, "", "", "", "", "")
-    private var photos: MediaRepository = MediaRepository(contentResolver)
+    private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
+    private val photos: MediaRepository = MediaRepository(contentResolver)
     private lateinit var minio: MinioRepository
-    var uiState: MutableStateFlow<Remote> = MutableStateFlow(remote)
+    var uiState: StateFlow<UiState> = internal.asStateFlow()
 
     init {
         viewModelScope.launch {
-            remote = dao.loadById(remoteId)
-            uiState.value = remote
+            val remote = dao.loadById(remoteId)
+            internal.update {
+                it.copy(name = remote.name, url = remote.url, bucket = remote.bucket)
+            }
             minio = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
         }
     }
@@ -60,8 +66,18 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         }
     }
 
-}
+    data class UiState (
+        var name: String = "",
+        var url: String = "",
+        var key: String = "",
+        var secret: String = "",
+        var bucket: String = "",
 
+        var localCount: Int = 0,
+        var remoteCount: Int = 0
+    )
+
+}
 
 @Composable
 fun SyncRemote(
@@ -75,10 +91,10 @@ fun SyncRemote(
         }
     }),
 ) {
-    val remote = viewModel.uiState.collectAsState()
+    val state = viewModel.uiState.collectAsState()
 
     SyncCompose(
-        remote = remote.value,
+        state,
         sync = { viewModel.viewModelScope.launch { viewModel.sync() } },
         edit = { edit(remoteId) },
         photos = { viewModel.viewModelScope.launch { viewModel.photos() } })
@@ -86,7 +102,7 @@ fun SyncRemote(
 
 @Composable
 private fun SyncCompose(
-    remote: Remote,
+    state: State<SyncModel.UiState>,
     sync: () -> Unit,
     photos: () -> Unit,
     edit: () -> Unit
@@ -96,11 +112,11 @@ private fun SyncCompose(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(all = 16.dp)
     ) {
-        Text(remote.name)
-        Text(remote.url)
-        Text(remote.bucket)
-        Text(remote.key)
-        Text(remote.secret)
+        Text(state.value.name)
+        Text(state.value.url)
+        Text(state.value.bucket)
+        Text(state.value.key)
+        Text(state.value.secret)
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
@@ -144,11 +160,19 @@ fun SyncPreview() {
         secret = "testtest",
         bucket = "testbucket"
     )
+    val uiState = SyncModel.UiState(
+        name = "zeitmaschine.io",
+        url = "http://10.0.2.2:9000",
+        key = "test",
+        secret = "testtest",
+        bucket = "testbucket"
+    )
+    val internal: MutableStateFlow<SyncModel.UiState> = MutableStateFlow(uiState)
 
 
     ZimzyncTheme {
         SyncCompose(
-            remote, sync = {}, photos = {}, edit = {}
+            state = internal.collectAsState(), sync = {}, photos = {}, edit = {}
         )
     }
 }
