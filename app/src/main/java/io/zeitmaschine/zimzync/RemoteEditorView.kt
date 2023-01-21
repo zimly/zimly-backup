@@ -87,16 +87,15 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
             dao.update(remote)
         }
     }
+    data class UiState(
+        var uid: Int? = null,
+        var name: String = "",
+        var url: String = "",
+        var key: String = "",
+        var secret: String = "",
+        var bucket: String = ""
+    )
 }
-
-data class UiState(
-    var uid: Int? = null,
-    var name: String = "",
-    var url: String = "",
-    var key: String = "",
-    var secret: String = "",
-    var bucket: String = ""
-)
 
 @Composable
 fun EditRemote(
@@ -129,7 +128,7 @@ fun EditRemote(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EditorCompose(
-    state: State<UiState>,
+    state: State<EditorModel.UiState>,
     setName: (name: String) -> Unit,
     setUrl: (url: String) -> Unit,
     setKey: (key: String) -> Unit,
@@ -197,7 +196,7 @@ private fun EditorCompose(
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
-        val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
+        val internal: MutableStateFlow<EditorModel.UiState> = MutableStateFlow(EditorModel.UiState())
 
         EditorCompose(
             internal.collectAsState(),
