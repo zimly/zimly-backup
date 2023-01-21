@@ -47,6 +47,7 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
                 internal.value.url = remote.url
                 internal.value.key = remote.key
                 internal.value.secret = remote.secret
+                internal.value.bucket = remote.bucket
             }
         }
     }
