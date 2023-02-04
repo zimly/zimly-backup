@@ -29,16 +29,19 @@ import kotlinx.coroutines.launch
 class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Application) :
     AndroidViewModel(application) {
 
+    // Todo: https://luisramos.dev/testing-your-android-viewmodel
     companion object {
         val TAG: String? = SyncModel::class.simpleName
     }
 
     private val contentResolver by lazy { application.contentResolver }
-
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
-    private val photos: MediaRepository = MediaRepository(contentResolver)
-    private lateinit var minio: MinioRepository
+
     var uiState: StateFlow<UiState> = internal.asStateFlow()
+    private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
+
+    private lateinit var s3Repo: S3Repository
+    private lateinit var syncService: SyncService
 
     init {
         viewModelScope.launch {
@@ -46,32 +49,38 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
             internal.update {
                 it.copy(name = remote.name, url = remote.url, bucket = remote.bucket)
             }
-            minio = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
-        }
-    }
-
-    suspend fun sync() {
-        // Display result of the minio request to the user
-        when (val result = minio.listObjects()) {
-            is Result.Success<List<S3Object>> -> {
-                internal.update { it.copy(remoteCount = result.data.count())}
+            try {
+                s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
+            } catch (e: Exception) {
+                // TODO: Exception handling in a lateinit block, inside a viewModelFactory, inside a
+                //  NavHost Composable? Some global error handling?
+                Log.e(TAG, "Failed to initialize minio repo: ${e.message}", e)
             }
-            is Result.Error -> Log.e(TAG, "Failed to list bucket objects.", result.exception)// Show error in UI
+
+            syncService = SyncServiceImpl(s3Repo, mediaRepo)
         }
     }
 
-    suspend fun photos() {
+    suspend fun createDiff() {
         // Display result of the minio request to the user
-        when (val result = photos.getPhotos()) {
-            is Result.Success<List<String>> -> {
-                internal.update { it.copy(localCount = result.data.count()) }
-                Log.i(TAG, "${internal.value.localCount}")
+        when (val result = syncService.diff()) {
+            is Result.Success<Diff> -> {
+                internal.update {
+                    it.copy(
+                        remoteCount = result.data.remotes.size,
+                        localCount = result.data.locals.size
+                    )
+                }
             }
-            else -> Log.e(TAG, "FML")// Show error in UI
+            is Result.Error -> Log.e(
+                TAG,
+                "Failed to create log",
+                result.exception
+            )// Show error in UI
         }
     }
 
-    data class UiState (
+    data class UiState(
         var name: String = "",
         var url: String = "",
         var key: String = "",
@@ -100,16 +109,14 @@ fun SyncRemote(
 
     SyncCompose(
         state,
-        sync = { viewModel.viewModelScope.launch { viewModel.sync() } },
-        edit = { edit(remoteId) },
-        photos = { viewModel.viewModelScope.launch { viewModel.photos() } })
+        sync = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
+        edit = { edit(remoteId) })
 }
 
 @Composable
 private fun SyncCompose(
     state: State<SyncModel.UiState>,
     sync: () -> Unit,
-    photos: () -> Unit,
     edit: () -> Unit
 ) {
 
@@ -132,15 +139,6 @@ private fun SyncCompose(
         )
         {
             Text(text = "Sync")
-        }
-        Button(
-            modifier = Modifier.align(Alignment.End),
-            onClick = {
-                photos()
-            }
-        )
-        {
-            Text(text = "Photos")
         }
         Button(
             modifier = Modifier.align(Alignment.End),
@@ -172,7 +170,7 @@ fun SyncPreview() {
 
     ZimzyncTheme {
         SyncCompose(
-            state = internal.collectAsState(), sync = {}, photos = {}, edit = {}
+            state = internal.collectAsState(), sync = {}, edit = {}
         )
     }
 }
