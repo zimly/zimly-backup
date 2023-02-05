@@ -58,6 +58,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
             }
 
             syncService = SyncServiceImpl(s3Repo, mediaRepo)
+            createDiff()
         }
     }
 
@@ -68,13 +69,28 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
                 internal.update {
                     it.copy(
                         remoteCount = result.data.remotes.size,
-                        localCount = result.data.locals.size
+                        localCount = result.data.locals.size,
+                        diff = result.data
                     )
                 }
             }
             is Result.Error -> Log.e(
                 TAG,
                 "Failed to create log",
+                result.exception
+            )// Show error in UI
+        }
+    }
+
+    suspend fun sync() {
+        // Display result of the minio request to the user
+        when (val result = syncService.sync(uiState.value.diff)) {
+            is Result.Success<Boolean> -> {
+                Log.i(TAG, "Win")
+            }
+            is Result.Error -> Log.e(
+                TAG,
+                "Failed to to sync",
                 result.exception
             )// Show error in UI
         }
@@ -88,7 +104,8 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         var bucket: String = "",
 
         var localCount: Int = 0,
-        var remoteCount: Int = 0
+        var remoteCount: Int = 0,
+        var diff: Diff = Diff(emptyList(), emptyList())
     )
 
 }
@@ -109,7 +126,7 @@ fun SyncRemote(
 
     SyncCompose(
         state,
-        sync = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
+        sync = { viewModel.viewModelScope.launch { viewModel.sync() } },
         edit = { edit(remoteId) })
 }
 
@@ -163,7 +180,8 @@ fun SyncPreview() {
         url = "http://10.0.2.2:9000",
         key = "test",
         secret = "testtest",
-        bucket = "testbucket"
+        bucket = "test-bucket",
+        diff = Diff(emptyList(), emptyList()),
     )
     val internal: MutableStateFlow<SyncModel.UiState> = MutableStateFlow(uiState)
 

@@ -33,12 +33,31 @@ class SyncServiceImpl(
             }
         }
     }
+
+    override suspend fun sync(diff: Diff): Result<Boolean> {
+        // Move the execution of the coroutine to the I/O dispatcher
+        return withContext(Dispatchers.IO) {
+            try {
+                diff.locals
+                    .filter { loc -> diff.remotes.none { rem -> rem.name == loc.name } }
+                    .map { loc -> Pair(loc, mediaRepository.getStream(loc.path)) }
+                    .forEach { (loc, file) -> s3Repository.put(file, loc.name, loc.contentType, loc.size) }
+
+                return@withContext Result.Success(true)
+            } catch (e: Exception) {
+                Log.i(TAG, "${e.message}")
+                return@withContext Result.Error(e)
+            }
+        }
+    }
+
 }
 
-data class Diff(val remotes: List<S3Object>, val locals: List<String>)
+data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>)
 
 interface SyncService {
 
     suspend fun diff(): Result<Diff>
+    suspend fun sync(diff: Diff): Result<Boolean>
 }
 
