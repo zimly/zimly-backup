@@ -16,7 +16,6 @@ data class MediaObject(
     val path: Uri,
 )
 
-// https://www.geeksforgeeks.org/services-in-android-using-jetpack-compose/
 class ResolverBasedRepository(private val contentResolver: ContentResolver) : MediaRepository {
 
     companion object {
