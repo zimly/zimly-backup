@@ -42,12 +42,16 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
         remoteId?.let {
             viewModelScope.launch {
                 val remote = dao.loadById(remoteId)
-                internal.value.uid = remote.uid
-                internal.value.name = remote.name
-                internal.value.url = remote.url
-                internal.value.key = remote.key
-                internal.value.secret = remote.secret
-                internal.value.bucket = remote.bucket
+                internal.update {
+                    it.copy(
+                        uid = remote.uid,
+                        name = remote.name,
+                        url = remote.url,
+                        key = remote.key,
+                        secret = remote.secret,
+                        bucket = remote.bucket
+                    )
+                }
             }
         }
     }
@@ -88,6 +92,7 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
             dao.update(remote)
         }
     }
+
     data class UiState(
         var uid: Int? = null,
         var name: String = "",
@@ -197,7 +202,8 @@ private fun EditorCompose(
 @Composable
 fun EditPreview() {
     ZimzyncTheme {
-        val internal: MutableStateFlow<EditorModel.UiState> = MutableStateFlow(EditorModel.UiState())
+        val internal: MutableStateFlow<EditorModel.UiState> =
+            MutableStateFlow(EditorModel.UiState())
 
         EditorCompose(
             internal.collectAsState(),
