@@ -52,11 +52,11 @@ dependencies {
     implementation "androidx.compose.material3:material3:$material3_version"
     implementation "androidx.compose.material3:material3-window-size-class:$material3_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.0'
     implementation 'androidx.activity:activity-compose:1.6.1'
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
@@ -65,15 +65,15 @@ dependencies {
 dependencies {
 
 
-    implementation 'androidx.test:core-ktx:1.4.0'
+    implementation 'androidx.test:core-ktx:1.5.0'
     implementation 'androidx.work:work-testing:2.8.0'
-    implementation "io.minio:minio:8.4.6"
+    implementation 'io.minio:minio:8.5.2'
     // needed for okhttp3/minio
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.2")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
+    implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.2')
+    implementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2')
     implementation("javax.xml.stream:stax-api:1.0-2")
 
-    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1"
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0'
     implementation 'androidx.navigation:navigation-compose:2.5.3'
 
     // https://developer.android.com/codelabs/android-workmanager#2
@@ -84,7 +84,7 @@ dependencies {
 
 
     // room DB
-    def room_version = "2.5.0-rc01"
+    def room_version = '2.5.0'
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
 
