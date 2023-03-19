@@ -34,20 +34,39 @@ class SyncServiceImpl(
         }
     }
 
-    override suspend fun sync(diff: Diff): Result<Boolean> {
-        // Move the execution of the coroutine to the I/O dispatcher
-        return withContext(Dispatchers.IO) {
-            try {
-                diff.locals
-                    .filter { loc -> diff.remotes.none { rem -> rem.name == loc.name } }
-                    .map { loc -> Pair(loc, mediaRepository.getStream(loc.path)) }
-                    .forEach { (loc, file) -> s3Repository.put(file, loc.name, loc.contentType, loc.size) }
 
-                return@withContext Result.Success(true)
-            } catch (e: Exception) {
-                Log.i(TAG, "${e.message}")
-                return@withContext Result.Error(e)
-            }
+    override fun diffA(): Diff {
+        // Move the execution of the coroutine to the I/O dispatcher
+        try {
+            val s3Objects = s3Repository.listObjects()
+            val photos = mediaRepository.getPhotos()
+            return Diff(s3Objects, photos)
+        } catch (e: Exception) {
+            Log.i(TAG, "${e.message}")
+            throw Exception("ups", e)
+        }
+    }
+
+    override fun sync(diff: Diff): Boolean {
+
+        // Move the execution of the coroutine to the I/O dispatcher
+        try {
+            diff.locals
+                .filter { loc -> diff.remotes.none { rem -> rem.name == loc.name } }
+                .map { loc -> Pair(loc, mediaRepository.getStream(loc.path)) }
+                .forEach { (loc, file) ->
+                    s3Repository.put(
+                        file,
+                        loc.name,
+                        loc.contentType,
+                        loc.size
+                    )
+                }
+
+            return true
+        } catch (e: Exception) {
+            Log.i(TAG, "${e.message}")
+            throw Exception("ups", e)
         }
     }
 
@@ -58,6 +77,7 @@ data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>)
 interface SyncService {
 
     suspend fun diff(): Result<Diff>
-    suspend fun sync(diff: Diff): Result<Boolean>
+    fun sync(diff: Diff): Boolean
+    fun diffA(): Diff
 }
 

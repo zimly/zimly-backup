@@ -19,6 +19,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.*
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +48,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         viewModelScope.launch {
             val remote = dao.loadById(remoteId)
             internal.update {
-                it.copy(name = remote.name, url = remote.url, bucket = remote.bucket)
+                it.copy(name = remote.name, url = remote.url, bucket = remote.bucket, key = remote.key, secret = remote.secret)
             }
             try {
                 s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
@@ -82,18 +83,25 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         }
     }
 
-    suspend fun sync() {
+    fun sync() {
         // Display result of the minio request to the user
-        when (val result = syncService.sync(uiState.value.diff)) {
-            is Result.Success<Boolean> -> {
-                Log.i(TAG, "Win")
-            }
-            is Result.Error -> Log.e(
-                TAG,
-                "Failed to to sync",
-                result.exception
-            )// Show error in UI
-        }
+        val data = workDataOf(
+            SyncConstants.S3_URL to uiState.value.url,
+            SyncConstants.S3_KEY to uiState.value.key,
+            SyncConstants.S3_SECRET to uiState.value.secret,
+            SyncConstants.S3_BUCKET to uiState.value.bucket
+        )
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(true)
+            .build()
+
+        val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setInputData(data)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(getApplication<Application>().applicationContext).enqueue(syncRequest)
     }
 
     data class UiState(

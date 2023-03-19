@@ -64,6 +64,9 @@ dependencies {
 
 dependencies {
 
+
+    implementation 'androidx.test:core-ktx:1.4.0'
+    implementation 'androidx.work:work-testing:2.8.0'
     implementation "io.minio:minio:8.4.6"
     // needed for okhttp3/minio
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.2")
@@ -72,6 +75,13 @@ dependencies {
 
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1"
     implementation 'androidx.navigation:navigation-compose:2.5.3'
+
+    // https://developer.android.com/codelabs/android-workmanager#2
+    def wm_version = "2.8.0"
+    implementation "androidx.work:work-runtime-ktx:$wm_version"
+    // Kotlin + coroutines
+    implementation "androidx.work:work-runtime-ktx:$wm_version"
+
 
     // room DB
     def room_version = "2.5.0-rc01"
