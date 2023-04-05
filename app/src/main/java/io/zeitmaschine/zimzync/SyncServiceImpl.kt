@@ -47,7 +47,7 @@ class SyncServiceImpl(
         }
     }
 
-    override fun sync(diff: Diff): Boolean {
+    override fun sync(diff: Diff, progress: () -> Unit): Boolean {
 
         // Move the execution of the coroutine to the I/O dispatcher
         try {
@@ -61,6 +61,7 @@ class SyncServiceImpl(
                         loc.contentType,
                         loc.size
                     )
+                    progress()
                 }
 
             return true
@@ -77,7 +78,7 @@ data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>)
 interface SyncService {
 
     suspend fun diff(): Result<Diff>
-    fun sync(diff: Diff): Boolean
     fun diffA(): Diff
+    fun sync(diff: Diff, progress: () -> Unit): Boolean
 }
 
