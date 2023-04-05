@@ -53,6 +53,10 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
             }
     }
 
+    override fun createBucket(bucket: String) {
+        mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build())
+    }
+
     override fun put(stream: InputStream, name: String, contentType: String, size: Long): Boolean {
         stream.use { stream ->
             val param = PutObjectArgs.builder()
@@ -70,4 +74,5 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
 interface S3Repository {
     fun listObjects(): List<S3Object>
     fun put(stream: InputStream, name: String, contentType: String, size: Long): Boolean
+    fun createBucket(bucket: String)
 }
