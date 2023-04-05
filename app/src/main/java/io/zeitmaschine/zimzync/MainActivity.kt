@@ -41,9 +41,9 @@ class MainActivity : ComponentActivity() {
                     // https://semicolonspace.com/jetpack-compose-request-permissions/#rememberLauncherForActivityResult
                     composable("grant-permission") {
                         val permissionLauncher = rememberLauncherForActivityResult(
-                            ActivityResultContracts.RequestPermission()
+                            ActivityResultContracts.RequestMultiplePermissions()
                         ) { isGranted ->
-                            if (isGranted) {
+                            if (isGranted[Manifest.permission.READ_MEDIA_IMAGES] == true && isGranted[Manifest.permission.ACCESS_MEDIA_LOCATION] == true) {
                                 Log.i(localClassName, "Permissions granted")
                                 navController.navigate("remotes-list")
                             } else {
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         SideEffect {
-                            permissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+                            permissionLauncher.launch(arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.ACCESS_MEDIA_LOCATION))
                         }
                     }
 
@@ -123,9 +123,8 @@ class MainActivity : ComponentActivity() {
 
     // check initially if the permission is granted
     private fun isPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.READ_MEDIA_IMAGES
-        ) == PackageManager.PERMISSION_GRANTED
+        val location = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_MEDIA_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val read = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+        return read && location
     }
 }

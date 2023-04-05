@@ -11,6 +11,9 @@
          that other apps created. -->
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
+    <!-- Required to access location of photos. -->
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+
     <!-- If your app doesn't need to access media files that other apps created,
          set the "maxSdkVersion" attribute to "28" instead. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"

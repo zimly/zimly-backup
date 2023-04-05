@@ -60,8 +60,10 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
                 val mimeType = cursor.getString(mimeTypeColumn)
                 val modified = cursor.getLong(modifiedColumn)
                 val size = cursor.getLong(sizeColumn)
-                // TODO update to newer APIs? https://developer.android.com/training/data-storage/shared/media#open-file
-                val contentUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+                var contentUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+
+                // https://developer.android.com/training/data-storage/shared/media#location-media-captured
+                contentUri= MediaStore.setRequireOriginal(contentUri)
 
                 Log.i(TAG, name)
                 photos.add(MediaObject(name, size, "", mimeType, System.currentTimeMillis(), contentUri))
