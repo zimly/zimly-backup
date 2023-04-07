@@ -25,11 +25,13 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
     override fun getPhotos(): List<MediaObject> {
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val projection = arrayOf(
-            MediaStore.Images.Media._ID,
-            MediaStore.Images.Media.DISPLAY_NAME,
-            MediaStore.Images.Media.MIME_TYPE,
-            MediaStore.Images.Media.DATE_MODIFIED,
-            MediaStore.Images.Media.SIZE,
+            MediaStore.MediaColumns._ID,
+            MediaStore.MediaColumns.DISPLAY_NAME,
+            MediaStore.MediaColumns.MIME_TYPE,
+            MediaStore.MediaColumns.DATE_MODIFIED,
+            MediaStore.MediaColumns.SIZE,
+            MediaStore.MediaColumns.BUCKET_ID,
+            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME,
         )
 
         // Display videos in alphabetical order based on their display name.
@@ -43,15 +45,17 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         contentResolver.query(
             contentUri,
             projection,
-            null,
+            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " = 'Pictures'",
             null,
             sortOrder
         )?.use { cursor ->
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID)
-            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME)
-            val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE)
-            val modifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED)
-            val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+            val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
+            val modifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED)
+            val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
+            val bucketIdColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_ID)
+            val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
 
             Log.i(TAG, "${cursor.count}")
             while (cursor.moveToNext()) {
@@ -60,11 +64,15 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
                 val mimeType = cursor.getString(mimeTypeColumn)
                 val modified = cursor.getLong(modifiedColumn)
                 val size = cursor.getLong(sizeColumn)
+                val bucketId: Long = cursor.getLong(bucketIdColumn)
+                val bucketName = cursor.getString(bucketNameColumn)
                 var contentUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
 
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
                 contentUri= MediaStore.setRequireOriginal(contentUri)
 
+                Log.i(TAG, bucketId.toString())
+                Log.i(TAG, bucketName)
                 Log.i(TAG, name)
                 photos.add(MediaObject(name, size, "", mimeType, System.currentTimeMillis(), contentUri))
             }
