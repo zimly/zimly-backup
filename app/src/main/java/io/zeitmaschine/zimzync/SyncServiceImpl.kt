@@ -3,6 +3,7 @@ package io.zeitmaschine.zimzync
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper.EMPTY
 
 sealed class Result<out R> {
     data class Success<out T>(val data: T) : Result<T>()
@@ -25,7 +26,9 @@ class SyncServiceImpl(
             try {
                 val s3Objects = s3Repository.listObjects()
                 val photos = mediaRepository.getPhotos()
-                val data = Diff(s3Objects, photos)
+                val diff = photos.filter { loc -> s3Objects.none { rem -> rem.name == loc.name } }
+
+                val data = Diff(s3Objects, photos, diff)
                 return@withContext Result.Success(data)
             } catch (e: Exception) {
                 Log.i(TAG, "${e.message}")
@@ -40,19 +43,20 @@ class SyncServiceImpl(
         try {
             val s3Objects = s3Repository.listObjects()
             val photos = mediaRepository.getPhotos()
-            return Diff(s3Objects, photos)
+            val diff = photos.filter { loc -> s3Objects.none { rem -> rem.name == loc.name } }
+
+            return Diff(s3Objects, photos, diff)
         } catch (e: Exception) {
             Log.i(TAG, "${e.message}")
             throw Exception("ups", e)
         }
     }
 
-    override fun sync(diff: Diff, progress: () -> Unit): Boolean {
+    override fun sync(diff: Diff, progress: (size: Long) -> Unit): Boolean {
 
         // Move the execution of the coroutine to the I/O dispatcher
         try {
-            diff.locals
-                .filter { loc -> diff.remotes.none { rem -> rem.name == loc.name } }
+            diff.diff
                 .map { loc -> Pair(loc, mediaRepository.getStream(loc.path)) }
                 .forEach { (loc, file) ->
                     s3Repository.put(
@@ -61,7 +65,7 @@ class SyncServiceImpl(
                         loc.contentType,
                         loc.size
                     )
-                    progress()
+                    progress(loc.size)
                 }
 
             return true
@@ -73,12 +77,16 @@ class SyncServiceImpl(
 
 }
 
-data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>)
+data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val diff: List<MediaObject>) {
+    companion object {
+        val EMPTY = Diff(emptyList(), emptyList(), emptyList())
+    }
+}
 
 interface SyncService {
 
     suspend fun diff(): Result<Diff>
     fun diffA(): Diff
-    fun sync(diff: Diff, progress: () -> Unit): Boolean
+    fun sync(diff: Diff, progress: (size: Long) -> Unit): Boolean
 }
 

@@ -113,7 +113,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
 
         var localCount: Int = 0,
         var remoteCount: Int = 0,
-        var diff: Diff = Diff(emptyList(), emptyList())
+        var diff: Diff = Diff.EMPTY
     )
 
 }
@@ -189,7 +189,7 @@ fun SyncPreview() {
         key = "test",
         secret = "testtest",
         bucket = "test-bucket",
-        diff = Diff(emptyList(), emptyList()),
+        diff = Diff.EMPTY,
     )
     val internal: MutableStateFlow<SyncModel.UiState> = MutableStateFlow(uiState)
 

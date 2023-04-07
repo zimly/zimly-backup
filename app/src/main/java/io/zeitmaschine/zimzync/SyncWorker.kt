@@ -5,11 +5,6 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
-import io.zeitmaschine.zimzync.Result
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.withContext
 
 class SyncWorker(
     context: Context,
@@ -26,15 +21,18 @@ class SyncWorker(
 
         val diff = syncService.diffA()
 
-        var prog = 0
-        var total = 0
-        fun progress() {
-            prog++
+        var synced = 0
+        var syncedSize: Long = 0
+        var total = diff.diff.size
+        fun progress(size: Long) {
+            synced++
+            syncedSize += size
             setProgressAsync(Data.Builder()
-                .putInt("progress", prog)
+                .putInt("synced", synced)
+                .putLong("size", syncedSize)
                 .putInt("total", total)
                 .build())
-            Log.i(TAG, " Progress: $prog / $total")
+            Log.i(TAG, " Progress: $synced / $total Traffic: $syncedSize")
 
         }
 

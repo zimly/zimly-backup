@@ -55,6 +55,7 @@ class SyncServiceImplTest {
             is Result.Success<Diff> -> {
                 assertThat(result.data.remotes.size, `is`(0))
                 assertThat(result.data.locals.size, `is`(1))
+                assertThat(result.data.diff.size, `is`(1))
             }
             is Result.Error -> throw Exception("Diff failed", result.exception)
         }
@@ -67,5 +68,6 @@ class SyncServiceImplTest {
         val diff = ss.diffA()
         assertThat(diff.remotes.size, `is`(0))
         assertThat(diff.locals.size, `is`(1))
+        assertThat(diff.diff.size, `is`(1))
     }
 }
