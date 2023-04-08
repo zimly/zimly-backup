@@ -25,7 +25,7 @@ class SyncWorker(
         var syncedSize: Long = 0
         var total = diff.diff.size
         fun progress(size: Long) {
-            synced++
+            ++synced
             syncedSize += size
             setProgressAsync(Data.Builder()
                 .putInt("synced", synced)
@@ -37,7 +37,11 @@ class SyncWorker(
         }
 
         syncService.sync(diff, ::progress)
-        return Result.success()
+        return Result.success(Data.Builder()
+            .putInt("synced", synced)
+            .putLong("size", syncedSize)
+            .putInt("total", total)
+            .build())
     }
 }
 

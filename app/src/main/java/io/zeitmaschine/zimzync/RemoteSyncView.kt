@@ -12,9 +12,12 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -48,7 +51,13 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         viewModelScope.launch {
             val remote = dao.loadById(remoteId)
             internal.update {
-                it.copy(name = remote.name, url = remote.url, bucket = remote.bucket, key = remote.key, secret = remote.secret)
+                it.copy(
+                    name = remote.name,
+                    url = remote.url,
+                    bucket = remote.bucket,
+                    key = remote.key,
+                    secret = remote.secret
+                )
             }
             try {
                 s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
@@ -83,7 +92,10 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         }
     }
 
-    fun sync() {
+    // TODO this is whack. Needs to
+    //  * Separate the observer from the invocation (store the requestId in DB)
+    //  * Only allow invocation when there's no running sync for this remote
+    fun sync(owner: LifecycleOwner) {
         // Display result of the minio request to the user
         val data = workDataOf(
             SyncConstants.S3_URL to uiState.value.url,
@@ -101,7 +113,31 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
             .setConstraints(constraints)
             .build()
 
-        WorkManager.getInstance(getApplication<Application>().applicationContext).enqueue(syncRequest)
+        val workManager = WorkManager.getInstance(getApplication<Application>().applicationContext)
+        workManager.enqueue(syncRequest)
+
+        workManager
+            // requestId is the WorkRequest id
+            .getWorkInfoByIdLiveData(syncRequest.id)
+            .observe(owner, Observer { workInfo: WorkInfo? ->
+                if (workInfo != null) {
+                    var synced = 0
+                    if (workInfo.state == WorkInfo.State.SUCCEEDED) {
+                        val output = workInfo.outputData
+                        synced = output.getInt("synced", 0)
+                    } else if (workInfo.state == WorkInfo.State.RUNNING) {
+                        val progress = workInfo.progress
+                        synced = progress.getInt("synced", 0)
+                    }
+                    if (synced > 0) {
+                        internal.update {
+                            it.copy(
+                                progress = synced
+                            )
+                        }
+                    }
+                }
+            })
     }
 
     data class UiState(
@@ -113,9 +149,9 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
 
         var localCount: Int = 0,
         var remoteCount: Int = 0,
-        var diff: Diff = Diff.EMPTY
+        var diff: Diff = Diff.EMPTY,
+        var progress: Int = 0
     )
-
 }
 
 @Composable
@@ -129,12 +165,13 @@ fun SyncRemote(
             SyncModel(dao, remoteId, application)
         }
     }),
+    lifeCycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
 ) {
     val state = viewModel.uiState.collectAsState()
 
     SyncCompose(
         state,
-        sync = { viewModel.viewModelScope.launch { viewModel.sync() } },
+        sync = { viewModel.viewModelScope.launch { viewModel.sync(lifeCycleOwner) } },
         edit = { edit(remoteId) })
 }
 
@@ -156,6 +193,10 @@ private fun SyncCompose(
         Text(state.value.secret)
         Text("${state.value.remoteCount}")
         Text("${state.value.localCount}")
+        Text("${state.value.diff.remotes.size}")
+        Text("${state.value.diff.locals.size}")
+        Text("${state.value.diff.diff.size}")
+        Text("${state.value.progress}")
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
