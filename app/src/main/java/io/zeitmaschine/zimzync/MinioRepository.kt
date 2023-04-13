@@ -16,6 +16,10 @@ data class S3Object(
 class MinioRepository(url: String, key: String, secret: String, private val bucket: String) :
     S3Repository {
 
+    companion object {
+        val TAG: String? = MinioRepository::class.simpleName
+    }
+
     private var mc: MinioClient
 
     init {
@@ -33,9 +37,9 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     private fun verify() {
         val found = mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
         if (!found) {
-            Log.i(SyncModel.TAG, "Bucket doesn't exists.");
+            Log.i(TAG, "Bucket doesn't exists.");
         } else {
-            Log.i(SyncModel.TAG, "Bucket already exists.");
+            Log.i(TAG, "Bucket already exists.");
         }
     }
 
@@ -65,6 +69,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
                 .contentType(contentType)
                 .stream(stream, size, -1)
                 .build()
+            Log.i(TAG, "Uploading $name")
             mc.putObject(param)
             return true
         }
