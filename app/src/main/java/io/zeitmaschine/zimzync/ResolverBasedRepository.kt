@@ -45,7 +45,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         contentResolver.query(
             contentUri,
             projection,
-            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " = 'Pictures'",
+            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " = 'Camera'",
             null,
             sortOrder
         )?.use { cursor ->
