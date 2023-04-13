@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -130,9 +131,10 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
                         synced = progress.getInt("synced", 0)
                     }
                     if (synced > 0) {
+                        var progress: Float = synced.toFloat() / uiState.value.diff.diff.size
                         internal.update {
                             it.copy(
-                                progress = synced
+                                progress = progress
                             )
                         }
                     }
@@ -150,7 +152,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         var localCount: Int = 0,
         var remoteCount: Int = 0,
         var diff: Diff = Diff.EMPTY,
-        var progress: Int = 0
+        var progress: Float = 0.0f
     )
 }
 
@@ -197,6 +199,7 @@ private fun SyncCompose(
         Text("${state.value.diff.locals.size}")
         Text("${state.value.diff.diff.size}")
         Text("${state.value.progress}")
+        LinearProgressIndicator(progress = state.value.progress)
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
