@@ -2,9 +2,26 @@ package io.zeitmaschine.zimzync
 
 import android.app.Application
 import android.content.Context
-import androidx.work.*
+import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
+import androidx.work.Configuration
+import androidx.work.ListenableWorker
+import androidx.work.WorkerFactory
+import androidx.work.WorkerParameters
+
 
 class ZimApplication() : Application(), Configuration.Provider {
+
+    init {
+        // https://stackoverflow.com/questions/56911580/w-system-a-resource-failed-to-call-release
+        // TODO if dev-mode
+        StrictMode.setVmPolicy(
+            VmPolicy.Builder()
+                .detectLeakedClosableObjects()
+                .penaltyLog()
+                .build()
+        )
+    }
     override fun getWorkManagerConfiguration(): Configuration =
         Configuration.Builder()
             .setMinimumLoggingLevel(android.util.Log.INFO)
