@@ -52,7 +52,7 @@ class SyncServiceImpl(
         }
     }
 
-    override fun sync(diff: Diff, progress: (size: Long) -> Unit): Boolean {
+    override fun sync(diff: Diff, progress: (size: Long) -> Unit) {
 
         // Move the execution of the coroutine to the I/O dispatcher
         try {
@@ -67,11 +67,9 @@ class SyncServiceImpl(
                     )
                     progress(loc.size)
                 }
-
-            return true
         } catch (e: Exception) {
-            Log.i(TAG, "${e.message}")
-            throw Exception("ups", e)
+            Log.e(TAG, "${e.message}")
+            throw Exception("Failed to sync files: ${e.message}", e)
         }
     }
 
@@ -87,6 +85,6 @@ interface SyncService {
 
     suspend fun diff(): Result<Diff>
     fun diffA(): Diff
-    fun sync(diff: Diff, progress: (size: Long) -> Unit): Boolean
+    fun sync(diff: Diff, progress: (size: Long) -> Unit)
 }
 

@@ -21,27 +21,39 @@ class SyncWorker(
 
         val diff = syncService.diffA()
 
+        val total = diff.diff.size
         var synced = 0
         var syncedSize: Long = 0
-        var total = diff.diff.size
         fun progress(size: Long) {
             ++synced
             syncedSize += size
-            setProgressAsync(Data.Builder()
+            setProgressAsync(
+                Data.Builder()
+                    .putInt("synced", synced)
+                    .putLong("size", syncedSize)
+                    .putInt("total", total)
+                    .build()
+            )
+            Log.i(TAG, " Progress: $synced / $total Traffic: $syncedSize")
+        }
+
+        val result = try {
+            syncService.sync(diff, ::progress)
+            Result.success(Data.Builder()
                 .putInt("synced", synced)
                 .putLong("size", syncedSize)
                 .putInt("total", total)
                 .build())
-            Log.i(TAG, " Progress: $synced / $total Traffic: $syncedSize")
-
+        } catch (e: Exception) {
+            Result.failure(
+                Data.Builder()
+                    .putInt("synced", synced)
+                    .putLong("size", syncedSize)
+                    .putInt("total", total)
+                    .putString("error", e.message)
+                    .build())
         }
-
-        syncService.sync(diff, ::progress)
-        return Result.success(Data.Builder()
-            .putInt("synced", synced)
-            .putLong("size", syncedSize)
-            .putInt("total", total)
-            .build())
+        return result
     }
 }
 

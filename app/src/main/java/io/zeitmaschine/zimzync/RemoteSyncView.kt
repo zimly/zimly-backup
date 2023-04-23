@@ -73,7 +73,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         }
     }
 
-    suspend fun createDiff() {
+    private suspend fun createDiff() {
         // Display result of the minio request to the user
         when (val result = syncService.diff()) {
             is Result.Success<Diff> -> {
@@ -123,18 +123,36 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
             .observe(owner, Observer { workInfo: WorkInfo? ->
                 if (workInfo != null) {
                     var synced = 0
-                    if (workInfo.state == WorkInfo.State.SUCCEEDED) {
-                        val output = workInfo.outputData
-                        synced = output.getInt("synced", 0)
-                    } else if (workInfo.state == WorkInfo.State.RUNNING) {
-                        val progress = workInfo.progress
-                        synced = progress.getInt("synced", 0)
+                    var error = ""
+                    when (workInfo.state) {
+                        WorkInfo.State.SUCCEEDED -> {
+                            val output = workInfo.outputData
+                            synced = output.getInt("synced", 0)
+                        }
+                        WorkInfo.State.RUNNING -> {
+                            val progress = workInfo.progress
+                            synced = progress.getInt("synced", 0)
+                        }
+                        WorkInfo.State.FAILED -> {
+                            val progress = workInfo.progress
+                            synced = progress.getInt("synced", 0)
+                            error = progress.getString("error")!!
+                        }
+                        else -> {}
                     }
+
                     if (synced > 0) {
                         var progress: Float = synced.toFloat() / uiState.value.diff.diff.size
                         internal.update {
                             it.copy(
                                 progress = progress
+                            )
+                        }
+                    }
+                    if (error.isNotEmpty()) {
+                        internal.update {
+                            it.copy(
+                                error = error
                             )
                         }
                     }
@@ -152,7 +170,8 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         var localCount: Int = 0,
         var remoteCount: Int = 0,
         var diff: Diff = Diff.EMPTY,
-        var progress: Float = 0.0f
+        var progress: Float = 0.0f,
+        var error: String = ""
     )
 }
 
@@ -198,6 +217,10 @@ private fun SyncCompose(
         Text("${state.value.diff.remotes.size}")
         Text("${state.value.diff.locals.size}")
         Text("${state.value.diff.diff.size}")
+        Text("${state.value.progress}")
+        if (state.value.error.isNotEmpty()) {
+            Text("${state.value.error}")
+        }
         Text("${state.value.progress}")
         LinearProgressIndicator(progress = state.value.progress)
         Button(
