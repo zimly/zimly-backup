@@ -28,18 +28,16 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
                 .endpoint(url)
                 .credentials(key, secret)
                 .build()
-            verify()
         } catch (e: Exception) {
             throw Exception("Failed to initialize minio client: ${e.message}", e)
         }
     }
 
-    private fun verify() {
-        val found = mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
-        if (!found) {
-            Log.i(TAG, "Bucket doesn't exists.");
-        } else {
-            Log.i(TAG, "Bucket already exists.");
+    override fun verify(): Boolean {
+        try {
+            return mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+        } catch (e: Exception) {
+            throw Exception("Failed to connect to minio.", e)
         }
     }
 
@@ -80,4 +78,5 @@ interface S3Repository {
     fun listObjects(): List<S3Object>
     fun put(stream: InputStream, name: String, contentType: String, size: Long): Boolean
     fun createBucket(bucket: String)
+    fun verify(): Boolean
 }
