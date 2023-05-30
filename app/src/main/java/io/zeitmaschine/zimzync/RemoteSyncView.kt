@@ -62,18 +62,21 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
             }
             try {
                 s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
+                syncService = SyncServiceImpl(s3Repo, mediaRepo)
             } catch (e: Exception) {
                 // TODO: Exception handling in a lateinit block, inside a viewModelFactory, inside a
                 //  NavHost Composable? Some global error handling?
                 Log.e(TAG, "Failed to initialize minio repo: ${e.message}", e)
+                internal.update {
+                    it.copy(
+                        error = e.message ?: "Unknown error.",
+                    )
+                }
             }
-
-            syncService = SyncServiceImpl(s3Repo, mediaRepo)
-            createDiff()
         }
     }
 
-    private suspend fun createDiff() {
+    suspend fun createDiff() {
         // Display result of the minio request to the user
         when (val result = syncService.diff()) {
             is Result.Success<Diff> -> {
@@ -85,11 +88,15 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
                     )
                 }
             }
-            is Result.Error -> Log.e(
-                TAG,
-                "Failed to create log",
-                result.exception
-            )// Show error in UI
+            is Result.Error -> {
+                Log.e(TAG, "Failed to create diff.", result.exception)
+
+                internal.update {
+                    it.copy(
+                        error = result.exception.message?: "Unknown error.",
+                    )
+                }
+            }
         }
     }
 
@@ -193,6 +200,7 @@ fun SyncRemote(
     SyncCompose(
         state,
         sync = { viewModel.viewModelScope.launch { viewModel.sync(lifeCycleOwner) } },
+        diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
         edit = { edit(remoteId) })
 }
 
@@ -200,6 +208,7 @@ fun SyncRemote(
 private fun SyncCompose(
     state: State<SyncModel.UiState>,
     sync: () -> Unit,
+    diff: () -> Unit,
     edit: () -> Unit
 ) {
 
@@ -223,6 +232,15 @@ private fun SyncCompose(
         }
         Text("${state.value.progress}")
         LinearProgressIndicator(progress = state.value.progress)
+        Button(
+            modifier = Modifier.align(Alignment.End),
+            onClick = {
+                diff()
+            }
+        )
+        {
+            Text(text = "Diff")
+        }
         Button(
             modifier = Modifier.align(Alignment.End),
             onClick = {
@@ -263,7 +281,7 @@ fun SyncPreview() {
 
     ZimzyncTheme {
         SyncCompose(
-            state = internal.collectAsState(), sync = {}, edit = {}
+            state = internal.collectAsState(), sync = {}, diff = {} , edit = {}
         )
     }
 }
