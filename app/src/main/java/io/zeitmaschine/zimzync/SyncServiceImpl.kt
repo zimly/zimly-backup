@@ -24,7 +24,7 @@ class SyncServiceImpl(
         return withContext(Dispatchers.IO) {
             try {
                 val remotes = s3Repository.listObjects()
-                val photos = mediaRepository.getPhotos()
+                val photos = mediaRepository.getMedia()
                 val diff = photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
 
                 val data = Diff(remotes, photos, diff)
@@ -41,7 +41,7 @@ class SyncServiceImpl(
         // Move the execution of the coroutine to the I/O dispatcher
         try {
             val remotes = s3Repository.listObjects()
-            val photos = mediaRepository.getPhotos()
+            val photos = mediaRepository.getMedia()
             val diff = photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
 
             return Diff(remotes, photos, diff)

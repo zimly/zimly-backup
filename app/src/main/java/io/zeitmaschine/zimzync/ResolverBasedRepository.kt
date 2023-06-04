@@ -2,6 +2,7 @@ package io.zeitmaschine.zimzync
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -129,7 +130,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
                 var contentUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
 
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
-                contentUri= MediaStore.setRequireOriginal(contentUri)
+                contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
                 Log.i(TAG, bucketId.toString())
                 Log.i(TAG, bucketName)
@@ -139,6 +140,10 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
             }
         }
         return videos.toList()
+    }
+
+    override fun getMedia(): List<MediaObject> {
+        return listOf(getPhotos(), getVideos()).flatten()
     }
 
     override fun getStream(uri: Uri): InputStream {
@@ -151,4 +156,5 @@ interface MediaRepository {
     fun getPhotos(): List<MediaObject>
     fun getStream(uri: Uri): InputStream
     fun getVideos(): List<MediaObject>
+    fun getMedia(): List<MediaObject>
 }

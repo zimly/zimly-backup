@@ -38,7 +38,7 @@ class SyncServiceImplTest {
         val uri = mockk<Uri>()
         this.mediaRepository = mockk()
 
-        every { mediaRepository.getPhotos() } returns listOf(MediaObject("name", 1234, "12qsvsgv", "jpeg", 12354532, uri))
+        every { mediaRepository.getMedia() } returns listOf(MediaObject("name", 1234, "12qsvsgv", "jpeg", 12354532, uri))
 
         val url = "http://" + minioContainer.host + ":" + minioContainer.getMappedPort(minioPort)
         val bucket = "test-bucket"
