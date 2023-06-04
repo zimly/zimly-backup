@@ -3,7 +3,6 @@ package io.zeitmaschine.zimzync
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.reflect.jvm.internal.impl.util.ModuleVisibilityHelper.EMPTY
 
 sealed class Result<out R> {
     data class Success<out T>(val data: T) : Result<T>()
@@ -24,11 +23,11 @@ class SyncServiceImpl(
         // Move the execution of the coroutine to the I/O dispatcher
         return withContext(Dispatchers.IO) {
             try {
-                val s3Objects = s3Repository.listObjects()
+                val remotes = s3Repository.listObjects()
                 val photos = mediaRepository.getPhotos()
-                val diff = photos.filter { loc -> s3Objects.none { rem -> rem.name == loc.name } }
+                val diff = photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
 
-                val data = Diff(s3Objects, photos, diff)
+                val data = Diff(remotes, photos, diff)
                 return@withContext Result.Success(data)
             } catch (e: Exception) {
                 Log.i(TAG, "${e.message}")
@@ -41,11 +40,11 @@ class SyncServiceImpl(
     override fun diffA(): Diff {
         // Move the execution of the coroutine to the I/O dispatcher
         try {
-            val s3Objects = s3Repository.listObjects()
+            val remotes = s3Repository.listObjects()
             val photos = mediaRepository.getPhotos()
-            val diff = photos.filter { loc -> s3Objects.none { rem -> rem.name == loc.name } }
+            val diff = photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
 
-            return Diff(s3Objects, photos, diff)
+            return Diff(remotes, photos, diff)
         } catch (e: Exception) {
             Log.i(TAG, "${e.message}")
             throw Exception("ups", e)
@@ -57,15 +56,15 @@ class SyncServiceImpl(
         // Move the execution of the coroutine to the I/O dispatcher
         try {
             diff.diff
-                .map { loc -> Pair(loc, mediaRepository.getStream(loc.path)) }
-                .forEach { (loc, file) ->
+                .map { mediaObj -> Pair(mediaObj, mediaRepository.getStream(mediaObj.path)) }
+                .forEach { (mediaObj, file) ->
                     s3Repository.put(
                         file,
-                        loc.name,
-                        loc.contentType,
-                        loc.size
+                        mediaObj.name,
+                        mediaObj.contentType,
+                        mediaObj.size
                     )
-                    progress(loc.size)
+                    progress(mediaObj.size)
                 }
         } catch (e: Exception) {
             Log.e(TAG, "${e.message}")
