@@ -105,7 +105,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         contentResolver.query(
             contentUri,
             projection,
-            null, // TODO: Camera?
+            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " = 'Camera'",
             null,
             sortOrder
         )?.use { cursor ->
