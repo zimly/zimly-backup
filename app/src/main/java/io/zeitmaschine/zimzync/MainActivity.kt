@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
                         val permissionLauncher = rememberLauncherForActivityResult(
                             ActivityResultContracts.RequestMultiplePermissions()
                         ) { isGranted ->
-                            if (isGranted[Manifest.permission.READ_MEDIA_IMAGES] == true && isGranted[Manifest.permission.ACCESS_MEDIA_LOCATION] == true) {
+                            if (isGranted[Manifest.permission.READ_MEDIA_IMAGES] == true && isGranted[Manifest.permission.READ_MEDIA_VIDEO] == true && isGranted[Manifest.permission.ACCESS_MEDIA_LOCATION] == true) {
                                 Log.i(localClassName, "Permissions granted")
                                 navController.navigate("remotes-list")
                             } else {
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         SideEffect {
-                            permissionLauncher.launch(arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.ACCESS_MEDIA_LOCATION))
+                            permissionLauncher.launch(arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.ACCESS_MEDIA_LOCATION))
                         }
                     }
 
@@ -124,7 +124,8 @@ class MainActivity : ComponentActivity() {
     // check initially if the permission is granted
     private fun isPermissionGranted(): Boolean {
         val location = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_MEDIA_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val read = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
-        return read && location
+        val photos = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
+        val videos = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED
+        return photos && videos && location
     }
 }
