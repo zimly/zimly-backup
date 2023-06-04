@@ -9,7 +9,6 @@ import java.io.InputStream
 
 data class MediaObject(
     var name: String,
-    var bucket: String,
     var size: Long,
     var checksum: String,
     var contentType: String,
@@ -75,7 +74,9 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
                 Log.i(TAG, bucketId.toString())
                 Log.i(TAG, bucketName)
                 Log.i(TAG, name)
-                photos.add(MediaObject(name, bucketName, size, "", mimeType, System.currentTimeMillis(), contentUri))
+
+                val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
+                photos.add(MediaObject(objectName, size, "", mimeType, System.currentTimeMillis(), contentUri))
             }
         }
         return photos.toList()
@@ -104,7 +105,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         contentResolver.query(
             contentUri,
             projection,
-            null,
+            null, // TODO: Camera?
             null,
             sortOrder
         )?.use { cursor ->
@@ -133,7 +134,8 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
                 Log.i(TAG, bucketId.toString())
                 Log.i(TAG, bucketName)
                 Log.i(TAG, name)
-                videos.add(MediaObject(name, bucketName, size, "", mimeType, System.currentTimeMillis(), contentUri))
+                val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
+                videos.add(MediaObject(objectName, size, "", mimeType, System.currentTimeMillis(), contentUri))
             }
         }
         return videos.toList()
