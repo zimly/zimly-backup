@@ -42,7 +42,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     }
 
     override fun listObjects(): List<S3Object> {
-        return mc.listObjects(ListObjectsArgs.builder().bucket(bucket).build())
+        return mc.listObjects(ListObjectsArgs.builder().bucket(bucket).recursive(true).build())
             .map { res -> mc.statObject(StatObjectArgs.builder().bucket(bucket).`object`(res.get().objectName()).build()) }
             .map { result ->
                 val name = result.`object`()
