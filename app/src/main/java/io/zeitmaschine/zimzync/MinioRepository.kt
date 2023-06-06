@@ -9,7 +9,6 @@ data class S3Object(
     var name: String,
     var size: Long,
     var checksum: String,
-    var contentType: String,
     var modified: ZonedDateTime,
 )
 
@@ -43,15 +42,13 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
 
     override fun listObjects(): List<S3Object> {
         return mc.listObjects(ListObjectsArgs.builder().bucket(bucket).recursive(true).build())
-            .map { res -> mc.statObject(StatObjectArgs.builder().bucket(bucket).`object`(res.get().objectName()).build()) }
-            .map { result ->
-                val name = result.`object`()
-                val size = result.size()
-                val checksum = result.etag()
-                // TODO: Needed? Would get rid of the statObj req
-                val contentType = result.contentType()
-                val modified = result.lastModified()
-                S3Object(name, size, checksum, contentType, modified)
+            .map { it.get()}
+            .map {
+                val name = it.objectName()
+                val size = it.size()
+                val checksum = it.etag()
+                val modified = it.lastModified()
+                S3Object(name, size, checksum, modified)
             }
     }
 
