@@ -221,16 +221,14 @@ private fun SyncCompose(
         Text(state.value.bucket)
         Text(state.value.key)
         Text(state.value.secret)
-        Text("${state.value.remoteCount}")
-        Text("${state.value.localCount}")
-        Text("${state.value.diff.remotes.size}")
-        Text("${state.value.diff.locals.size}")
-        Text("${state.value.diff.diff.size}")
-        Text("${state.value.progress}")
+        Text("Remotes: ${state.value.diff.remotes.size}")
+        Text("Locales: ${state.value.diff.locals.size}")
+        Text("#Diffs: ${state.value.diff.diff.size}")
+        Text("Diff Size: ${state.value.diff.size}")
         if (state.value.error.isNotEmpty()) {
             Text("${state.value.error}")
         }
-        Text("${state.value.progress}")
+        Text("Progress: ${state.value.progress}")
         LinearProgressIndicator(progress = state.value.progress)
         Button(
             modifier = Modifier.align(Alignment.End),

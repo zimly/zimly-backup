@@ -23,11 +23,7 @@ class SyncServiceImpl(
         // Move the execution of the coroutine to the I/O dispatcher
         return withContext(Dispatchers.IO) {
             try {
-                val remotes = s3Repository.listObjects()
-                val photos = mediaRepository.getMedia()
-                val diff = photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
-
-                val data = Diff(remotes, photos, diff)
+                val data = diffA()
                 return@withContext Result.Success(data)
             } catch (e: Exception) {
                 Log.i(TAG, "${e.message}")
@@ -38,15 +34,15 @@ class SyncServiceImpl(
 
 
     override fun diffA(): Diff {
-        // Move the execution of the coroutine to the I/O dispatcher
         try {
             val remotes = s3Repository.listObjects()
             val photos = mediaRepository.getMedia()
             val diff = photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
+            val size = diff.sumOf { it.size }
 
-            return Diff(remotes, photos, diff)
+            return Diff(remotes, photos, diff, size)
         } catch (e: Exception) {
-            Log.i(TAG, "${e.message}")
+            Log.e(TAG, "${e.message}")
             throw Exception("ups", e)
         }
     }
@@ -74,9 +70,9 @@ class SyncServiceImpl(
 
 }
 
-data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val diff: List<MediaObject>) {
+data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val diff: List<MediaObject>, val size: Long) {
     companion object {
-        val EMPTY = Diff(emptyList(), emptyList(), emptyList())
+        val EMPTY = Diff(emptyList(), emptyList(), emptyList(), 0)
     }
 }
 
