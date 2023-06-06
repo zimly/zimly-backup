@@ -82,8 +82,6 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
             is Result.Success<Diff> -> {
                 internal.update {
                     it.copy(
-                        remoteCount = result.data.remotes.size,
-                        localCount = result.data.locals.size,
                         diff = result.data
                     )
                 }
@@ -174,8 +172,6 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         var secret: String = "",
         var bucket: String = "",
 
-        var localCount: Int = 0,
-        var remoteCount: Int = 0,
         var diff: Diff = Diff.EMPTY,
         var progress: Float = 0.0f,
         var error: String = ""
