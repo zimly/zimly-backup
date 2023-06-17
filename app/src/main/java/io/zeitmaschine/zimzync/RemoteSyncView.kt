@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Application) :
+class SyncModel(private val remoteRepo: RemoteRepository, remoteId: Int, application: Application) :
     AndroidViewModel(application) {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
@@ -50,7 +50,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
 
     init {
         viewModelScope.launch {
-            val remote = dao.loadById(remoteId)
+            val remote = remoteRepo.loadById(remoteId)
             internal.update {
                 it.copy(
                     name = remote.name,
@@ -180,13 +180,13 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
 
 @Composable
 fun SyncRemote(
-    dao: RemoteDao,
+    remoteRepo: RemoteRepository,
     remoteId: Int,
     application: Application,
     edit: (Int) -> Unit,
     viewModel: SyncModel = viewModel(factory = viewModelFactory {
         initializer {
-            SyncModel(dao, remoteId, application)
+            SyncModel(remoteRepo, remoteId, application)
         }
     }),
     lifeCycleOwner: LifecycleOwner = LocalLifecycleOwner.current,

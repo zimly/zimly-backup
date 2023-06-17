@@ -15,4 +15,6 @@ import androidx.room.TypeConverters
 @TypeConverters(Converters::class)
 abstract class ZimDatabase : RoomDatabase() {
     abstract fun remoteDao(): RemoteDao
+
+    abstract fun logDao(): LogDao
 }
