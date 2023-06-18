@@ -31,13 +31,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Application) :
+class SyncModel(private val dao: RemoteDao, private val remoteId: Int, application: Application) :
     AndroidViewModel(application) {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
     companion object {
         val TAG: String? = SyncModel::class.simpleName
     }
+
+    // This identifier is used to identify already running sync instances and prevent simultaneous
+    // sync-executions.
+    private var uniqueWorkIdentifier = "sync_${remoteId}"
+    private val workManager = WorkManager.getInstance(getApplication<Application>().applicationContext)
 
     private val contentResolver by lazy { application.contentResolver }
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
@@ -57,7 +62,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
                     url = remote.url,
                     bucket = remote.bucket,
                     key = remote.key,
-                    secret = remote.secret
+                    secret = remote.secret,
                 )
             }
             try {
@@ -98,11 +103,64 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
         }
     }
 
-    // TODO this is whack. Needs to
-    //  * Separate the observer from the invocation (store the requestId in DB)
-    //  * Only allow invocation when there's no running sync for this remote
-    fun sync(owner: LifecycleOwner) {
-        // Display result of the minio request to the user
+    fun loadSyncState(owner: LifecycleOwner) {
+        val query = WorkQuery.Builder
+            .fromUniqueWorkNames(listOf(uniqueWorkIdentifier))
+            .addStates(listOf( WorkInfo.State.RUNNING))
+            .build()
+
+        workManager.getWorkInfosLiveData(query).observe(owner, Observer { workInfos: List<WorkInfo> ->
+
+            if (workInfos.size > 1) throw Exception("More than one sync running. This should never happen.")
+
+            if (workInfos.size == 1) {
+                val workInfo = workInfos.first()
+                var synced = 0
+                var error = ""
+                var inProgress = true
+                when (workInfo.state) {
+                    WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
+                        val output = workInfo.outputData
+                        synced = output.getInt("synced", 0)
+                        inProgress = false
+                    }
+                    WorkInfo.State.RUNNING -> {
+                        val progress = workInfo.progress
+                        synced = progress.getInt("synced", 0)
+                        inProgress = true
+                    }
+                    WorkInfo.State.FAILED -> {
+                        val progress = workInfo.progress
+                        synced = progress.getInt("synced", 0)
+                        error = progress.getString("error")!!
+                        inProgress = false
+                    }
+                    else -> {}
+                }
+
+                if (synced > 0) {
+                    var progress: Float = synced.toFloat() / uiState.value.diff.diff.size
+                    internal.update {
+                        it.copy(
+                            progress = progress,
+                            inProgress = inProgress
+                        )
+                    }
+                }
+                if (error.isNotEmpty()) {
+                    internal.update {
+                        it.copy(
+                            error = error,
+                            inProgress = inProgress
+                        )
+                    }
+                }
+            }
+
+        })
+    }
+
+    fun sync() {
         val data = workDataOf(
             SyncConstants.S3_URL to uiState.value.url,
             SyncConstants.S3_KEY to uiState.value.key,
@@ -119,50 +177,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
             .setConstraints(constraints)
             .build()
 
-        val workManager = WorkManager.getInstance(getApplication<Application>().applicationContext)
-        workManager.enqueue(syncRequest)
-
-        workManager
-            // requestId is the WorkRequest id
-            .getWorkInfoByIdLiveData(syncRequest.id)
-            .observe(owner, Observer { workInfo: WorkInfo? ->
-                if (workInfo != null) {
-                    var synced = 0
-                    var error = ""
-                    when (workInfo.state) {
-                        WorkInfo.State.SUCCEEDED -> {
-                            val output = workInfo.outputData
-                            synced = output.getInt("synced", 0)
-                        }
-                        WorkInfo.State.RUNNING -> {
-                            val progress = workInfo.progress
-                            synced = progress.getInt("synced", 0)
-                        }
-                        WorkInfo.State.FAILED -> {
-                            val progress = workInfo.progress
-                            synced = progress.getInt("synced", 0)
-                            error = progress.getString("error")!!
-                        }
-                        else -> {}
-                    }
-
-                    if (synced > 0) {
-                        var progress: Float = synced.toFloat() / uiState.value.diff.diff.size
-                        internal.update {
-                            it.copy(
-                                progress = progress
-                            )
-                        }
-                    }
-                    if (error.isNotEmpty()) {
-                        internal.update {
-                            it.copy(
-                                error = error
-                            )
-                        }
-                    }
-                }
-            })
+        workManager.enqueueUniqueWork(uniqueWorkIdentifier, ExistingWorkPolicy.KEEP, syncRequest)
     }
 
     data class UiState(
@@ -174,6 +189,7 @@ class SyncModel(private val dao: RemoteDao, remoteId: Int, application: Applicat
 
         var diff: Diff = Diff.EMPTY,
         var progress: Float = 0.0f,
+        var inProgress: Boolean = false,
         var error: String = ""
     )
 }
@@ -193,9 +209,13 @@ fun SyncRemote(
 ) {
     val state = viewModel.uiState.collectAsState()
 
+    viewModel.loadSyncState(lifeCycleOwner)
     SyncCompose(
         state,
-        sync = { viewModel.viewModelScope.launch { viewModel.sync(lifeCycleOwner) } },
+        sync = { viewModel.viewModelScope.launch {
+            viewModel.sync()
+            viewModel.loadSyncState(lifeCycleOwner)
+        } },
         diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
         edit = { edit(remoteId) })
 }
@@ -228,6 +248,7 @@ private fun SyncCompose(
         LinearProgressIndicator(progress = state.value.progress)
         Button(
             modifier = Modifier.align(Alignment.End),
+            enabled = !state.value.inProgress,
             onClick = {
                 diff()
             }
@@ -237,6 +258,7 @@ private fun SyncCompose(
         }
         Button(
             modifier = Modifier.align(Alignment.End),
+            enabled = !state.value.inProgress,
             onClick = {
                 sync()
             }
@@ -269,6 +291,7 @@ fun SyncPreview() {
         secret = "testtest",
         bucket = "test-bucket",
         diff = Diff.EMPTY,
+        inProgress = false,
     )
     val internal: MutableStateFlow<SyncModel.UiState> = MutableStateFlow(uiState)
 

@@ -43,7 +43,7 @@ class SyncServiceImpl(
             return Diff(remotes, photos, diff, size)
         } catch (e: Exception) {
             Log.e(TAG, "${e.message}")
-            throw Exception("ups", e)
+            throw Exception("Failed to create diff: ${e.message}", e)
         }
     }
 
