@@ -30,8 +30,6 @@ class MainActivity : ComponentActivity() {
         val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db")
             .build()
         val remoteDao = db.remoteDao()
-        val logDao = db.logDao()
-        val remoteRepository = RemoteRepository(remoteDao, logDao)
 
         setContent {
             ZimzyncTheme {
@@ -113,7 +111,7 @@ class MainActivity : ComponentActivity() {
                             val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                             remoteId?.let {
-                                SyncRemote(remoteRepository, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") })
+                                SyncRemote(remoteDao, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") })
                             }
                         }
                     }
