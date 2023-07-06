@@ -2,6 +2,7 @@ package io.zeitmaschine.zimzync
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.graphics.Picture
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -14,13 +15,13 @@ data class MediaObject(
     val path: Uri,
 )
 
-class ResolverBasedRepository(private val contentResolver: ContentResolver) : MediaRepository {
+class ResolverBasedRepository(private val contentResolver: ContentResolver): MediaRepository {
 
     companion object {
         private val TAG: String? = ResolverBasedRepository::class.simpleName
     }
 
-    override fun getPhotos(): List<MediaObject> {
+    override fun getPhotos(buckets: List<String>): List<MediaObject> {
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val projection = arrayOf(
             MediaStore.MediaColumns._ID,
@@ -40,10 +41,12 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         Log.i(TAG, contentUri.path ?: "whoops")
 
         val photos = mutableListOf<MediaObject>()
+        val contentBuckets = buckets.joinToString(separator = ",", transform = {bucket -> "'${bucket}'"})
+        val selection = MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " IN ($contentBuckets)"
         contentResolver.query(
             contentUri,
             projection,
-            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " = 'Camera'",
+            selection,
             null,
             sortOrder
         )?.use { cursor ->
@@ -76,7 +79,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         return photos.toList()
     }
 
-    override fun getVideos(): List<MediaObject> {
+    override fun getVideos(buckets: List<String>): List<MediaObject> {
 
         val videos = mutableListOf<MediaObject>()
 
@@ -96,10 +99,11 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val contentUri = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
 
+        val contentBuckets = buckets.joinToString(separator = ",", transform = {bucket -> "'${bucket}'"})
         contentResolver.query(
             contentUri,
             projection,
-            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " = 'Camera'",
+            MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " IN ($contentBuckets)",
             null,
             sortOrder
         )?.use { cursor ->
@@ -132,19 +136,25 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver) : Me
         return videos.toList()
     }
 
-    override fun getMedia(): List<MediaObject> {
-        return listOf(getPhotos(), getVideos()).flatten()
+    override fun getMedia(buckets: List<String>): List<MediaObject> {
+        return listOf(getPhotos(buckets), getVideos(buckets)).flatten()
     }
 
     override fun getStream(uri: Uri): InputStream {
         return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
     }
+
+    override fun getBuckets(): List<String> {
+        return listOf("Camera", "Pictures")
+    }
 }
 
 
 interface MediaRepository {
-    fun getPhotos(): List<MediaObject>
+    fun getVideos(buckets: List<String>): List<MediaObject>
+    fun getPhotos(buckets: List<String>): List<MediaObject>
+    fun getMedia(buckets: List<String>): List<MediaObject>
     fun getStream(uri: Uri): InputStream
-    fun getVideos(): List<MediaObject>
-    fun getMedia(): List<MediaObject>
+    fun getBuckets(): List<String>
+
 }

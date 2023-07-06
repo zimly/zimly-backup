@@ -19,7 +19,8 @@ class SyncWorker(
     override suspend fun doWork(): Result {
         Log.i(TAG, "Launching sync...")
 
-        val diff = syncService.diffA()
+        val contentBuckets = inputData.getStringArray(SyncConstants.CONTENT_BUCKETS)?.asList() ?: emptyList()
+        val diff = syncService.diffA(contentBuckets)
 
         val total = diff.diff.size
         var synced = 0
@@ -62,4 +63,5 @@ object SyncConstants {
     const val S3_KEY = "key"
     const val S3_SECRET = "secret"
     const val S3_BUCKET = "bucket"
+    const val CONTENT_BUCKETS = "buckets"
 }

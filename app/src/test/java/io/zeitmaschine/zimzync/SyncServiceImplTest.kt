@@ -38,7 +38,7 @@ class SyncServiceImplTest {
         val uri = mockk<Uri>()
         this.mediaRepository = mockk()
 
-        every { mediaRepository.getMedia() } returns listOf(MediaObject("name", 1234, "jpeg", uri))
+        every { mediaRepository.getMedia(listOf("Camera")) } returns listOf(MediaObject("name", 1234, "jpeg", uri))
 
         val url = "http://" + minioContainer.host + ":" + minioContainer.getMappedPort(minioPort)
         val bucket = "test-bucket"
@@ -51,7 +51,7 @@ class SyncServiceImplTest {
     fun diffA() = runTest {
         val ss = SyncServiceImpl(minioRepository, mediaRepository)
 
-        when (val result = ss.diff()) {
+        when (val result = ss.diff(listOf("Camera"))) {
             is Result.Success<Diff> -> {
                 assertThat(result.data.remotes.size, `is`(0))
                 assertThat(result.data.locals.size, `is`(1))
@@ -65,7 +65,7 @@ class SyncServiceImplTest {
     fun diff() {
         val ss = SyncServiceImpl(minioRepository, mediaRepository)
 
-        val diff = ss.diffA()
+        val diff = ss.diffA(listOf("Camera"))
         assertThat(diff.remotes.size, `is`(0))
         assertThat(diff.locals.size, `is`(1))
         assertThat(diff.diff.size, `is`(1))

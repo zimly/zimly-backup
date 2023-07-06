@@ -52,6 +52,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     private lateinit var s3Repo: S3Repository
     private lateinit var syncService: SyncService
+    private lateinit var contentBuckets: List<String>
 
     init {
         viewModelScope.launch {
@@ -65,6 +66,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                     secret = remote.secret,
                 )
             }
+            contentBuckets = listOf("Camera") // Simulator: "Pictures", "Movies"
             try {
                 s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
                 syncService = SyncServiceImpl(s3Repo, mediaRepo)
@@ -83,7 +85,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     suspend fun createDiff() {
         // Display result of the minio request to the user
-        when (val result = syncService.diff()) {
+        when (val result = syncService.diff(contentBuckets)) {
             is Result.Success<Diff> -> {
                 internal.update {
                     it.copy(
@@ -165,7 +167,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             SyncConstants.S3_URL to uiState.value.url,
             SyncConstants.S3_KEY to uiState.value.key,
             SyncConstants.S3_SECRET to uiState.value.secret,
-            SyncConstants.S3_BUCKET to uiState.value.bucket
+            SyncConstants.S3_BUCKET to uiState.value.bucket,
+            SyncConstants.CONTENT_BUCKETS to contentBuckets
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
