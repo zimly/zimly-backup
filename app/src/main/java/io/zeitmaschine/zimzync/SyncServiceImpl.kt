@@ -19,7 +19,7 @@ class SyncServiceImpl(
         val TAG: String? = SyncServiceImpl::class.simpleName
     }
 
-    override suspend fun diff(buckets: List<String>): Result<Diff> {
+    override suspend fun diff(buckets: Set<String>): Result<Diff> {
         // Move the execution of the coroutine to the I/O dispatcher
         return withContext(Dispatchers.IO) {
             try {
@@ -33,7 +33,7 @@ class SyncServiceImpl(
     }
 
 
-    override fun diffA(buckets: List<String>): Diff {
+    override fun diffA(buckets: Set<String>): Diff {
         try {
             val remotes = s3Repository.listObjects()
             val photos = mediaRepository.getMedia(buckets)
@@ -78,8 +78,8 @@ data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val 
 
 interface SyncService {
 
-    suspend fun diff(buckets: List<String>): Result<Diff>
-    fun diffA(buckets: List<String>): Diff
+    suspend fun diff(buckets: Set<String>): Result<Diff>
+    fun diffA(buckets: Set<String>): Diff
     fun sync(diff: Diff, progress: (size: Long) -> Unit)
 }
 

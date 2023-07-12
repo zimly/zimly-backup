@@ -52,7 +52,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     private lateinit var s3Repo: S3Repository
     private lateinit var syncService: SyncService
-    private lateinit var contentBuckets: List<String>
+    private lateinit var contentBuckets: Set<String>
 
     init {
         viewModelScope.launch {
@@ -66,10 +66,10 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                     secret = remote.secret,
                 )
             }
-            contentBuckets = listOf("Camera") // Simulator: "Pictures", "Movies"
             try {
                 s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
                 syncService = SyncServiceImpl(s3Repo, mediaRepo)
+                contentBuckets = mediaRepo.getBuckets().keys
             } catch (e: Exception) {
                 // TODO: Exception handling in a lateinit block, inside a viewModelFactory, inside a
                 //  NavHost Composable? Some global error handling?

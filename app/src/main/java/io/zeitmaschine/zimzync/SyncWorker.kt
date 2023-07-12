@@ -19,7 +19,7 @@ class SyncWorker(
     override suspend fun doWork(): Result {
         Log.i(TAG, "Launching sync...")
 
-        val contentBuckets = inputData.getStringArray(SyncConstants.CONTENT_BUCKETS)?.asList() ?: emptyList()
+        val contentBuckets = inputData.getStringArray(SyncConstants.CONTENT_BUCKETS)?.toSet() ?: emptySet()
         val diff = syncService.diffA(contentBuckets)
 
         val total = diff.diff.size

@@ -2,7 +2,6 @@ package io.zeitmaschine.zimzync
 
 import android.content.ContentResolver
 import android.content.ContentUris
-import android.graphics.Picture
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -21,7 +20,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
         private val TAG: String? = ResolverBasedRepository::class.simpleName
     }
 
-    override fun getPhotos(buckets: List<String>): List<MediaObject> {
+    override fun getPhotos(buckets: Set<String>): List<MediaObject> {
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val projection = arrayOf(
             MediaStore.MediaColumns._ID,
@@ -79,7 +78,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
         return photos.toList()
     }
 
-    override fun getVideos(buckets: List<String>): List<MediaObject> {
+    override fun getVideos(buckets: Set<String>): List<MediaObject> {
 
         val videos = mutableListOf<MediaObject>()
 
@@ -136,7 +135,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
         return videos.toList()
     }
 
-    override fun getMedia(buckets: List<String>): List<MediaObject> {
+    override fun getMedia(buckets: Set<String>): List<MediaObject> {
         return listOf(getPhotos(buckets), getVideos(buckets)).flatten()
     }
 
@@ -144,17 +143,41 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
         return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
     }
 
-    override fun getBuckets(): List<String> {
-        return listOf("Camera", "Pictures")
+    override fun getBuckets(): Map<String, Number> {
+        val buckets = mutableMapOf<String, Int>()
+        // DISTINCT? https://stackoverflow.com/questions/2315203/android-distinct-and-groupby-in-contentresolver
+        // nope: https://stackoverflow.com/a/58643357
+        val projection = arrayOf(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME)
+        // https://stackoverflow.com/questions/30654774/android-is-external-content-uri-enough-for-a-photo-gallery
+        val contentUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        contentResolver.query(
+            contentUri,
+            projection,
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            val bucketNameColumn =
+                cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+            while (cursor.moveToNext()) {
+                val bucketName = cursor.getString(bucketNameColumn)
+
+                val function: (k: String, v: Int?) -> Int = { _: String, v: Int? -> if (v == null) 1 else v + 1}
+                buckets.compute(bucketName, function)
+            }
+        }
+        buckets.forEach { (b, c) -> Log.i(TAG, "Bucket: $b count: $c" ) }
+
+        return buckets
     }
 }
 
 
 interface MediaRepository {
-    fun getVideos(buckets: List<String>): List<MediaObject>
-    fun getPhotos(buckets: List<String>): List<MediaObject>
-    fun getMedia(buckets: List<String>): List<MediaObject>
+    fun getVideos(buckets: Set<String>): List<MediaObject>
+    fun getPhotos(buckets: Set<String>): List<MediaObject>
+    fun getMedia(buckets: Set<String>): List<MediaObject>
     fun getStream(uri: Uri): InputStream
-    fun getBuckets(): List<String>
+    fun getBuckets(): Map<String, Number>
 
 }
