@@ -162,8 +162,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
             while (cursor.moveToNext()) {
                 val bucketName = cursor.getString(bucketNameColumn)
 
-                val function: (k: String, v: Int?) -> Int = { _: String, v: Int? -> if (v == null) 1 else v + 1}
-                buckets.compute(bucketName, function)
+                buckets.compute(bucketName) { _: String, v: Int? -> if (v == null) 1 else v + 1 }
             }
         }
         buckets.forEach { (b, c) -> Log.i(TAG, "Bucket: $b count: $c" ) }
