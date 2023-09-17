@@ -54,17 +54,17 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.core:core-ktx:1.12.0'
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.material3:material3:$material3_version"
     implementation "androidx.compose.material3:material3-window-size-class:$material3_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.0'
-    implementation 'androidx.activity:activity-compose:1.6.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.activity:activity-compose:1.7.2'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation "org.testcontainers:testcontainers:1.17.6"
-    testImplementation "io.mockk:mockk:1.13.4"
-    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4"
+    testImplementation 'org.testcontainers:testcontainers:1.19.0'
+    testImplementation 'io.mockk:mockk:1.13.7'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
@@ -76,25 +76,25 @@ dependencies {
 
 
     implementation 'androidx.test:core-ktx:1.5.0'
-    implementation 'androidx.work:work-testing:2.8.0'
-    implementation 'io.minio:minio:8.5.2'
+    implementation 'androidx.work:work-testing:2.8.1'
+    implementation 'io.minio:minio:8.5.5'
     // needed for okhttp3/minio
-    implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.14.2')
-    implementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2')
+    implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2')
+    implementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2')
     implementation("javax.xml.stream:stax-api:1.0-2")
 
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0'
-    implementation 'androidx.navigation:navigation-compose:2.5.3'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2'
+    implementation 'androidx.navigation:navigation-compose:2.7.2'
 
     // https://developer.android.com/codelabs/android-workmanager#2
-    def wm_version = "2.8.0"
+    def wm_version = '2.8.1'
     implementation "androidx.work:work-runtime-ktx:$wm_version"
     // Kotlin + coroutines
     implementation "androidx.work:work-runtime-ktx:$wm_version"
 
 
     // room DB
-    def room_version = '2.5.0'
+    def room_version = '2.5.2'
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
 
