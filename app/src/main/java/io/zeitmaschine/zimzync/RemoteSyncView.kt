@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.apache.commons.compress.utils.Sets
 
 class SyncModel(private val dao: RemoteDao, private val remoteId: Int, application: Application) :
     AndroidViewModel(application) {
@@ -64,6 +65,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                     bucket = remote.bucket,
                     key = remote.key,
                     secret = remote.secret,
+                    folder = remote.folder,
                 )
             }
             try {
@@ -85,7 +87,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     suspend fun createDiff() {
         // Display result of the minio request to the user
-        when (val result = syncService.diff(contentBuckets)) {
+        when (val result = syncService.diff(setOf(uiState.value.folder))) {
             is Result.Success<Diff> -> {
                 internal.update {
                     it.copy(
@@ -168,7 +170,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             SyncConstants.S3_KEY to uiState.value.key,
             SyncConstants.S3_SECRET to uiState.value.secret,
             SyncConstants.S3_BUCKET to uiState.value.bucket,
-            SyncConstants.CONTENT_BUCKETS to contentBuckets
+            SyncConstants.DEVICE_FOLDER to arrayOf(uiState.value.folder)
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -189,6 +191,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         var key: String = "",
         var secret: String = "",
         var bucket: String = "",
+
+        var folder: String = "",
 
         var diff: Diff = Diff.EMPTY,
         var progress: Float = 0.0f,
@@ -240,6 +244,7 @@ private fun SyncCompose(
         Text(state.value.bucket)
         Text(state.value.key)
         Text(state.value.secret)
+        Text(state.value.folder)
         Text("Remotes: ${state.value.diff.remotes.size}")
         Text("Locales: ${state.value.diff.locals.size}")
         Text("#Diffs: ${state.value.diff.diff.size}")

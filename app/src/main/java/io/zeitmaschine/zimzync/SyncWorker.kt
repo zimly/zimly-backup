@@ -19,7 +19,8 @@ class SyncWorker(
     override suspend fun doWork(): Result {
         Log.i(TAG, "Launching sync...")
 
-        val contentBuckets = inputData.getStringArray(SyncConstants.CONTENT_BUCKETS)?.toSet() ?: emptySet()
+        val contentBuckets =
+            inputData.getStringArray(SyncConstants.DEVICE_FOLDER)?.toSet() ?: emptySet()
         val diff = syncService.diffA(contentBuckets)
 
         val total = diff.diff.size
@@ -40,11 +41,13 @@ class SyncWorker(
 
         val result = try {
             syncService.sync(diff, ::progress)
-            Result.success(Data.Builder()
-                .putInt("synced", synced)
-                .putLong("size", syncedSize)
-                .putInt("total", total)
-                .build())
+            Result.success(
+                Data.Builder()
+                    .putInt("synced", synced)
+                    .putLong("size", syncedSize)
+                    .putInt("total", total)
+                    .build()
+            )
         } catch (e: Exception) {
             Result.failure(
                 Data.Builder()
@@ -52,7 +55,8 @@ class SyncWorker(
                     .putLong("size", syncedSize)
                     .putInt("total", total)
                     .putString("error", e.message)
-                    .build())
+                    .build()
+            )
         }
         return result
     }
@@ -63,5 +67,5 @@ object SyncConstants {
     const val S3_KEY = "key"
     const val S3_SECRET = "secret"
     const val S3_BUCKET = "bucket"
-    const val CONTENT_BUCKETS = "buckets"
+    const val DEVICE_FOLDER = "folder"
 }

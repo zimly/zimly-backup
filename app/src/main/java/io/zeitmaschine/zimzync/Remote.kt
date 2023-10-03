@@ -12,4 +12,5 @@ data class Remote(
     @ColumnInfo(name = "key") val key: String,
     @ColumnInfo(name = "secret") val secret: String,
     @ColumnInfo(name = "bucket") val bucket: String,
+    @ColumnInfo(name = "folder", defaultValue = "Pictures") val folder: String,
 )

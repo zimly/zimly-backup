@@ -49,7 +49,8 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
                         url = remote.url,
                         key = remote.key,
                         secret = remote.secret,
-                        bucket = remote.bucket
+                        bucket = remote.bucket,
+                        folder = remote.folder
                     )
                 }
             }
@@ -76,6 +77,10 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
         internal.update { it.copy(bucket = bucket) }
     }
 
+    fun setFolder(folder: String) {
+        internal.update { it.copy(folder = folder) }
+    }
+
 
     suspend fun save() {
         val remote = Remote(
@@ -84,7 +89,8 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
             internal.value.url,
             internal.value.key,
             internal.value.secret,
-            internal.value.bucket
+            internal.value.bucket,
+            internal.value.folder
         )
         if (remote.uid == null) {
             dao.insert(remote)
@@ -99,7 +105,8 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
         var url: String = "",
         var key: String = "",
         var secret: String = "",
-        var bucket: String = ""
+        var bucket: String = "",
+        var folder: String = ""
     )
 }
 
@@ -122,7 +129,8 @@ fun EditRemote(
         setUrl = viewModel::setUrl,
         setKey = viewModel::setKey,
         setSecret = viewModel::setSecret,
-        setBucket = viewModel::setBucket
+        setBucket = viewModel::setBucket,
+        setFolder = viewModel::setFolder
     ) {
         viewModel.viewModelScope.launch {
             viewModel.save()
@@ -140,6 +148,7 @@ private fun EditorCompose(
     setKey: (key: String) -> Unit,
     setSecret: (secret: String) -> Unit,
     setBucket: (secret: String) -> Unit,
+    setFolder: (folder: String) -> Unit,
     save: () -> Unit,
 ) {
 
@@ -181,7 +190,14 @@ private fun EditorCompose(
             label = { Text("Bucket") },
             value = state.value.bucket,
             onValueChange = { setBucket(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+        )
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Device Folder") },
+            value = state.value.folder,
+            onValueChange = { setFolder(it) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
 
         Button(
@@ -212,6 +228,7 @@ fun EditPreview() {
             setKey = { key -> internal.update { it.copy(key = key) } },
             setSecret = { secret -> internal.update { it.copy(secret = secret) } },
             setBucket = { bucket -> internal.update { it.copy(bucket = bucket) } },
+            setFolder = { folder -> internal.update { it.copy(folder = folder) } },
         ) {}
     }
 }
