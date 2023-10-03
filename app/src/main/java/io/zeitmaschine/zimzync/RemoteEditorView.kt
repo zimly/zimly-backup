@@ -1,13 +1,17 @@
 package io.zeitmaschine.zimzync
 
 import android.annotation.SuppressLint
+import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
@@ -16,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -28,7 +32,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
+class EditorModel(application: Application, private val dao: RemoteDao, remoteId: Int?) :
+    AndroidViewModel(application) {
+
+    private val contentResolver by lazy { application.contentResolver }
+    private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
     // https://stackoverflow.com/questions/69689843/jetpack-compose-state-hoisting-previews-and-viewmodels-best-practices
     // TODO ???? https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate
@@ -42,6 +50,7 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
         remoteId?.let {
             viewModelScope.launch {
                 val remote = dao.loadById(remoteId)
+                val galleries = mediaRepo.getBuckets().keys
                 internal.update {
                     it.copy(
                         uid = remote.uid,
@@ -50,7 +59,8 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
                         key = remote.key,
                         secret = remote.secret,
                         bucket = remote.bucket,
-                        folder = remote.folder
+                        folder = remote.folder,
+                        galleries = galleries,
                     )
                 }
             }
@@ -106,17 +116,19 @@ class EditorModel(private val dao: RemoteDao, remoteId: Int?) : ViewModel() {
         var key: String = "",
         var secret: String = "",
         var bucket: String = "",
-        var folder: String = ""
+        var folder: String = "",
+        var galleries: Set<String> = emptySet()
     )
 }
 
 @Composable
 fun EditRemote(
+    application: Application,
     remoteDao: RemoteDao,
     remoteId: Int?,
     viewModel: EditorModel = viewModel(factory = viewModelFactory {
         initializer {
-            EditorModel(remoteDao, remoteId)
+            EditorModel(application, remoteDao, remoteId)
         }
     }),
     saveEntry: () -> Unit
@@ -199,6 +211,41 @@ private fun EditorCompose(
             onValueChange = { setFolder(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
+
+
+        var expanded by remember { mutableStateOf(false) }
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+        ) {
+            TextField(
+                // The `menuAnchor` modifier must be passed to the text field for correctness.
+                modifier = Modifier.menuAnchor(),
+                readOnly = true,
+                value = state.value.folder,
+                onValueChange = {},
+                label = { Text("Folder") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                state.value.galleries.forEach { gallery ->
+                    DropdownMenuItem(
+                        text = { Text(gallery) },
+                        onClick = {
+                            setFolder(gallery)
+                            expanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    )
+                }
+            }
+
+        }
 
         Button(
             modifier = Modifier.align(Alignment.End),

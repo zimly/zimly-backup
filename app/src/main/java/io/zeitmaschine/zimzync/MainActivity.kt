@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
                         Scaffold(
                             content = {
                                 EditRemote(
+                                    application = application,
                                     remoteDao = remoteDao,
                                     remoteId = remoteId,
                                     saveEntry = { navController.navigate("remotes-list") }
@@ -95,9 +96,10 @@ class MainActivity : ComponentActivity() {
                         Scaffold(
                             content = {
                                 EditRemote(
+                                    application = application,
                                     remoteDao = remoteDao,
                                     remoteId = null,
-                                    saveEntry = { navController.navigate("remotes-list") }
+                                    saveEntry = { navController.navigate("remotes-list")}
                                 )
                             },
                         )
