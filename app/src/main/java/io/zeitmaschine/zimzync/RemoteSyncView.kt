@@ -23,14 +23,20 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import androidx.work.WorkQuery
+import androidx.work.workDataOf
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.apache.commons.compress.utils.Sets
 
 class SyncModel(private val dao: RemoteDao, private val remoteId: Int, application: Application) :
     AndroidViewModel(application) {
@@ -43,7 +49,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     // This identifier is used to identify already running sync instances and prevent simultaneous
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
-    private val workManager = WorkManager.getInstance(getApplication<Application>().applicationContext)
+    private val workManager =
+        WorkManager.getInstance(getApplication<Application>().applicationContext)
 
     private val contentResolver by lazy { application.contentResolver }
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
@@ -95,12 +102,13 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                     )
                 }
             }
+
             is Result.Error -> {
                 Log.e(TAG, "Failed to create diff.", result.exception)
 
                 internal.update {
                     it.copy(
-                        error = result.exception.message?: "Unknown error.",
+                        error = result.exception.message ?: "Unknown error.",
                     )
                 }
             }
@@ -110,58 +118,62 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     fun loadSyncState(owner: LifecycleOwner) {
         val query = WorkQuery.Builder
             .fromUniqueWorkNames(listOf(uniqueWorkIdentifier))
-            .addStates(listOf( WorkInfo.State.RUNNING))
+            .addStates(listOf(WorkInfo.State.RUNNING))
             .build()
 
-        workManager.getWorkInfosLiveData(query).observe(owner, Observer { workInfos: List<WorkInfo> ->
+        workManager.getWorkInfosLiveData(query)
+            .observe(owner, Observer { workInfos: List<WorkInfo> ->
 
-            if (workInfos.size > 1) throw Exception("More than one sync running. This should never happen.")
+                if (workInfos.size > 1) throw Exception("More than one sync running. This should never happen.")
 
-            if (workInfos.size == 1) {
-                val workInfo = workInfos.first()
-                var synced = 0
-                var error = ""
-                var inProgress = true
-                when (workInfo.state) {
-                    WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
-                        val output = workInfo.outputData
-                        synced = output.getInt("synced", 0)
-                        inProgress = false
+                if (workInfos.size == 1) {
+                    val workInfo = workInfos.first()
+                    var synced = 0
+                    var error = ""
+                    var inProgress = true
+                    when (workInfo.state) {
+                        WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
+                            val output = workInfo.outputData
+                            synced = output.getInt("synced", 0)
+                            inProgress = false
+                        }
+
+                        WorkInfo.State.RUNNING -> {
+                            val progress = workInfo.progress
+                            synced = progress.getInt("synced", 0)
+                            inProgress = true
+                        }
+
+                        WorkInfo.State.FAILED -> {
+                            val progress = workInfo.progress
+                            synced = progress.getInt("synced", 0)
+                            error = progress.getString("error")!!
+                            inProgress = false
+                        }
+
+                        else -> {}
                     }
-                    WorkInfo.State.RUNNING -> {
-                        val progress = workInfo.progress
-                        synced = progress.getInt("synced", 0)
-                        inProgress = true
+
+                    if (synced > 0) {
+                        var progress: Float = synced.toFloat() / uiState.value.diff.diff.size
+                        internal.update {
+                            it.copy(
+                                progress = progress,
+                                inProgress = inProgress
+                            )
+                        }
                     }
-                    WorkInfo.State.FAILED -> {
-                        val progress = workInfo.progress
-                        synced = progress.getInt("synced", 0)
-                        error = progress.getString("error")!!
-                        inProgress = false
+                    if (error.isNotEmpty()) {
+                        internal.update {
+                            it.copy(
+                                error = error,
+                                inProgress = inProgress
+                            )
+                        }
                     }
-                    else -> {}
                 }
 
-                if (synced > 0) {
-                    var progress: Float = synced.toFloat() / uiState.value.diff.diff.size
-                    internal.update {
-                        it.copy(
-                            progress = progress,
-                            inProgress = inProgress
-                        )
-                    }
-                }
-                if (error.isNotEmpty()) {
-                    internal.update {
-                        it.copy(
-                            error = error,
-                            inProgress = inProgress
-                        )
-                    }
-                }
-            }
-
-        })
+            })
     }
 
     fun sync() {
@@ -219,10 +231,12 @@ fun SyncRemote(
     viewModel.loadSyncState(lifeCycleOwner)
     SyncCompose(
         state,
-        sync = { viewModel.viewModelScope.launch {
-            viewModel.sync()
-            viewModel.loadSyncState(lifeCycleOwner)
-        } },
+        sync = {
+            viewModel.viewModelScope.launch {
+                viewModel.sync()
+                viewModel.loadSyncState(lifeCycleOwner)
+            }
+        },
         diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
         edit = { edit(remoteId) })
 }
@@ -306,7 +320,7 @@ fun SyncPreview() {
 
     ZimzyncTheme {
         SyncCompose(
-            state = internal.collectAsState(), sync = {}, diff = {} , edit = {}
+            state = internal.collectAsState(), sync = {}, diff = {}, edit = {}
         )
     }
 }
