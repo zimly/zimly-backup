@@ -11,8 +11,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,11 +27,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.room.Room
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
-import java.util.*
 
 class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "FlowOperatorInvokedInComposition")
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db")
@@ -33,7 +38,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ZimzyncTheme {
-                val startDest = if (isPermissionGranted()) "remotes-list" else "grant-permission"
+                var startDest by remember { mutableStateOf(if (isPermissionGranted()) "remotes-list" else "grant-permission") }
                 val navController = rememberNavController()
                 NavHost(navController, startDestination = startDest) {
                     // Grant permission for app
