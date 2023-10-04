@@ -2,6 +2,7 @@ package io.zeitmaschine.zimzync
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.database.Cursor
 import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
@@ -147,24 +148,34 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
         val buckets = mutableMapOf<String, Int>()
         // DISTINCT? https://stackoverflow.com/questions/2315203/android-distinct-and-groupby-in-contentresolver
         // nope: https://stackoverflow.com/a/58643357
-        val projection = arrayOf(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME)
+        val projection = arrayOf(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
         // https://stackoverflow.com/questions/30654774/android-is-external-content-uri-enough-for-a-photo-gallery
-        val contentUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        val imageUri = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        val videoUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+
+        val bucketCollector: (Cursor) -> Unit = { cursor ->
+            val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+            while (cursor.moveToNext()) {
+                val bucketName = cursor.getString(bucketNameColumn)
+                buckets.compute(bucketName) { _: String, v: Int? -> if (v == null) 1 else v + 1 }
+            }
+        }
         contentResolver.query(
-            contentUri,
+            imageUri,
             projection,
             null,
             null,
             null
-        )?.use { cursor ->
-            val bucketNameColumn =
-                cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
-            while (cursor.moveToNext()) {
-                val bucketName = cursor.getString(bucketNameColumn)
+        )?.use(bucketCollector)
 
-                buckets.compute(bucketName) { _: String, v: Int? -> if (v == null) 1 else v + 1 }
-            }
-        }
+        contentResolver.query(
+            videoUri,
+            projection,
+            null,
+            null,
+            null
+        )?.use(bucketCollector)
+
         buckets.forEach { (b, c) -> Log.i(TAG, "Bucket: $b count: $c" ) }
 
         return buckets
