@@ -47,10 +47,15 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
     val state: StateFlow<UiState> = internal.asStateFlow()
 
     init {
+        val galleries = mediaRepo.getBuckets().keys
+        internal.update {
+            it.copy(galleries = galleries)
+        }
+
         remoteId?.let {
             viewModelScope.launch {
                 val remote = dao.loadById(remoteId)
-                val galleries = mediaRepo.getBuckets().keys
+
                 internal.update {
                     it.copy(
                         uid = remote.uid,
@@ -60,7 +65,6 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
                         secret = remote.secret,
                         bucket = remote.bucket,
                         folder = remote.folder,
-                        galleries = galleries,
                     )
                 }
             }
@@ -169,6 +173,8 @@ private fun EditorCompose(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.padding(all = 16.dp)
     ) {
+
+        Text(text = "Remote Bucket")
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Name") },
@@ -204,15 +210,8 @@ private fun EditorCompose(
             onValueChange = { setBucket(it) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
         )
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Device Folder") },
-            value = state.value.folder,
-            onValueChange = { setFolder(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-        )
 
-
+        Text(text = "Device")
         var expanded by remember { mutableStateOf(false) }
 
         ExposedDropdownMenuBox(
