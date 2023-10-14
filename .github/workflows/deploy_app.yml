@@ -15,10 +15,12 @@ jobs:
       - name: Assemble Release Bundle
         run: ./gradlew bundleRelease
       - name: Sign Release
+        # TODO: https://stackoverflow.com/a/25252900
+        # ./gradlew assembleRelease -Pandroid.injected.signing.store.file=$FROM_FILE -Pandroid.injected.signing.store.password=$KEY_STORE_PASSWORD -Pandroid.injected.signing.key.alias=$KEY_ALIAS -Pandroid.injected.signing.key.password=$KEY_PASSWORD
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.ALIAS }}
+          signingKeyBase64: ${{ secrets.KEY_STORE_BASE64}}
+          alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
