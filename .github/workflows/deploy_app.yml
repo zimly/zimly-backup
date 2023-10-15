@@ -11,13 +11,13 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Extract keystore
-        # TODO: https://stackoverflow.com/a/25252900
+        # https://stackoverflow.com/a/25252900
         env:
           KEY_STORE_BASE64: ${{secrets.KEY_STORE_BASE64}}
         shell: bash
-        run: echo "$KEY_STORE_BASE64" | base64 -d >> keystore.jks
+        run: echo "$KEY_STORE_BASE64" | base64 -d >> ${GITHUB_WORKSPACE}/keystore.jks
       - name: Sign release
-        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
+        run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
       - name: Deploy to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
