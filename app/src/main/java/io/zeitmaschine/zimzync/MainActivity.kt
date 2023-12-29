@@ -118,7 +118,7 @@ class MainActivity : ComponentActivity() {
                             val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                             remoteId?.let {
-                                SyncRemote(remoteDao, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") })
+                                SyncRemote(remoteDao, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") }, back=  { navController.popBackStack() })
                             }
                         }
                     }

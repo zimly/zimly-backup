@@ -5,15 +5,25 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
@@ -219,6 +229,7 @@ fun SyncRemote(
     remoteId: Int,
     application: Application,
     edit: (Int) -> Unit,
+    back: () -> Unit,
     viewModel: SyncModel = viewModel(factory = viewModelFactory {
         initializer {
             SyncModel(dao, remoteId, application)
@@ -238,66 +249,93 @@ fun SyncRemote(
             }
         },
         diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
-        edit = { edit(remoteId) })
+        edit = { edit(remoteId) },
+        back)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SyncCompose(
     state: State<SyncModel.UiState>,
     sync: () -> Unit,
     diff: () -> Unit,
-    edit: () -> Unit
+    edit: () -> Unit,
+    back: () -> Unit
 ) {
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(all = 16.dp)
-    ) {
-        Text(state.value.name)
-        Text(state.value.url)
-        Text(state.value.bucket)
-        Text(state.value.key)
-        Text(state.value.secret)
-        Text(state.value.folder)
-        Text("Remotes: ${state.value.diff.remotes.size}")
-        Text("Locales: ${state.value.diff.locals.size}")
-        Text("#Diffs: ${state.value.diff.diff.size}")
-        Text("Diff Size: ${state.value.diff.size}")
-        if (state.value.error.isNotEmpty()) {
-            Text("${state.value.error}")
-        }
-        Text("Progress: ${state.value.progress}")
-        LinearProgressIndicator(progress = state.value.progress)
-        Button(
-            modifier = Modifier.align(Alignment.End),
-            enabled = !state.value.inProgress,
-            onClick = {
-                diff()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = {
+                    Text(
+                        state.value.name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { back() }) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            tint = MaterialTheme.colorScheme.primary,
+                            contentDescription = "Localized description"
+                        )
+                    }
+                },
+            )
+        }) { innerPadding ->
+        Column(
+            modifier = Modifier.padding(all = 16.dp) then Modifier.padding(top = innerPadding.calculateTopPadding(), bottom = innerPadding.calculateBottomPadding()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(state.value.name)
+            Text(state.value.url)
+            Text(state.value.bucket)
+            Text(state.value.key)
+            Text(state.value.secret)
+            Text(state.value.folder)
+            Text("Remotes: ${state.value.diff.remotes.size}")
+            Text("Locales: ${state.value.diff.locals.size}")
+            Text("#Diffs: ${state.value.diff.diff.size}")
+            Text("Diff Size: ${state.value.diff.size}")
+            if (state.value.error.isNotEmpty()) {
+                Text("${state.value.error}")
             }
-        )
-        {
-            Text(text = "Diff")
-        }
-        Button(
-            modifier = Modifier.align(Alignment.End),
-            enabled = !state.value.inProgress,
-            onClick = {
-                sync()
+            Text("Progress: ${state.value.progress}")
+            LinearProgressIndicator(progress = state.value.progress)
+            Button(
+                modifier = Modifier.align(Alignment.End),
+                enabled = !state.value.inProgress,
+                onClick = {
+                    diff()
+                }
+            )
+            {
+                Text(text = "Diff")
             }
-        )
-        {
-            Text(text = "Sync")
-        }
-        Button(
-            modifier = Modifier.align(Alignment.End),
-            onClick = {
-                edit()
+            Button(
+                modifier = Modifier.align(Alignment.End),
+                enabled = !state.value.inProgress,
+                onClick = {
+                    sync()
+                }
+            )
+            {
+                Text(text = "Sync")
             }
-        )
-        {
-            Text(text = "Edit")
+            Button(
+                modifier = Modifier.align(Alignment.End),
+                onClick = {
+                    edit()
+                }
+            )
+            {
+                Text(text = "Edit")
+            }
         }
-
     }
 }
 
@@ -320,7 +358,7 @@ fun SyncPreview() {
 
     ZimzyncTheme {
         SyncCompose(
-            state = internal.collectAsState(), sync = {}, diff = {}, edit = {}
+            state = internal.collectAsState(), sync = {}, diff = {}, edit = {}, back = {}
         )
     }
 }
