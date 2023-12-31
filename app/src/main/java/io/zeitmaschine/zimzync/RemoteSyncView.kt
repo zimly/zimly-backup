@@ -14,12 +14,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -66,6 +72,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
 
     var uiState: StateFlow<UiState> = internal.asStateFlow()
+
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
     private lateinit var s3Repo: S3Repository
@@ -103,6 +110,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     }
 
     suspend fun createDiff() {
+
         // Display result of the minio request to the user
         when (val result = syncService.diff(setOf(uiState.value.folder))) {
             is Result.Success<Diff> -> {
@@ -175,6 +183,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                     }
                     if (error.isNotEmpty()) {
                         internal.update {
+
                             it.copy(
                                 error = error,
                                 inProgress = inProgress
@@ -207,6 +216,10 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         workManager.enqueueUniqueWork(uniqueWorkIdentifier, ExistingWorkPolicy.KEEP, syncRequest)
     }
 
+    fun clearError() {
+        internal.update { it.copy(error = "") }
+    }
+
     data class UiState(
         var name: String = "",
         var url: String = "",
@@ -219,7 +232,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         var diff: Diff = Diff.EMPTY,
         var progress: Float = 0.0f,
         var inProgress: Boolean = false,
-        var error: String = ""
+        var error: String = "",
     )
 }
 
@@ -239,9 +252,14 @@ fun SyncRemote(
 ) {
     val state = viewModel.uiState.collectAsState()
 
+    // want to go nuts?
+    // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
+    val snackbarState = remember { SnackbarHostState() }
+
     viewModel.loadSyncState(lifeCycleOwner)
     SyncCompose(
         state,
+        snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
                 viewModel.sync()
@@ -250,18 +268,39 @@ fun SyncRemote(
         },
         diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
         edit = { edit(remoteId) },
-        back)
+        back,
+        clearError = { viewModel.clearError() }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SyncCompose(
     state: State<SyncModel.UiState>,
+    snackbarState: SnackbarHostState,
     sync: () -> Unit,
     diff: () -> Unit,
     edit: () -> Unit,
-    back: () -> Unit
+    back: () -> Unit,
+    clearError: () -> Unit
 ) {
+    // If the UI state contains an error, show snackbar
+    if (state.value.error.isNotEmpty()) {
+        LaunchedEffect(snackbarState) {
+            val result = snackbarState.showSnackbar(
+                message = state.value.error,
+                withDismissAction = true,
+                duration = SnackbarDuration.Indefinite
+            )
+            when (result) {
+                SnackbarResult.Dismissed -> clearError()
+                SnackbarResult.ActionPerformed -> clearError()
+            }
+
+        }
+    }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -286,9 +325,15 @@ private fun SyncCompose(
                     }
                 },
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarState)
         }) { innerPadding ->
         Column(
-            modifier = Modifier.padding(all = 16.dp) then Modifier.padding(top = innerPadding.calculateTopPadding(), bottom = innerPadding.calculateBottomPadding()),
+            modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
+                top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding()
+            ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(state.value.name)
@@ -301,9 +346,6 @@ private fun SyncCompose(
             Text("Locales: ${state.value.diff.locals.size}")
             Text("#Diffs: ${state.value.diff.diff.size}")
             Text("Diff Size: ${state.value.diff.size}")
-            if (state.value.error.isNotEmpty()) {
-                Text("${state.value.error}")
-            }
             Text("Progress: ${state.value.progress}")
             LinearProgressIndicator(progress = state.value.progress)
             Button(
@@ -354,11 +396,18 @@ fun SyncPreview() {
         inProgress = false,
     )
     val internal: MutableStateFlow<SyncModel.UiState> = MutableStateFlow(uiState)
+    val snackbarState = remember { SnackbarHostState() }
 
 
     ZimzyncTheme {
         SyncCompose(
-            state = internal.collectAsState(), sync = {}, diff = {}, edit = {}, back = {}
+            state = internal.collectAsState(),
+            sync = {},
+            diff = {},
+            edit = {},
+            back = {},
+            snackbarState = snackbarState,
+            clearError = {}
         )
     }
 }
