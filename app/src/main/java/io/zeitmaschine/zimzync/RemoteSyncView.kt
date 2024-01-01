@@ -305,8 +305,8 @@ private fun SyncCompose(
         topBar = {
             TopAppBar(
                 colors = topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
                     Text(
@@ -319,7 +319,7 @@ private fun SyncCompose(
                     IconButton(onClick = { back() }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MaterialTheme.colorScheme.onPrimary,
                             contentDescription = "Localized description"
                         )
                     }
