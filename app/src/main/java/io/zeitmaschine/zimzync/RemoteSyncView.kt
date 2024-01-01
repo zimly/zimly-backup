@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -341,7 +342,7 @@ private fun SyncCompose(
                 top = innerPadding.calculateTopPadding(),
                 bottom = innerPadding.calculateBottomPadding()
             ) then Modifier.fillMaxWidth(),
-            //verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Card(
                 colors = CardDefaults.cardColors(
@@ -373,13 +374,55 @@ private fun SyncCompose(
                     }
                 }
             }
-            Text(state.value.folder)
-            Text("Remotes: ${state.value.diff.remotes.size}")
-            Text("Locales: ${state.value.diff.locals.size}")
-            Text("#Diffs: ${state.value.diff.diff.size}")
-            Text("Diff Size: ${state.value.diff.size}")
-            Text("Progress: ${state.value.progress}")
-            LinearProgressIndicator(progress = state.value.progress)
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        Icons.Outlined.Photo,
+                        "Remote",
+                        modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                    )
+                }
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Remotes")
+                        Text(text = "${state.value.diff.remotes.size}")
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Folder")
+                        Text(text = state.value.folder)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Locales")
+                        Text(text = "${state.value.diff.locals.size}")
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Diffs / #")
+                        Text(text = "${state.value.diff.diff.size} / ${state.value.diff.size}")
+                    }
+                }
+            }
+
+            LinearProgressIndicator(
+                progress = state.value.progress,
+                modifier = Modifier.fillMaxWidth()
+            )
             Button(
                 modifier = Modifier.align(Alignment.End),
                 enabled = !state.value.inProgress,
