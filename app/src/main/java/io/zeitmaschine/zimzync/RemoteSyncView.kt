@@ -43,7 +43,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -152,18 +151,20 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
         when (running.size) {
             0 -> return
-            1 -> loadSyncStateById(lifeCycleOwner, running.first().id)
+            1 -> observeSyncProgress(lifeCycleOwner, running.first().id)
             else -> throw Error("More than one unique sync job in progress. This should not happen.")
         }
     }
 
-    fun loadSyncStateById(owner: LifecycleOwner, id: UUID) {
-        workManager.getWorkInfoByIdLiveData(id).observe(owner, Observer { workInfo: WorkInfo ->
+    fun observeSyncProgress(owner: LifecycleOwner, id: UUID) {
+        workManager.getWorkInfoByIdLiveData(id).observe(owner) { workInfo: WorkInfo ->
 
+            var inProgress = false
+            var syncProgress = 0.0F
             var syncCount = 0
             var syncBytes = 0L
             var error = ""
-            var inProgress = true
+
             when (workInfo.state) {
                 WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
                     val output = workInfo.outputData
@@ -190,34 +191,20 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                 else -> {}
             }
 
+
             if (syncBytes > 0) {
-                val progress: Float = syncBytes.toFloat() / uiState.value.diff.size
-                internal.update {
-                    it.copy(
-                        progress = progress,
-                        syncBytes = syncBytes,
-                        inProgress = inProgress
-                    )
-                }
+                syncProgress = syncBytes.toFloat() / uiState.value.diff.size
             }
-            if (syncCount > 0) {
-                internal.update {
-                    it.copy(
-                        syncCount = syncCount,
-                    )
-                }
+            internal.update {
+                it.copy(
+                    inProgress = inProgress,
+                    progress = syncProgress,
+                    syncBytes = syncBytes,
+                    syncCount = syncCount,
+                    error = error
+                )
             }
-
-            if (error.isNotEmpty()) {
-                internal.update {
-
-                    it.copy(
-                        error = error,
-                        inProgress = inProgress
-                    )
-                }
-            }
-        })
+        }
     }
 
     fun sync(): UUID {
@@ -292,7 +279,7 @@ fun SyncRemote(
         sync = {
             viewModel.viewModelScope.launch {
                 val id = viewModel.sync()
-                viewModel.loadSyncStateById(lifeCycleOwner, id)
+                viewModel.observeSyncProgress(lifeCycleOwner, id)
             }
         },
         diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
