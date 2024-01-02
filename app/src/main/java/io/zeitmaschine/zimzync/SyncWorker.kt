@@ -6,6 +6,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 
+const val SYNC_COUNT = "synced"
+const val SYNC_BYTES = "size"
+const val SYNC_ERROR = "error"
+private const val DIFF_TOTAL = "total"
+
 class SyncWorker(
     context: Context,
     workerParameters: WorkerParameters,
@@ -31,9 +36,9 @@ class SyncWorker(
             syncedSize += size
             setProgressAsync(
                 Data.Builder()
-                    .putInt("synced", synced)
-                    .putLong("size", syncedSize)
-                    .putInt("total", total)
+                    .putInt(SYNC_COUNT, synced)
+                    .putLong(SYNC_BYTES, syncedSize)
+                    .putInt(DIFF_TOTAL, total)
                     .build()
             )
             Log.i(TAG, " Progress: $synced / $total Traffic: $syncedSize")
@@ -43,18 +48,18 @@ class SyncWorker(
             syncService.sync(diff, ::progress)
             Result.success(
                 Data.Builder()
-                    .putInt("synced", synced)
-                    .putLong("size", syncedSize)
-                    .putInt("total", total)
+                    .putInt(SYNC_COUNT, synced)
+                    .putLong(SYNC_BYTES, syncedSize)
+                    .putInt(DIFF_TOTAL, total)
                     .build()
             )
         } catch (e: Exception) {
             Result.failure(
                 Data.Builder()
-                    .putInt("synced", synced)
-                    .putLong("size", syncedSize)
-                    .putInt("total", total)
-                    .putString("error", e.message)
+                    .putInt(SYNC_COUNT, synced)
+                    .putLong(SYNC_BYTES, syncedSize)
+                    .putInt(DIFF_TOTAL, total)
+                    .putString(SYNC_ERROR, e.message)
                     .build()
             )
         }

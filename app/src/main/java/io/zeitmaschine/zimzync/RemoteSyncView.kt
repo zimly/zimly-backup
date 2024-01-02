@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -154,38 +155,50 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
                 if (workInfos.size == 1) {
                     val workInfo = workInfos.first()
-                    var synced = 0
+                    var syncCount = 0
+                    var syncBytes = 0L
                     var error = ""
                     var inProgress = true
                     when (workInfo.state) {
                         WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
                             val output = workInfo.outputData
-                            synced = output.getInt("synced", 0)
+                            syncCount = output.getInt(SYNC_COUNT, 0)
+                            syncBytes = output.getLong(SYNC_BYTES, 0)
                             inProgress = false
                         }
 
                         WorkInfo.State.RUNNING -> {
                             val progress = workInfo.progress
-                            synced = progress.getInt("synced", 0)
+                            syncCount = progress.getInt(SYNC_COUNT, 0)
+                            syncBytes = progress.getLong(SYNC_BYTES, 0)
                             inProgress = true
                         }
 
                         WorkInfo.State.FAILED -> {
                             val progress = workInfo.progress
-                            synced = progress.getInt("synced", 0)
-                            error = progress.getString("error")!!
+                            syncCount = progress.getInt(SYNC_COUNT, 0)
+                            syncBytes = progress.getLong(SYNC_BYTES, 0)
+                            error = progress.getString(SYNC_ERROR)!!
                             inProgress = false
                         }
 
                         else -> {}
                     }
 
-                    if (synced > 0) {
-                        var progress: Float = synced.toFloat() / uiState.value.diff.diff.size
+                    if (syncBytes > 0) {
+                        val progress: Float = syncBytes.toFloat() / uiState.value.diff.size
                         internal.update {
                             it.copy(
                                 progress = progress,
+                                syncBytes = syncBytes,
                                 inProgress = inProgress
+                            )
+                        }
+                    }
+                    if (syncCount > 0) {
+                        internal.update {
+                            it.copy(
+                                syncCount = syncCount,
                             )
                         }
                     }
@@ -239,6 +252,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
         var diff: Diff = Diff.EMPTY,
         var progress: Float = 0.0f,
+        var syncBytes: Long = 0,
+        var syncCount: Int = 0,
         var inProgress: Boolean = false,
         var error: String = "",
     )
@@ -383,7 +398,7 @@ private fun SyncCompose(
                 Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
                     Icon(
                         Icons.Outlined.Photo,
-                        "Remote",
+                        "Media",
                         modifier = Modifier.padding(top = 8.dp, end = 8.dp)
                     )
                 }
@@ -418,6 +433,38 @@ private fun SyncCompose(
                     }
                 }
             }
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        Icons.Outlined.Upload,
+                        "Progress",
+                        modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                    )
+                }
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Uploaded")
+                        Text(text = "${state.value.syncCount}")
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Uploaded KB")
+                        Text(text = "${state.value.syncBytes}")
+                    }
+                }
+            }
+
 
             LinearProgressIndicator(
                 progress = state.value.progress,
