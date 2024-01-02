@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class SyncModel(private val dao: RemoteDao, private val remoteId: Int, application: Application) :
     AndroidViewModel(application) {
@@ -142,81 +143,84 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         }
     }
 
-    fun loadSyncState(owner: LifecycleOwner) {
+    fun loadSyncState(lifeCycleOwner: LifecycleOwner) {
         val query = WorkQuery.Builder
             .fromUniqueWorkNames(listOf(uniqueWorkIdentifier))
             .addStates(listOf(WorkInfo.State.RUNNING))
             .build()
+        val running = workManager.getWorkInfos(query).get()
 
-        workManager.getWorkInfosLiveData(query)
-            .observe(owner, Observer { workInfos: List<WorkInfo> ->
-
-                if (workInfos.size > 1) throw Exception("More than one sync running. This should never happen.")
-
-                if (workInfos.size == 1) {
-                    val workInfo = workInfos.first()
-                    var syncCount = 0
-                    var syncBytes = 0L
-                    var error = ""
-                    var inProgress = true
-                    when (workInfo.state) {
-                        WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
-                            val output = workInfo.outputData
-                            syncCount = output.getInt(SYNC_COUNT, 0)
-                            syncBytes = output.getLong(SYNC_BYTES, 0)
-                            inProgress = false
-                        }
-
-                        WorkInfo.State.RUNNING -> {
-                            val progress = workInfo.progress
-                            syncCount = progress.getInt(SYNC_COUNT, 0)
-                            syncBytes = progress.getLong(SYNC_BYTES, 0)
-                            inProgress = true
-                        }
-
-                        WorkInfo.State.FAILED -> {
-                            val progress = workInfo.progress
-                            syncCount = progress.getInt(SYNC_COUNT, 0)
-                            syncBytes = progress.getLong(SYNC_BYTES, 0)
-                            error = progress.getString(SYNC_ERROR)!!
-                            inProgress = false
-                        }
-
-                        else -> {}
-                    }
-
-                    if (syncBytes > 0) {
-                        val progress: Float = syncBytes.toFloat() / uiState.value.diff.size
-                        internal.update {
-                            it.copy(
-                                progress = progress,
-                                syncBytes = syncBytes,
-                                inProgress = inProgress
-                            )
-                        }
-                    }
-                    if (syncCount > 0) {
-                        internal.update {
-                            it.copy(
-                                syncCount = syncCount,
-                            )
-                        }
-                    }
-                    if (error.isNotEmpty()) {
-                        internal.update {
-
-                            it.copy(
-                                error = error,
-                                inProgress = inProgress
-                            )
-                        }
-                    }
-                }
-
-            })
+        when (running.size) {
+            0 -> return
+            1 -> loadSyncStateById(lifeCycleOwner, running.first().id)
+            else -> throw Error("More than one unique sync job in progress. This should not happen.")
+        }
     }
 
-    fun sync() {
+    fun loadSyncStateById(owner: LifecycleOwner, id: UUID) {
+        workManager.getWorkInfoByIdLiveData(id).observe(owner, Observer { workInfo: WorkInfo ->
+
+            var syncCount = 0
+            var syncBytes = 0L
+            var error = ""
+            var inProgress = true
+            when (workInfo.state) {
+                WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
+                    val output = workInfo.outputData
+                    syncCount = output.getInt(SYNC_COUNT, 0)
+                    syncBytes = output.getLong(SYNC_BYTES, 0)
+                    inProgress = false
+                }
+
+                WorkInfo.State.RUNNING -> {
+                    val progress = workInfo.progress
+                    syncCount = progress.getInt(SYNC_COUNT, 0)
+                    syncBytes = progress.getLong(SYNC_BYTES, 0)
+                    inProgress = true
+                }
+
+                WorkInfo.State.FAILED -> {
+                    val progress = workInfo.progress
+                    syncCount = progress.getInt(SYNC_COUNT, 0)
+                    syncBytes = progress.getLong(SYNC_BYTES, 0)
+                    error = progress.getString(SYNC_ERROR)!!
+                    inProgress = false
+                }
+
+                else -> {}
+            }
+
+            if (syncBytes > 0) {
+                val progress: Float = syncBytes.toFloat() / uiState.value.diff.size
+                internal.update {
+                    it.copy(
+                        progress = progress,
+                        syncBytes = syncBytes,
+                        inProgress = inProgress
+                    )
+                }
+            }
+            if (syncCount > 0) {
+                internal.update {
+                    it.copy(
+                        syncCount = syncCount,
+                    )
+                }
+            }
+
+            if (error.isNotEmpty()) {
+                internal.update {
+
+                    it.copy(
+                        error = error,
+                        inProgress = inProgress
+                    )
+                }
+            }
+        })
+    }
+
+    fun sync(): UUID {
         val data = workDataOf(
             SyncConstants.S3_URL to uiState.value.url,
             SyncConstants.S3_KEY to uiState.value.key,
@@ -235,11 +239,13 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             .build()
 
         workManager.enqueueUniqueWork(uniqueWorkIdentifier, ExistingWorkPolicy.KEEP, syncRequest)
+        return syncRequest.id
     }
 
     fun clearError() {
         internal.update { it.copy(error = "") }
     }
+
 
     data class UiState(
         var name: String = "",
@@ -285,8 +291,8 @@ fun SyncRemote(
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
-                viewModel.sync()
-                viewModel.loadSyncState(lifeCycleOwner)
+                val id = viewModel.sync()
+                viewModel.loadSyncStateById(lifeCycleOwner, id)
             }
         },
         diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
