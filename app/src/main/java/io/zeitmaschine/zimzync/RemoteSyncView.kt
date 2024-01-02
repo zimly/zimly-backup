@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.Upload
@@ -336,10 +337,20 @@ private fun SyncCompose(
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            contentDescription = "Localized description"
+                            contentDescription = "Go Back"
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = { edit() }) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            contentDescription = "Edit Remote"
+                        )
+                    }
+
+                }
             )
         },
         snackbarHost = {
@@ -482,15 +493,6 @@ private fun SyncCompose(
             )
             {
                 Text(text = "Sync")
-            }
-            Button(
-                modifier = Modifier.align(Alignment.End),
-                onClick = {
-                    edit()
-                }
-            )
-            {
-                Text(text = "Edit")
             }
         }
     }
