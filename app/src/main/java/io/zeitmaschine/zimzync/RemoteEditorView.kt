@@ -10,6 +10,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -25,6 +27,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -178,6 +182,7 @@ private fun EditorCompose(
     save: () -> Unit,
     back: () -> Unit,
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -250,6 +255,15 @@ private fun EditorCompose(
                 value = state.value.secret,
                 onValueChange = { setSecret(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            if (passwordVisible) "Hide password" else "Show password"
+                        )
+                    }
+                }
             )
             TextField(
                 modifier = Modifier.fillMaxWidth(),
