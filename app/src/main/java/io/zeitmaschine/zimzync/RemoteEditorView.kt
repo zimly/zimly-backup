@@ -3,6 +3,7 @@ package io.zeitmaschine.zimzync
 import android.annotation.SuppressLint
 import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,6 +13,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -19,12 +25,14 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -219,6 +227,7 @@ private fun EditorCompose(
                 }
             )
         }) { innerPadding ->
+
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
@@ -226,86 +235,115 @@ private fun EditorCompose(
                 bottom = innerPadding.calculateBottomPadding()
             ) then Modifier.fillMaxWidth(),
         ) {
-
-            Text(text = "Remote Bucket")
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Name") },
-                value = state.value.name,
-                onValueChange = { setName(it) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            )
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("URL") },
-                value = state.value.url,
-                onValueChange = { setUrl(it) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-            )
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Key") },
-                value = state.value.key,
-                onValueChange = { setKey(it) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            )
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Secret") },
-                value = state.value.secret,
-                onValueChange = { setSecret(it) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            if (passwordVisible) "Hide password" else "Show password"
-                        )
-                    }
-                }
-            )
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Bucket") },
-                value = state.value.bucket,
-                onValueChange = { setBucket(it) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-            )
-
-            Text(text = "Device")
-            var expanded by remember { mutableStateOf(false) }
-
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                TextField(
-                    // The `menuAnchor` modifier must be passed to the text field for correctness.
-                    modifier = Modifier.menuAnchor(),
-                    readOnly = true,
-                    value = state.value.folder,
-                    onValueChange = {},
-                    label = { Text("Folder") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                ) {
-                    state.value.galleries.forEach { gallery ->
-                        DropdownMenuItem(
-                            text = { Text(gallery) },
-                            onClick = {
-                                setFolder(gallery)
-                                expanded = false
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        Icons.Outlined.CloudUpload,
+                        "Media",
+                        modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                    )
+                }
+                Column(modifier = Modifier.padding(16.dp)) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Name") },
+                        value = state.value.name,
+                        onValueChange = { setName(it) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("URL") },
+                        value = state.value.url,
+                        onValueChange = { setUrl(it) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Key") },
+                        value = state.value.key,
+                        onValueChange = { setKey(it) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Secret") },
+                        value = state.value.secret,
+                        onValueChange = { setSecret(it) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        trailingIcon = {
+                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                Icon(
+                                    if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                    if (passwordVisible) "Hide password" else "Show password"
+                                )
+                            }
+                        }
+                    )
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Bucket") },
+                        value = state.value.bucket,
+                        onValueChange = { setBucket(it) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    )
+                }
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+                    Icon(
+                        Icons.Outlined.Photo,
+                        "Media",
+                        modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                    )
+                }
+                Column(modifier = Modifier.padding(16.dp)) {
+
+                    var expanded by remember { mutableStateOf(false) }
+
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = !expanded },
+                    ) {
+                        OutlinedTextField(
+                            // The `menuAnchor` modifier must be passed to the text field for correctness.
+                            modifier = Modifier.menuAnchor() then Modifier.fillMaxWidth(),
+                            readOnly = true,
+                            value = state.value.folder,
+                            onValueChange = {},
+                            label = { Text("Folder") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            colors = ExposedDropdownMenuDefaults.textFieldColors(),
                         )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                        ) {
+                            state.value.galleries.forEach { gallery ->
+                                DropdownMenuItem(
+                                    text = { Text(gallery) },
+                                    onClick = {
+                                        setFolder(gallery)
+                                        expanded = false
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                                )
+                            }
+                        }
                     }
                 }
-
             }
         }
     }
