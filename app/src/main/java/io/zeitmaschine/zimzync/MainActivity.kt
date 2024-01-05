@@ -88,7 +88,8 @@ class MainActivity : ComponentActivity() {
                                     application = application,
                                     remoteDao = remoteDao,
                                     remoteId = remoteId,
-                                    saveEntry = { navController.navigate("remotes-list") }
+                                    saveEntry = { navController.navigate("remotes-list") },
+                                    back = { navController.popBackStack() }
                                 )
                             },
                         )
@@ -104,7 +105,8 @@ class MainActivity : ComponentActivity() {
                                     application = application,
                                     remoteDao = remoteDao,
                                     remoteId = null,
-                                    saveEntry = { navController.navigate("remotes-list")}
+                                    saveEntry = { navController.navigate("remotes-list")},
+                                    back = { navController.popBackStack() }
                                 )
                             },
                         )
@@ -118,7 +120,7 @@ class MainActivity : ComponentActivity() {
                             val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                             remoteId?.let {
-                                SyncRemote(remoteDao, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") }, back=  { navController.popBackStack() })
+                                SyncRemote(remoteDao, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") }, back = { navController.popBackStack() })
                             }
                         }
                     }

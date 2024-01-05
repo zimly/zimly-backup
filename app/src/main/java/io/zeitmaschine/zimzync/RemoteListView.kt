@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
     private var internal: MutableStateFlow<List<Remote>> = MutableStateFlow(emptyList())
+
     // Expose read-only flow
     var uiState: Flow<List<Remote>> = internal.asStateFlow()
 
@@ -36,6 +37,7 @@ class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
             internal.update { fetchAll() }
         }
     }
+
     private suspend fun fetchAll(): List<Remote> {
         return dataStore.getAll()
     }
@@ -65,7 +67,7 @@ fun RemoteComponent(remotes: List<Remote>, openSync: (Int) -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(16.dp)
                     .clickable(onClick = { if (remote.uid != null) openSync(remote.uid) })
             ) {
                 Column {

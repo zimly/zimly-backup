@@ -7,17 +7,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
@@ -135,7 +143,8 @@ fun EditRemote(
             EditorModel(application, remoteDao, remoteId)
         }
     }),
-    saveEntry: () -> Unit
+    saveEntry: () -> Unit,
+    back: () -> Unit,
 ) {
 
     val state = viewModel.state.collectAsState()
@@ -146,7 +155,8 @@ fun EditRemote(
         setKey = viewModel::setKey,
         setSecret = viewModel::setSecret,
         setBucket = viewModel::setBucket,
-        setFolder = viewModel::setFolder
+        setFolder = viewModel::setFolder,
+        back
     ) {
         viewModel.viewModelScope.launch {
             viewModel.save()
@@ -166,94 +176,123 @@ private fun EditorCompose(
     setBucket: (secret: String) -> Unit,
     setFolder: (folder: String) -> Unit,
     save: () -> Unit,
+    back: () -> Unit,
 ) {
 
-
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(all = 16.dp)
-    ) {
-
-        Text(text = "Remote Bucket")
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Name") },
-            value = state.value.name,
-            onValueChange = { setName(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-        )
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("URL") },
-            value = state.value.url,
-            onValueChange = { setUrl(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-        )
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Key") },
-            value = state.value.key,
-            onValueChange = { setKey(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-        )
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Secret") },
-            value = state.value.secret,
-            onValueChange = { setSecret(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        )
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Bucket") },
-            value = state.value.bucket,
-            onValueChange = { setBucket(it) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-        )
-
-        Text(text = "Device")
-        var expanded by remember { mutableStateOf(false) }
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-        ) {
-            TextField(
-                // The `menuAnchor` modifier must be passed to the text field for correctness.
-                modifier = Modifier.menuAnchor(),
-                readOnly = true,
-                value = state.value.folder,
-                onValueChange = {},
-                label = { Text("Folder") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                state.value.galleries.forEach { gallery ->
-                    DropdownMenuItem(
-                        text = { Text(gallery) },
-                        onClick = {
-                            setFolder(gallery)
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
+                title = {
+                    Text(
+                        text = if (state.value.uid != null) state.value.name else "New configuration",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { back() }) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            contentDescription = "Go Back"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { save() }) {
+                        Icon(
+                            imageVector = Icons.Filled.Save,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            contentDescription = "Save or Create Remote"
+                        )
+                    }
+
                 }
-            }
+            )
+        }) { innerPadding ->
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
+                top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding()
+            ) then Modifier.fillMaxWidth(),
+        ) {
 
-        }
+            Text(text = "Remote Bucket")
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Name") },
+                value = state.value.name,
+                onValueChange = { setName(it) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            )
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("URL") },
+                value = state.value.url,
+                onValueChange = { setUrl(it) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+            )
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Key") },
+                value = state.value.key,
+                onValueChange = { setKey(it) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            )
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Secret") },
+                value = state.value.secret,
+                onValueChange = { setSecret(it) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            )
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Bucket") },
+                value = state.value.bucket,
+                onValueChange = { setBucket(it) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            )
 
-        Button(
-            modifier = Modifier.align(Alignment.End),
-            onClick = {
-                save()
+            Text(text = "Device")
+            var expanded by remember { mutableStateOf(false) }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+            ) {
+                TextField(
+                    // The `menuAnchor` modifier must be passed to the text field for correctness.
+                    modifier = Modifier.menuAnchor(),
+                    readOnly = true,
+                    value = state.value.folder,
+                    onValueChange = {},
+                    label = { Text("Folder") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                )
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    state.value.galleries.forEach { gallery ->
+                        DropdownMenuItem(
+                            text = { Text(gallery) },
+                            onClick = {
+                                setFolder(gallery)
+                                expanded = false
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                        )
+                    }
+                }
+
             }
-        )
-        {
-            Text(text = "Save")
         }
     }
 }
@@ -275,6 +314,8 @@ fun EditPreview() {
             setSecret = { secret -> internal.update { it.copy(secret = secret) } },
             setBucket = { bucket -> internal.update { it.copy(bucket = bucket) } },
             setFolder = { folder -> internal.update { it.copy(folder = folder) } },
-        ) {}
+            save = {},
+            back = {},
+        )
     }
 }
