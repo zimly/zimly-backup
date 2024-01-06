@@ -88,7 +88,6 @@ class MainActivity : ComponentActivity() {
                                     application = application,
                                     remoteDao = remoteDao,
                                     remoteId = remoteId,
-                                    saveEntry = { navController.navigate("remotes-list") },
                                     back = { navController.popBackStack() }
                                 )
                             },
@@ -105,7 +104,6 @@ class MainActivity : ComponentActivity() {
                                     application = application,
                                     remoteDao = remoteDao,
                                     remoteId = null,
-                                    saveEntry = { navController.navigate("remotes-list")},
                                     back = { navController.popBackStack() }
                                 )
                             },

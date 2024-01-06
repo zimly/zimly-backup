@@ -153,7 +153,6 @@ fun EditRemote(
             EditorModel(application, remoteDao, remoteId)
         }
     }),
-    saveEntry: () -> Unit,
     back: () -> Unit,
 ) {
 
@@ -166,14 +165,14 @@ fun EditRemote(
         setSecret = viewModel::setSecret,
         setBucket = viewModel::setBucket,
         setFolder = viewModel::setFolder,
+        save = {
+            viewModel.viewModelScope.launch {
+                viewModel.save()
+                back()
+            }
+        },
         back
-    ) {
-        viewModel.viewModelScope.launch {
-            viewModel.save()
-            saveEntry()
-        }
-    }
-}
+    ) }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
