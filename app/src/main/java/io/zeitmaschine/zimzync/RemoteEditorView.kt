@@ -2,6 +2,7 @@ package io.zeitmaschine.zimzync
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -325,6 +326,7 @@ private fun BucketConfiguration(
                 value = state.value.name,
                 onValueChange = { setName(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                isError = state.value.name.isBlank()
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -332,6 +334,7 @@ private fun BucketConfiguration(
                 value = state.value.url,
                 onValueChange = { setUrl(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+                isError = !URLUtil.isValidUrl(state.value.url)
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -339,6 +342,7 @@ private fun BucketConfiguration(
                 value = state.value.key,
                 onValueChange = { setKey(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                isError = state.value.key.isBlank()
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -354,7 +358,8 @@ private fun BucketConfiguration(
                             if (passwordVisible) "Hide password" else "Show password"
                         )
                     }
-                }
+                },
+                isError = state.value.secret.isBlank()
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -362,6 +367,7 @@ private fun BucketConfiguration(
                 value = state.value.bucket,
                 onValueChange = { setBucket(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                isError = state.value.bucket.isBlank()
             )
         }
     }
