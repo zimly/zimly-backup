@@ -65,6 +65,32 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
     // Expose Ui State
     val state: StateFlow<UiState> = internal.asStateFlow()
 
+    val name: Field = Field(
+        update = { value -> internal.update { it.copy(name = value) } },
+        errorMessage = "This field is required.",
+        validate = { internal.value.name.isNotEmpty() })
+    val url: Field = Field(
+        update = { value -> internal.update { it.copy(url = value) } },
+        errorMessage = "Not a valid URL.",
+        validate = { URLUtil.isValidUrl(internal.value.url) })
+    val key: Field = Field(
+        update = { value -> internal.update { it.copy(key = value) } },
+        errorMessage = "This field is required.",
+        validate = { internal.value.key.isNotEmpty() })
+    val secret: Field = Field(
+        update = { value -> internal.update { it.copy(secret = value) } },
+        errorMessage = "This field is required.",
+        validate = { internal.value.secret.isNotEmpty() })
+    val bucket: Field = Field(
+        update = { value -> internal.update { it.copy(bucket = value) } },
+        errorMessage = "This field is required.",
+        validate = { internal.value.bucket.isNotEmpty() })
+    val folder: Field = Field(
+        update = { value -> internal.update { it.copy(folder = value) } },
+        errorMessage = "Select a media gallery to synchronize.",
+        validate = { internal.value.folder.isNotEmpty() })
+
+
     init {
         val galleries = mediaRepo.getBuckets().keys
         internal.update {
@@ -89,31 +115,6 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
             }
         }
     }
-
-    fun setName(name: String) {
-        internal.update { it.copy(name = name) }
-    }
-
-    fun setUrl(url: String) {
-        internal.update { it.copy(url = url) }
-    }
-
-    fun setKey(key: String) {
-        internal.update { it.copy(key = key) }
-    }
-
-    fun setSecret(secret: String) {
-        internal.update { it.copy(secret = secret) }
-    }
-
-    fun setBucket(bucket: String) {
-        internal.update { it.copy(bucket = bucket) }
-    }
-
-    fun setFolder(folder: String) {
-        internal.update { it.copy(folder = folder) }
-    }
-
 
     suspend fun save() {
         val remote = Remote(
@@ -140,8 +141,20 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
         var secret: String = "",
         var bucket: String = "",
         var folder: String = "",
-        var galleries: Set<String> = emptySet()
+        var galleries: Set<String> = emptySet(),
+
+        var errors: Set<String> = emptySet()
     )
+
+    data class Field(
+        val update: (value: String) -> Unit,
+        val validate: () -> Boolean,
+        var errorMessage: String?
+    ) {
+        val error: String? = errorMessage
+            get() = if (!this.validate()) field else null
+
+    }
 }
 
 @Composable
@@ -160,12 +173,12 @@ fun EditRemote(
     val state = viewModel.state.collectAsState()
     EditorCompose(
         state,
-        setName = viewModel::setName,
-        setUrl = viewModel::setUrl,
-        setKey = viewModel::setKey,
-        setSecret = viewModel::setSecret,
-        setBucket = viewModel::setBucket,
-        setFolder = viewModel::setFolder,
+        name = viewModel.name,
+        url = viewModel.url,
+        key = viewModel.key,
+        secret = viewModel.secret,
+        bucket = viewModel.bucket,
+        folder = viewModel.folder,
         save = {
             viewModel.viewModelScope.launch {
                 viewModel.save()
@@ -173,18 +186,19 @@ fun EditRemote(
             }
         },
         back
-    ) }
+    )
+}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EditorCompose(
     state: State<EditorModel.UiState>,
-    setName: (name: String) -> Unit,
-    setUrl: (url: String) -> Unit,
-    setKey: (key: String) -> Unit,
-    setSecret: (secret: String) -> Unit,
-    setBucket: (secret: String) -> Unit,
-    setFolder: (folder: String) -> Unit,
+    name: EditorModel.Field,
+    url: EditorModel.Field,
+    key: EditorModel.Field,
+    secret: EditorModel.Field,
+    bucket: EditorModel.Field,
+    folder: EditorModel.Field,
     save: () -> Unit,
     back: () -> Unit,
 ) {
@@ -232,8 +246,8 @@ private fun EditorCompose(
             ) then Modifier.fillMaxWidth(),
         ) {
 
-            BucketConfiguration(state, setName, setUrl, setKey, setSecret, setBucket)
-            FolderConfiguration(state, setFolder)
+            BucketConfiguration(state, name, url, key, secret, bucket)
+            FolderConfiguration(state, folder)
         }
     }
 }
@@ -242,7 +256,7 @@ private fun EditorCompose(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun FolderConfiguration(
     state: State<EditorModel.UiState>,
-    setFolder: (folder: String) -> Unit
+    folder: EditorModel.Field
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -283,7 +297,7 @@ private fun FolderConfiguration(
                         DropdownMenuItem(
                             text = { Text(gallery) },
                             onClick = {
-                                setFolder(gallery)
+                                folder.update(gallery)
                                 expanded = false
                             },
                             contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -298,11 +312,11 @@ private fun FolderConfiguration(
 @Composable
 private fun BucketConfiguration(
     state: State<EditorModel.UiState>,
-    setName: (name: String) -> Unit,
-    setUrl: (url: String) -> Unit,
-    setKey: (key: String) -> Unit,
-    setSecret: (secret: String) -> Unit,
-    setBucket: (secret: String) -> Unit
+    name: EditorModel.Field,
+    url: EditorModel.Field,
+    key: EditorModel.Field,
+    secret: EditorModel.Field,
+    bucket: EditorModel.Field
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -324,31 +338,35 @@ private fun BucketConfiguration(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Name") },
                 value = state.value.name,
-                onValueChange = { setName(it) },
+                onValueChange = { name.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = state.value.name.isBlank()
+                isError = !name.validate(),
+                supportingText = { name.error?.let { Text(it) } }
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("URL") },
                 value = state.value.url,
-                onValueChange = { setUrl(it) },
+                onValueChange = { url.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                isError = !URLUtil.isValidUrl(state.value.url)
+                isError = !url.validate(),
+                supportingText = { url.error?.let { Text(it) } }
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Key") },
                 value = state.value.key,
-                onValueChange = { setKey(it) },
+                onValueChange = { key.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = state.value.key.isBlank()
+                isError = !key.validate(),
+                supportingText = { key.error?.let { Text(it) } }
+
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Secret") },
                 value = state.value.secret,
-                onValueChange = { setSecret(it) },
+                onValueChange = { secret.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -359,15 +377,17 @@ private fun BucketConfiguration(
                         )
                     }
                 },
-                isError = state.value.secret.isBlank()
+                isError = !secret.validate(),
+                supportingText = { secret.error?.let { Text(it) } }
             )
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Bucket") },
                 value = state.value.bucket,
-                onValueChange = { setBucket(it) },
+                onValueChange = { bucket.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = state.value.bucket.isBlank()
+                isError = !bucket.validate(),
+                supportingText = { bucket.error?.let { Text(it) } }
             )
         }
     }
@@ -381,15 +401,39 @@ fun EditPreview() {
     ZimzyncTheme {
         val internal: MutableStateFlow<EditorModel.UiState> =
             MutableStateFlow(EditorModel.UiState())
+        val name: EditorModel.Field = EditorModel.Field(
+            update = { value -> internal.update { it.copy(name = value) } },
+            errorMessage = "This field is required.",
+            validate = { internal.value.name.isNotEmpty() })
+        val url: EditorModel.Field = EditorModel.Field(
+            update = { value -> internal.update { it.copy(url = value) } },
+            errorMessage = "Not a valid URL.",
+            validate = { URLUtil.isValidUrl(internal.value.url) })
+        val key: EditorModel.Field = EditorModel.Field(
+            update = { value -> internal.update { it.copy(key = value) } },
+            errorMessage = "This field is required.",
+            validate = { internal.value.key.isNotEmpty() })
+        val secret: EditorModel.Field = EditorModel.Field(
+            update = { value -> internal.update { it.copy(secret = value) } },
+            errorMessage = "This field is required.",
+            validate = { internal.value.secret.isNotEmpty() })
+        val bucket: EditorModel.Field = EditorModel.Field(
+            update = { value -> internal.update { it.copy(bucket = value) } },
+            errorMessage = "This field is required.",
+            validate = { internal.value.bucket.isNotEmpty() })
+        val folder: EditorModel.Field = EditorModel.Field(
+            update = { value -> internal.update { it.copy(folder = value) } },
+            errorMessage = "Select a media gallery to synchronize.",
+            validate = { internal.value.folder.isNotEmpty() })
 
         EditorCompose(
             internal.collectAsState(),
-            setName = { name -> internal.update { it.copy(name = name) } },
-            setUrl = { url -> internal.update { it.copy(url = url) } },
-            setKey = { key -> internal.update { it.copy(key = key) } },
-            setSecret = { secret -> internal.update { it.copy(secret = secret) } },
-            setBucket = { bucket -> internal.update { it.copy(bucket = bucket) } },
-            setFolder = { folder -> internal.update { it.copy(folder = folder) } },
+            name,
+            url,
+            key,
+            secret,
+            bucket,
+            folder,
             save = {},
             back = {},
         )
