@@ -33,6 +33,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -117,19 +119,24 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
     }
 
     suspend fun save() {
-        val remote = Remote(
-            internal.value.uid,
-            internal.value.name,
-            internal.value.url,
-            internal.value.key,
-            internal.value.secret,
-            internal.value.bucket,
-            internal.value.folder
-        )
-        if (remote.uid == null) {
-            dao.insert(remote)
-        } else {
-            dao.update(remote)
+        val valid =
+            name.validate() && url.validate() && key.validate() && secret.validate() && bucket.validate() && folder.validate()
+        if (valid) {
+            val remote = Remote(
+                internal.value.uid,
+                internal.value.name,
+                internal.value.url,
+                internal.value.key,
+                internal.value.secret,
+                internal.value.bucket,
+                internal.value.folder
+            )
+            if (remote.uid == null) {
+                dao.insert(remote)
+            } else {
+                dao.update(remote)
+            }
+
         }
     }
 
@@ -146,13 +153,28 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
         var errors: Set<String> = emptySet()
     )
 
-    data class Field(
+    class Field(
         val update: (value: String) -> Unit,
+        val errorMessage: String,
         val validate: () -> Boolean,
-        var errorMessage: String?
+        private var touched: Boolean? = null
     ) {
-        val error: String? = errorMessage
-            get() = if (!this.validate()) field else null
+        fun focus(focus: FocusState) {
+            if (touched == null && focus.hasFocus) {
+                touched = false
+            }
+            if (touched == false && !focus.hasFocus) {
+                touched = true
+            }
+        }
+
+        /*
+        Field should display error if it has been touched and doesn't validate successfully.
+         */
+        fun isError(): Boolean {
+            return touched == true && !validate()
+        }
+
 
     }
 }
@@ -281,7 +303,10 @@ private fun FolderConfiguration(
             ) {
                 OutlinedTextField(
                     // The `menuAnchor` modifier must be passed to the text field for correctness.
-                    modifier = Modifier.menuAnchor() then Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                        .onFocusChanged { folder.focus(it) },
                     readOnly = true,
                     value = state.value.folder,
                     onValueChange = {},
@@ -334,36 +359,44 @@ private fun BucketConfiguration(
             )
         }
         Column(modifier = Modifier.padding(16.dp)) {
+
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .onFocusChanged { name.focus(it) }
+                    .fillMaxWidth(),
                 label = { Text("Name") },
                 value = state.value.name,
                 onValueChange = { name.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = !name.validate(),
-                supportingText = { name.error?.let { Text(it) } }
+                isError = name.isError(),
+                supportingText = { if (name.isError()) Text(name.errorMessage) }
             )
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .onFocusChanged { url.focus(it) }
+                    .fillMaxWidth(),
                 label = { Text("URL") },
                 value = state.value.url,
                 onValueChange = { url.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                isError = !url.validate(),
-                supportingText = { url.error?.let { Text(it) } }
+                isError = url.isError(),
+                supportingText = { if (url.isError()) Text(url.errorMessage) }
             )
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .onFocusChanged { key.focus(it) }
+                    .fillMaxWidth(),
                 label = { Text("Key") },
                 value = state.value.key,
                 onValueChange = { key.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = !key.validate(),
-                supportingText = { key.error?.let { Text(it) } }
-
+                isError = key.isError(),
+                supportingText = { if (key.isError()) Text(key.errorMessage) }
             )
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .onFocusChanged { secret.focus(it) }
+                    .fillMaxWidth(),
                 label = { Text("Secret") },
                 value = state.value.secret,
                 onValueChange = { secret.update(it) },
@@ -377,17 +410,19 @@ private fun BucketConfiguration(
                         )
                     }
                 },
-                isError = !secret.validate(),
-                supportingText = { secret.error?.let { Text(it) } }
+                isError = secret.isError(),
+                supportingText = { if (secret.isError()) Text(secret.errorMessage) }
             )
             OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .onFocusChanged { bucket.focus(it) }
+                    .fillMaxWidth(),
                 label = { Text("Bucket") },
                 value = state.value.bucket,
                 onValueChange = { bucket.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = !bucket.validate(),
-                supportingText = { bucket.error?.let { Text(it) } }
+                isError = bucket.isError(),
+                supportingText = { if (bucket.isError()) Text(bucket.errorMessage) }
             )
         }
     }
