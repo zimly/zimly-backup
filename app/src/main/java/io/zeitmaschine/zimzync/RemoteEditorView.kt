@@ -67,36 +67,23 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
     // Expose Ui State
     val state: StateFlow<UiState> = internal.asStateFlow()
 
-    val name: Field = Field(
-        update = { value -> internal.update { it.copy(name = value) } },
-        errorMessage = "This field is required.",
-        validate = { internal.value.name.isNotEmpty() })
+    val name: Field = Field()
     val url: Field = Field(
-        update = { value -> internal.update { it.copy(url = value) } },
         errorMessage = "Not a valid URL.",
-        validate = { URLUtil.isValidUrl(internal.value.url) })
-    val key: Field = Field(
-        update = { value -> internal.update { it.copy(key = value) } },
-        errorMessage = "This field is required.",
-        validate = { internal.value.key.isNotEmpty() })
-    val secret: Field = Field(
-        update = { value -> internal.update { it.copy(secret = value) } },
-        errorMessage = "This field is required.",
-        validate = { internal.value.secret.isNotEmpty() })
-    val bucket: Field = Field(
-        update = { value -> internal.update { it.copy(bucket = value) } },
-        errorMessage = "This field is required.",
-        validate = { internal.value.bucket.isNotEmpty() })
-    val folder: Field = Field(
-        update = { value -> internal.update { it.copy(folder = value) } },
-        errorMessage = "Select a media gallery to synchronize.",
-        validate = { internal.value.folder.isNotEmpty() })
+        validate = { URLUtil.isValidUrl(it) })
+    val key: Field = Field()
+    val secret: Field = Field()
+    val bucket: Field = Field()
+    val folder: Field = Field(errorMessage = "Select a media gallery to synchronize.")
 
 
     init {
         val galleries = mediaRepo.getBuckets().keys
         internal.update {
-            it.copy(galleries = galleries)
+            it.copy(
+                galleries = galleries,
+                title = "New configuration"
+            )
         }
 
         remoteId?.let {
@@ -106,30 +93,32 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
                 internal.update {
                     it.copy(
                         uid = remote.uid,
-                        name = remote.name,
-                        url = remote.url,
-                        key = remote.key,
-                        secret = remote.secret,
-                        bucket = remote.bucket,
-                        folder = remote.folder,
+                        title = remote.name,
                     )
                 }
+                name.update(remote.name)
+                url.update(remote.url)
+                key.update(remote.key)
+                secret.update(remote.secret)
+                bucket.update(remote.bucket)
+                folder.update(remote.folder)
+
             }
         }
     }
 
     suspend fun save() {
         val valid =
-            name.validate() && url.validate() && key.validate() && secret.validate() && bucket.validate() && folder.validate()
+            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && folder.isValid()
         if (valid) {
             val remote = Remote(
                 internal.value.uid,
-                internal.value.name,
-                internal.value.url,
-                internal.value.key,
-                internal.value.secret,
-                internal.value.bucket,
-                internal.value.folder
+                name.state.value.value, // TODO from state vs internal state?
+                url.state.value.value,
+                key.state.value.value,
+                secret.state.value.value,
+                bucket.state.value.value,
+                folder.state.value.value,
             )
             if (remote.uid == null) {
                 dao.insert(remote)
@@ -142,40 +131,52 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
 
     data class UiState(
         var uid: Int? = null,
-        var name: String = "",
-        var url: String = "",
-        var key: String = "",
-        var secret: String = "",
-        var bucket: String = "",
-        var folder: String = "",
+        var title: String = "",
         var galleries: Set<String> = emptySet(),
-
-        var errors: Set<String> = emptySet()
     )
 
     class Field(
-        val update: (value: String) -> Unit,
-        val errorMessage: String,
-        val validate: () -> Boolean,
-        private var touched: Boolean? = null
+        private val errorMessage: String = "This field is required.",
+        private val validate: (value: String) -> Boolean = { it.isNotEmpty() },
     ) {
+        private var touched: Boolean? = null
+        private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState())
+        val state: StateFlow<FieldState> = internal.asStateFlow()
+
+        fun update(value: String) {
+            internal.update {
+                it.copy(
+                    value = value,
+                    error = if (isError()) errorMessage else null
+                )
+            }
+        }
+
         fun focus(focus: FocusState) {
             if (touched == null && focus.hasFocus) {
                 touched = false
-            }
-            if (touched == false && !focus.hasFocus) {
+            } else if (touched == false && !focus.hasFocus) {
                 touched = true
             }
+            if (isError()) {
+                internal.update {
+                    it.copy(
+                        error = errorMessage
+                    )
+                }
+            }
         }
 
-        /*
-        Field should display error if it has been touched and doesn't validate successfully.
-         */
-        fun isError(): Boolean {
-            return touched == true && !validate()
+        private fun isError(): Boolean {
+            return touched == true && !isValid()
+        }
+
+        fun isValid(): Boolean {
+            return validate(internal.value.value)
         }
 
 
+        data class FieldState(val value: String = "", val error: String? = null)
     }
 }
 
@@ -203,7 +204,7 @@ fun EditRemote(
         folder = viewModel.folder,
         save = {
             viewModel.viewModelScope.launch {
-                viewModel.save()
+                viewModel.save() // TODO callback on success
                 back()
             }
         },
@@ -233,7 +234,7 @@ private fun EditorCompose(
                 ),
                 title = {
                     Text(
-                        text = if (state.value.uid != null) state.value.name else "New configuration",
+                        text = state.value.title,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -268,7 +269,7 @@ private fun EditorCompose(
             ) then Modifier.fillMaxWidth(),
         ) {
 
-            BucketConfiguration(state, name, url, key, secret, bucket)
+            BucketConfiguration(name, url, key, secret, bucket)
             FolderConfiguration(state, folder)
         }
     }
@@ -296,6 +297,7 @@ private fun FolderConfiguration(
         Column(modifier = Modifier.padding(16.dp)) {
 
             var expanded by remember { mutableStateOf(false) }
+            val folderState = folder.state.collectAsState()
 
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -308,7 +310,7 @@ private fun FolderConfiguration(
                         .fillMaxWidth()
                         .onFocusChanged { folder.focus(it) },
                     readOnly = true,
-                    value = state.value.folder,
+                    value = folderState.value.value,
                     onValueChange = {},
                     label = { Text("Folder") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -336,7 +338,6 @@ private fun FolderConfiguration(
 
 @Composable
 private fun BucketConfiguration(
-    state: State<EditorModel.UiState>,
     name: EditorModel.Field,
     url: EditorModel.Field,
     key: EditorModel.Field,
@@ -359,46 +360,51 @@ private fun BucketConfiguration(
             )
         }
         Column(modifier = Modifier.padding(16.dp)) {
+            val nameState = name.state.collectAsState()
+            val urlState = url.state.collectAsState()
+            val keyState = key.state.collectAsState()
+            val secretState = secret.state.collectAsState()
+            val bucketState = bucket.state.collectAsState()
 
             OutlinedTextField(
                 modifier = Modifier
                     .onFocusChanged { name.focus(it) }
                     .fillMaxWidth(),
                 label = { Text("Name") },
-                value = state.value.name,
+                value = nameState.value.value,
                 onValueChange = { name.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = name.isError(),
-                supportingText = { if (name.isError()) Text(name.errorMessage) }
+                isError = nameState.value.error != null,
+                supportingText = { nameState.value.error?.let { Text(it) } }
             )
             OutlinedTextField(
                 modifier = Modifier
                     .onFocusChanged { url.focus(it) }
                     .fillMaxWidth(),
                 label = { Text("URL") },
-                value = state.value.url,
+                value = urlState.value.value,
                 onValueChange = { url.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                isError = url.isError(),
-                supportingText = { if (url.isError()) Text(url.errorMessage) }
+                isError = urlState.value.error != null,
+                supportingText = { urlState.value.error?.let { Text(it) } }
             )
             OutlinedTextField(
                 modifier = Modifier
                     .onFocusChanged { key.focus(it) }
                     .fillMaxWidth(),
                 label = { Text("Key") },
-                value = state.value.key,
+                value = keyState.value.value,
                 onValueChange = { key.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = key.isError(),
-                supportingText = { if (key.isError()) Text(key.errorMessage) }
+                isError = keyState.value.error != null,
+                supportingText = { keyState.value.error?.let { Text(it) } }
             )
             OutlinedTextField(
                 modifier = Modifier
                     .onFocusChanged { secret.focus(it) }
                     .fillMaxWidth(),
                 label = { Text("Secret") },
-                value = state.value.secret,
+                value = secretState.value.value,
                 onValueChange = { secret.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -410,19 +416,19 @@ private fun BucketConfiguration(
                         )
                     }
                 },
-                isError = secret.isError(),
-                supportingText = { if (secret.isError()) Text(secret.errorMessage) }
+                isError = secretState.value.error != null,
+                supportingText = { secretState.value.error?.let { Text(it) } }
             )
             OutlinedTextField(
                 modifier = Modifier
                     .onFocusChanged { bucket.focus(it) }
                     .fillMaxWidth(),
                 label = { Text("Bucket") },
-                value = state.value.bucket,
+                value = bucketState.value.value,
                 onValueChange = { bucket.update(it) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                isError = bucket.isError(),
-                supportingText = { if (bucket.isError()) Text(bucket.errorMessage) }
+                isError = bucketState.value.error != null,
+                supportingText = { bucketState.value.error?.let { Text(it) } }
             )
         }
     }
@@ -437,29 +443,23 @@ fun EditPreview() {
         val internal: MutableStateFlow<EditorModel.UiState> =
             MutableStateFlow(EditorModel.UiState())
         val name: EditorModel.Field = EditorModel.Field(
-            update = { value -> internal.update { it.copy(name = value) } },
             errorMessage = "This field is required.",
-            validate = { internal.value.name.isNotEmpty() })
+            validate = { it.isNotEmpty() })
         val url: EditorModel.Field = EditorModel.Field(
-            update = { value -> internal.update { it.copy(url = value) } },
             errorMessage = "Not a valid URL.",
-            validate = { URLUtil.isValidUrl(internal.value.url) })
+            validate = { URLUtil.isValidUrl(it) })
         val key: EditorModel.Field = EditorModel.Field(
-            update = { value -> internal.update { it.copy(key = value) } },
             errorMessage = "This field is required.",
-            validate = { internal.value.key.isNotEmpty() })
+            validate = { it.isNotEmpty() })
         val secret: EditorModel.Field = EditorModel.Field(
-            update = { value -> internal.update { it.copy(secret = value) } },
             errorMessage = "This field is required.",
-            validate = { internal.value.secret.isNotEmpty() })
+            validate = { it.isNotEmpty() })
         val bucket: EditorModel.Field = EditorModel.Field(
-            update = { value -> internal.update { it.copy(bucket = value) } },
             errorMessage = "This field is required.",
-            validate = { internal.value.bucket.isNotEmpty() })
+            validate = { it.isNotEmpty() })
         val folder: EditorModel.Field = EditorModel.Field(
-            update = { value -> internal.update { it.copy(folder = value) } },
             errorMessage = "Select a media gallery to synchronize.",
-            validate = { internal.value.folder.isNotEmpty() })
+            validate = { it.isNotEmpty() })
 
         EditorCompose(
             internal.collectAsState(),
