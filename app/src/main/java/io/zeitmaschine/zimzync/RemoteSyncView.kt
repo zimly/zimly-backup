@@ -325,10 +325,6 @@ private fun SyncCompose(
     Scaffold(
         topBar = {
             TopAppBar(
-                colors = topAppBarColors(
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ),
                 title = {
                     Text(
                         state.value.name,
@@ -340,7 +336,6 @@ private fun SyncCompose(
                     IconButton(onClick = { back() }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onPrimary,
                             contentDescription = "Go Back"
                         )
                     }
@@ -349,7 +344,6 @@ private fun SyncCompose(
                     IconButton(onClick = { edit() }) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
-                            tint = MaterialTheme.colorScheme.onPrimary,
                             contentDescription = "Edit Remote"
                         )
                     }

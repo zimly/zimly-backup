@@ -228,10 +228,6 @@ private fun EditorCompose(
     Scaffold(
         topBar = {
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = MaterialTheme.colorScheme.primary,
-                ),
                 title = {
                     Text(
                         text = state.value.title,
@@ -243,7 +239,6 @@ private fun EditorCompose(
                     IconButton(onClick = { back() }) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            tint = MaterialTheme.colorScheme.onPrimary,
                             contentDescription = "Go Back"
                         )
                     }
@@ -252,7 +247,6 @@ private fun EditorCompose(
                     IconButton(onClick = { save() }) {
                         Icon(
                             imageVector = Icons.Filled.Save,
-                            tint = MaterialTheme.colorScheme.onPrimary,
                             contentDescription = "Save or Create Remote"
                         )
                     }
@@ -283,7 +277,7 @@ private fun FolderConfiguration(
 ) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -348,7 +342,7 @@ private fun BucketConfiguration(
 
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
