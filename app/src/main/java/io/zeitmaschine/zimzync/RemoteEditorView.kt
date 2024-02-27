@@ -27,9 +27,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -107,7 +110,7 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
         }
     }
 
-    suspend fun save() {
+    suspend fun save(success: () -> Unit) {
         val valid =
             name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && folder.isValid()
         if (valid) {
@@ -125,14 +128,22 @@ class EditorModel(application: Application, private val dao: RemoteDao, remoteId
             } else {
                 dao.update(remote)
             }
-
+            success()
+        } else {
+            internal.update { it.copy(error = "Form has errors, won't save.") }
         }
     }
+
+    fun clearError() {
+        internal.update { it.copy(error = "") }
+    }
+
 
     data class UiState(
         var uid: Int? = null,
         var title: String = "",
         var galleries: Set<String> = emptySet(),
+        var error: String = "",
     )
 
     class Field(
@@ -194,18 +205,23 @@ fun EditRemote(
 ) {
 
     val state = viewModel.state.collectAsState()
+    // want to go nuts?
+    // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
+    val snackbarState = remember { SnackbarHostState() }
+
     EditorCompose(
         state,
+        snackbarState,
         name = viewModel.name,
         url = viewModel.url,
         key = viewModel.key,
         secret = viewModel.secret,
         bucket = viewModel.bucket,
         folder = viewModel.folder,
+        clearError = viewModel::clearError,
         save = {
             viewModel.viewModelScope.launch {
-                viewModel.save() // TODO callback on success
-                back()
+                viewModel.save(back)
             }
         },
         back
@@ -216,15 +232,33 @@ fun EditRemote(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EditorCompose(
     state: State<EditorModel.UiState>,
+    snackbarState: SnackbarHostState,
     name: EditorModel.Field,
     url: EditorModel.Field,
     key: EditorModel.Field,
     secret: EditorModel.Field,
     bucket: EditorModel.Field,
     folder: EditorModel.Field,
+    clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
 ) {
+    // If the UI state contains an error, show snackbar
+    if (state.value.error.isNotEmpty()) {
+        LaunchedEffect(snackbarState) {
+            val result = snackbarState.showSnackbar(
+                message = state.value.error,
+                withDismissAction = true,
+                duration = SnackbarDuration.Indefinite
+            )
+            when (result) {
+                SnackbarResult.Dismissed -> clearError()
+                SnackbarResult.ActionPerformed -> clearError()
+            }
+
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -253,7 +287,11 @@ private fun EditorCompose(
 
                 }
             )
-        }) { innerPadding ->
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarState)
+        }
+    ) { innerPadding ->
 
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -436,6 +474,9 @@ fun EditPreview() {
     ZimzyncTheme {
         val internal: MutableStateFlow<EditorModel.UiState> =
             MutableStateFlow(EditorModel.UiState())
+
+        val snackbarState = remember { SnackbarHostState() }
+
         val name: EditorModel.Field = EditorModel.Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
@@ -457,12 +498,14 @@ fun EditPreview() {
 
         EditorCompose(
             internal.collectAsState(),
+            snackbarState,
             name,
             url,
             key,
             secret,
             bucket,
             folder,
+            clearError = {},
             save = {},
             back = {},
         )
