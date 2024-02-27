@@ -1,9 +1,9 @@
 buildscript {
     ext {
         // https://developer.android.com/jetpack/androidx/releases/compose
-        compose_version = '1.5.1'
+        compose_version = '1.6.2'
         // https://developer.android.com/jetpack/androidx/releases/compose-material3
-        material3_version = '1.1.1'
+        material3_version = '1.2.0'
     }
 }// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
