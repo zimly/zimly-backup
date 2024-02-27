@@ -1,5 +1,6 @@
 package io.zeitmaschine.zimzync.ui.theme
 
+import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -8,7 +9,11 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 
 private val LightColors = lightColorScheme(
@@ -89,9 +94,18 @@ fun ZimzyncTheme(
         darkTheme -> DarkColors
         else -> LightColors
     }
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        val activity = view.context as Activity
+        SideEffect {
+            (view.context as Activity).window.statusBarColor = colors.primary.toArgb()
+            WindowCompat.getInsetsController(activity.window, view).isAppearanceLightStatusBars =
+                darkTheme
+        }
+    }
 
-  MaterialTheme(
-    colorScheme = colors,
-    content = content
-  )
+    MaterialTheme(
+        colorScheme = colors,
+        content = content
+    )
 }
