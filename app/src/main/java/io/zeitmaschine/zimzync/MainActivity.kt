@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ZimzyncTheme {
-                var startDest by remember { mutableStateOf(if (isPermissionGranted()) "remotes-list" else "grant-permission") }
+                val startDest by remember { mutableStateOf(if (isPermissionGranted()) "remotes-list" else "grant-permission") }
                 val navController = rememberNavController()
                 NavHost(navController, startDestination = startDest) {
                     // Grant permission for app
