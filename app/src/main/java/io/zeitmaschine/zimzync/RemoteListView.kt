@@ -14,34 +14,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flow
 
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
-    private var internal: MutableStateFlow<List<Remote>> = MutableStateFlow(emptyList())
-
-    // Expose read-only flow
-    var uiState: Flow<List<Remote>> = internal.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            internal.update { fetchAll() }
-        }
+    val uiState = flow {
+        val items = dataStore.getAll()
+        emit(items)
     }
-
-    private suspend fun fetchAll(): List<Remote> {
-        return dataStore.getAll()
-    }
-
 }
 
 @Composable
