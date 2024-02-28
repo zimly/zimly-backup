@@ -11,18 +11,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -428,18 +428,6 @@ private fun SyncCompose(
                         Text(text = "Diffs / #")
                         Text(text = "${state.value.diff.diff.size} / ${state.value.diff.size}")
                     }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.Absolute.Center
-                    ) {
-
-                        Button(onClick = { diff() }) {
-                            Text(text = "Refresh")
-                        }
-
-                    }
                 }
             }
 
@@ -486,12 +474,31 @@ private fun SyncCompose(
 
             Column(
             ) {
-                ExtendedFloatingActionButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { sync() },
-                    icon = { Icon(Icons.Filled.Upload, "Upload media") },
-                    text = { Text(text = "Upload") },
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(
+                        onClick = diff,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            disabledContentColor = MaterialTheme.colorScheme.onSurface),
+                    ) {
+                        Text(text = "Refresh")
+                    }
+                    Button(
+                        onClick = sync,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = "Upload")
+                    }
+                }
+
             }
 
 
