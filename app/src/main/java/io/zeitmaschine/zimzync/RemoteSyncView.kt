@@ -25,7 +25,6 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -33,7 +32,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -61,6 +59,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
+import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -383,9 +382,7 @@ private fun SyncCompose(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                ),
+                colors = CardDefaults.cardColors(containerColor = containerBackground()),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
@@ -414,7 +411,7 @@ private fun SyncCompose(
             }
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    containerColor = containerBackground(),
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -459,7 +456,7 @@ private fun SyncCompose(
 
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    containerColor = containerBackground(),
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {

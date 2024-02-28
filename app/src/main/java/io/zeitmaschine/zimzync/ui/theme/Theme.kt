@@ -109,3 +109,7 @@ fun ZimzyncTheme(
         content = content
     )
 }
+
+@Composable
+fun containerBackground(darkTheme: Boolean = isSystemInDarkTheme()) =
+    if (darkTheme) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surfaceContainerLowest

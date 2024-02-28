@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
+import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.flow.flow
 
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
@@ -61,14 +62,14 @@ fun RemoteComponent(remotes: List<Remote>, openSync: (Int) -> Unit,) {
                 modifier = Modifier
                     // Note: Order matters!
                     .clip(RoundedCornerShape(12.dp))
-                    .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
+                    .background(color = containerBackground())
                     .fillMaxWidth()
                     .clickable(onClick = { if (remote.uid != null) openSync(remote.uid) })
                     .padding(16.dp)
                 ) {
                 Column {
-                    Text(remote.name)
-                    Text(remote.url)
+                    Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
+                    Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
