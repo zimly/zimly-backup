@@ -26,7 +26,16 @@ class SyncWorker(
 
         val contentBuckets =
             inputData.getStringArray(SyncConstants.DEVICE_FOLDER)?.toSet() ?: emptySet()
-        val diff = syncService.diffA(contentBuckets)
+
+        val diff = try {
+            syncService.diffA(contentBuckets)
+        } catch (e: Exception) {
+            return Result.failure(
+                Data.Builder()
+                    .putString(SYNC_ERROR, e.message)
+                    .build()
+            )
+        }
 
         val total = diff.diff.size
         var synced = 0

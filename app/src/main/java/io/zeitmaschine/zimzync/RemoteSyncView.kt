@@ -183,10 +183,10 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                 }
 
                 WorkInfo.State.FAILED -> {
-                    val progress = workInfo.progress
-                    syncCount = progress.getInt(SYNC_COUNT, 0)
-                    syncBytes = progress.getLong(SYNC_BYTES, 0)
-                    error = progress.getString(SYNC_ERROR)!!
+                    val output = workInfo.outputData
+                    syncCount = output.getInt(SYNC_COUNT, 0)
+                    syncBytes = output.getLong(SYNC_BYTES, 0)
+                    error = output.getString(SYNC_ERROR) ?: "Unknown error."
                     inProgress = false
                 }
 
