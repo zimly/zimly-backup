@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.Upload
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.BottomAppBarDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -350,27 +348,6 @@ private fun SyncCompose(
                 }
             )
         },
-        bottomBar = {
-            BottomAppBar(
-                actions = {
-                    IconButton(onClick = { diff() }) {
-                        Icon(
-                            Icons.Filled.Refresh,
-                            contentDescription = "Calculate diff",
-                        )
-                    }
-                },
-                floatingActionButton = {
-                    ExtendedFloatingActionButton(
-                        containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
-                        onClick = { sync() },
-                        icon = { Icon(Icons.Filled.Upload, "Upload media") },
-                        text = { Text(text = "Upload") },
-                    )
-
-                }
-            )
-        },
         snackbarHost = {
             SnackbarHost(hostState = snackbarState)
         }) { innerPadding ->
@@ -451,6 +428,18 @@ private fun SyncCompose(
                         Text(text = "Diffs / #")
                         Text(text = "${state.value.diff.diff.size} / ${state.value.diff.size}")
                     }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.Absolute.Center
+                    ) {
+
+                        Button(onClick = { diff() }) {
+                            Text(text = "Refresh")
+                        }
+
+                    }
                 }
             }
 
@@ -491,9 +480,18 @@ private fun SyncCompose(
                             progress = { state.value.progress },
                             modifier = Modifier.fillMaxWidth()
                         )
-
                     }
                 }
+            }
+
+            Column(
+            ) {
+                ExtendedFloatingActionButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { sync() },
+                    icon = { Icon(Icons.Filled.Upload, "Upload media") },
+                    text = { Text(text = "Upload") },
+                )
             }
 
 
