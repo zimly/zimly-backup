@@ -79,7 +79,17 @@ fun RemoteComponent(remotes: List<Remote>, openSync: (Int) -> Unit,) {
 @Composable
 fun DefaultPreview() {
     ZimzyncTheme {
-        val remotes = emptyList<Remote>()
+        val remotes = generateSequence(0) { it + 1 }.take(10).map {
+            Remote(
+                uid = it,
+                name = "test $it",
+                url = "https://blob.rawbot.zone/$it",
+                key = "key",
+                secret = "secret",
+                bucket = "bucket-name",
+                folder = "Pictures"
+            )
+        }.toList()
 
         RemoteComponent(remotes = remotes, openSync = {})
     }
