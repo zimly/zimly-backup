@@ -1,16 +1,22 @@
 package io.zeitmaschine.zimzync
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -37,23 +43,29 @@ fun RemoteScreen(
             MainViewModel(remoteDao)
         }
     }),
-    openSync: (Int) -> Unit
+    openSync: (Int) -> Unit,
 ) {
     val remotes = viewModel.uiState.collectAsState(initial = emptyList())
     RemoteComponent(remotes = remotes.value, openSync = openSync)
 }
 
 @Composable
-fun RemoteComponent(remotes: List<Remote>, openSync: (Int) -> Unit) {
+fun RemoteComponent(remotes: List<Remote>, openSync: (Int) -> Unit,) {
 
-    LazyColumn {
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         items(remotes) { remote ->
             Box(
                 modifier = Modifier
+                    // Note: Order matters!
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(color = MaterialTheme.colorScheme.surfaceContainerLow)
                     .fillMaxWidth()
-                    .padding(16.dp)
                     .clickable(onClick = { if (remote.uid != null) openSync(remote.uid) })
-            ) {
+                    .padding(16.dp)
+                ) {
                 Column {
                     Text(remote.name)
                     Text(remote.url)
