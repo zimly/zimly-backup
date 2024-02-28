@@ -482,14 +482,21 @@ private fun SyncCompose(
                         Text(text = "Uploaded KB")
                         Text(text = "${state.value.syncBytes}")
                     }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                    ) {
+                        LinearProgressIndicator(
+                            progress = { state.value.progress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                    }
                 }
             }
 
 
-            LinearProgressIndicator(
-                progress = state.value.progress,
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
