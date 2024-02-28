@@ -384,7 +384,7 @@ private fun SyncCompose(
         ) {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -414,7 +414,7 @@ private fun SyncCompose(
             }
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -459,7 +459,7 @@ private fun SyncCompose(
 
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
