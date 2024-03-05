@@ -3,6 +3,7 @@ package io.zeitmaschine.zimzync
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -42,20 +43,29 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController, startDestination = startDest) {
                     // Grant permission for app
                     // https://stackoverflow.com/questions/60608101/how-request-permissions-with-jetpack-compose
-                    // https://semicolonspace.com/jetpack-compose-request-permissions/#rememberLauncherForActivityResult
                     composable("grant-permission") {
                         val permissionLauncher = rememberLauncherForActivityResult(
                             ActivityResultContracts.RequestMultiplePermissions()
                         ) { isGranted ->
-                            if (isGranted[Manifest.permission.READ_MEDIA_IMAGES] == true && isGranted[Manifest.permission.READ_MEDIA_VIDEO] == true && isGranted[Manifest.permission.ACCESS_MEDIA_LOCATION] == true) {
+
+                            // Lookup and compare the granted permission
+                            val granted = getPermissions()
+                                .map { permission -> isGranted[permission] }
+                                .reduce { granted, permission -> granted == true && permission == true }
+
+                            if (granted == true) {
                                 Log.i(localClassName, "Permissions granted")
                                 navController.navigate("remotes-list")
                             } else {
+                                // TODO Implement some sort of informative screen, that the user
+                                // needs to grant permissions for the app to work.
                                 Log.i(localClassName, "PERMISSION DENIED")
                             }
                         }
                         SideEffect {
-                            permissionLauncher.launch(arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO, Manifest.permission.ACCESS_MEDIA_LOCATION))
+                            permissionLauncher.launch(
+                                getPermissions()
+                            )
                         }
                     }
 
@@ -117,21 +127,53 @@ class MainActivity : ComponentActivity() {
                             val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                             remoteId?.let {
-                                SyncRemote(remoteDao, remoteId, application = application, edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") }, back = { navController.popBackStack() })
+                                SyncRemote(
+                                    remoteDao,
+                                    remoteId,
+                                    application = application,
+                                    edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
+                                    back = { navController.popBackStack() })
                             }
                         }
                     }
-
                 }
             }
         }
     }
 
-    // check initially if the permission is granted
+    // Check initially if the permission is granted
     private fun isPermissionGranted(): Boolean {
-        val location = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_MEDIA_LOCATION) == PackageManager.PERMISSION_GRANTED
-        val photos = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
-        val videos = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED
-        return photos && videos && location
+        val granted = getPermissions()
+            .map { permission ->
+                ContextCompat.checkSelfPermission(
+                    this,
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+            .reduce { granted, permission -> granted && permission }
+
+        return granted
+    }
+
+    /*
+     * Returns the needed permissions based on Android SDK version.
+     * Changes were introduced to the media permissions in API 33+
+     */
+    private fun getPermissions(): Array<String> {
+        val permissions = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            // Compatibility with older versions
+            arrayOf(
+                Manifest.permission.ACCESS_MEDIA_LOCATION,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
+        } else {
+            // New permissions
+            arrayOf(
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.ACCESS_MEDIA_LOCATION
+            )
+        }
+        return permissions
     }
 }
