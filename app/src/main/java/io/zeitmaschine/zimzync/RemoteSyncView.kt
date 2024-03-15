@@ -34,16 +34,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -58,13 +58,19 @@ import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SyncModel(private val dao: RemoteDao, private val remoteId: Int, application: Application) :
     AndroidViewModel(application) {
 
@@ -81,8 +87,12 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     private val contentResolver by lazy { application.contentResolver }
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
-
     var uiState: StateFlow<UiState> = internal.asStateFlow()
+
+    private val _syncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
+
+    // TODO Don't expose Flow to composable
+    var progressState: Flow<Progress> = _syncId.filterNotNull().flatMapConcat { observeSyncProgress(it) }
 
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
@@ -93,6 +103,10 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     init {
         viewModelScope.launch {
             val remote = dao.loadById(remoteId)
+
+            // TODO move to compose lifecycle
+            loadSyncState().let { _syncId.update{ it } }
+
             internal.update {
                 it.copy(
                     name = remote.name,
@@ -144,68 +158,57 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         }
     }
 
-    fun loadSyncState(lifeCycleOwner: LifecycleOwner) {
+    // TODO https://code.luasoftware.com/tutorials/android/jetpack-compose-load-data
+    private fun loadSyncState(): UUID? {
         val query = WorkQuery.Builder
             .fromUniqueWorkNames(listOf(uniqueWorkIdentifier))
             .addStates(listOf(WorkInfo.State.RUNNING))
             .build()
         val running = workManager.getWorkInfos(query).get()
 
-        when (running.size) {
-            0 -> return
-            1 -> observeSyncProgress(lifeCycleOwner, running.first().id)
+        return when (running.size) {
+            0 -> null // empty
+            1 -> running.first().id
             else -> throw Error("More than one unique sync job in progress. This should not happen.")
         }
     }
 
-    fun observeSyncProgress(owner: LifecycleOwner, id: UUID) {
-        workManager.getWorkInfoByIdLiveData(id).observe(owner) { workInfo: WorkInfo ->
+    private fun observeSyncProgress(id: UUID): Flow<Progress> {
+        return workManager.getWorkInfoByIdFlow(id).map { workInfo ->
 
-            var inProgress = false
-            var syncProgress = 0.0F
-            var syncCount = 0
-            var syncBytes = 0L
-            var error = ""
+            val progressState = Progress()
 
             when (workInfo.state) {
                 WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
                     val output = workInfo.outputData
-                    syncCount = output.getInt(SYNC_COUNT, 0)
-                    syncBytes = output.getLong(SYNC_BYTES, 0)
-                    inProgress = false
+                    progressState.syncCount = output.getInt(SYNC_COUNT, 0)
+                    progressState.syncBytes = output.getLong(SYNC_BYTES, 0)
+                    progressState.inProgress = false
                 }
 
                 WorkInfo.State.RUNNING -> {
                     val progress = workInfo.progress
-                    syncCount = progress.getInt(SYNC_COUNT, 0)
-                    syncBytes = progress.getLong(SYNC_BYTES, 0)
-                    inProgress = true
+                    progressState.syncCount = progress.getInt(SYNC_COUNT, 0)
+                    progressState.syncBytes = progress.getLong(SYNC_BYTES, 0)
+                    progressState.inProgress = true
                 }
 
                 WorkInfo.State.FAILED -> {
                     val output = workInfo.outputData
-                    syncCount = output.getInt(SYNC_COUNT, 0)
-                    syncBytes = output.getLong(SYNC_BYTES, 0)
-                    error = output.getString(SYNC_ERROR) ?: "Unknown error."
-                    inProgress = false
+                    progressState.syncCount = output.getInt(SYNC_COUNT, 0)
+                    progressState.syncBytes = output.getLong(SYNC_BYTES, 0)
+                    progressState.error = output.getString(SYNC_ERROR) ?: "Unknown error."
+                    progressState.inProgress = false
                 }
 
                 else -> {}
             }
 
-
-            if (syncBytes > 0) {
-                syncProgress = syncBytes.toFloat() / uiState.value.diff.size
+            if (progressState.syncBytes > 0) {
+                progressState.percentage =
+                    progressState.syncBytes.toFloat() / uiState.value.diff.size
             }
-            internal.update {
-                it.copy(
-                    inProgress = inProgress,
-                    progress = syncProgress,
-                    syncBytes = syncBytes,
-                    syncCount = syncCount,
-                    error = error
-                )
-            }
+            progressState
         }
     }
 
@@ -228,6 +231,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             .build()
 
         workManager.enqueueUniqueWork(uniqueWorkIdentifier, ExistingWorkPolicy.KEEP, syncRequest)
+        _syncId.update { syncRequest.id }
+
         return syncRequest.id
     }
 
@@ -246,7 +251,11 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         var folder: String = "",
 
         var diff: Diff = Diff.EMPTY,
-        var progress: Float = 0.0f,
+        var error: String = "",
+    )
+
+    data class Progress(
+        var percentage: Float = 0.0f,
         var syncBytes: Long = 0,
         var syncCount: Int = 0,
         var inProgress: Boolean = false,
@@ -266,7 +275,6 @@ fun SyncRemote(
             SyncModel(dao, remoteId, application)
         }
     }),
-    lifeCycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
 ) {
     val state = viewModel.uiState.collectAsState()
 
@@ -274,14 +282,15 @@ fun SyncRemote(
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
 
-    viewModel.loadSyncState(lifeCycleOwner)
+    val progressState by viewModel.progressState.collectAsStateWithLifecycle(SyncModel.Progress())
+
     SyncCompose(
         state,
+        progressState,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
-                val id = viewModel.sync()
-                viewModel.observeSyncProgress(lifeCycleOwner, id)
+                viewModel.sync()
             }
         },
         diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
@@ -295,6 +304,7 @@ fun SyncRemote(
 @Composable
 private fun SyncCompose(
     state: State<SyncModel.UiState>,
+    progress: SyncModel.Progress,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
     diff: () -> Unit,
@@ -450,14 +460,14 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded")
-                        Text(text = "${state.value.syncCount}")
+                        Text(text = "${progress.syncCount}")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded KB")
-                        Text(text = "${state.value.syncBytes}")
+                        Text(text = "${progress.syncBytes}")
                     }
                     Row(
                         modifier = Modifier
@@ -465,7 +475,7 @@ private fun SyncCompose(
                             .padding(top = 16.dp)
                     ) {
                         LinearProgressIndicator(
-                            progress = { state.value.progress },
+                            progress = { progress.percentage },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -487,7 +497,8 @@ private fun SyncCompose(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
                             contentColor = MaterialTheme.colorScheme.onSurface,
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            disabledContentColor = MaterialTheme.colorScheme.onSurface),
+                            disabledContentColor = MaterialTheme.colorScheme.onSurface
+                        ),
                     ) {
                         Text(text = "Refresh")
                     }
@@ -518,8 +529,8 @@ fun SyncPreview() {
         secret = "testtest",
         bucket = "test-bucket",
         diff = Diff.EMPTY,
-        inProgress = false,
     )
+    val progressState = SyncModel.Progress()
     val internal: MutableStateFlow<SyncModel.UiState> = MutableStateFlow(uiState)
     val snackbarState = remember { SnackbarHostState() }
 
@@ -527,6 +538,7 @@ fun SyncPreview() {
     ZimzyncTheme {
         SyncCompose(
             state = internal.collectAsState(),
+            progressState,
             sync = {},
             diff = {},
             edit = {},

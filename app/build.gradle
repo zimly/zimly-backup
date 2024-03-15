@@ -63,6 +63,7 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation 'androidx.activity:activity-compose:1.8.2'
     implementation 'androidx.compose.material:material-icons-extended:1.6.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.7.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.testcontainers:testcontainers:1.19.6'
     testImplementation 'io.mockk:mockk:1.13.9'
