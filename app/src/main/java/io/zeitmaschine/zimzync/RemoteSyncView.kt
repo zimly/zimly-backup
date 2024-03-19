@@ -96,8 +96,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
-    private lateinit var s3Repo: S3Repository
-    private lateinit var syncService: SyncService
     private lateinit var contentBuckets: Set<String>
 
     init {
@@ -118,8 +116,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                 )
             }
             try {
-                s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
-                syncService = SyncServiceImpl(s3Repo, mediaRepo)
                 contentBuckets = mediaRepo.getBuckets().keys
             } catch (e: Exception) {
                 // TODO: Exception handling in a lateinit block, inside a viewModelFactory, inside a
@@ -136,6 +132,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     suspend fun createDiff() {
 
+        val s3Repo = MinioRepository(internal.value.url, internal.value.key, internal.value.secret, internal.value.bucket)
+        val syncService = SyncServiceImpl(s3Repo, mediaRepo)
         // Display result of the minio request to the user
         when (val result = syncService.diff(setOf(uiState.value.folder))) {
             is Result.Success<Diff> -> {
