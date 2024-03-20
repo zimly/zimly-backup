@@ -32,10 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -61,11 +60,13 @@ import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -86,13 +87,36 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         WorkManager.getInstance(getApplication<Application>().applicationContext)
 
     private val contentResolver by lazy { application.contentResolver }
-    private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
-    var uiState: StateFlow<UiState> = internal.asStateFlow()
+
+    private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _diff: MutableStateFlow<Diff> = MutableStateFlow(Diff.EMPTY)
+    val diff: StateFlow<Diff> = _diff.asStateFlow()
+
+    var remoteState: StateFlow<RemoteState> = snapshotFlow { remoteId }
+        .map { dao.loadById(it) }
+        .map {
+            RemoteState(
+                name = it.name,
+                url = it.url,
+                bucket = it.bucket,
+                key = it.key,
+                secret = it.secret,
+                folder = it.folder
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = RemoteState(),
+        )
 
     private val _syncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
 
     // TODO Don't expose Flow to composable
-    var progressState: Flow<Progress> = _syncId.filterNotNull().flatMapConcat { observeSyncProgress(it) }
+    var progressState: Flow<Progress> =
+        _syncId.filterNotNull().flatMapConcat { observeSyncProgress(it) }
 
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
@@ -100,58 +124,35 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     init {
         viewModelScope.launch {
-            val remote = dao.loadById(remoteId)
+            // TODO
+            loadSyncState().let { _syncId.update { it } }
 
-            // TODO move to compose lifecycle
-            loadSyncState().let { _syncId.update{ it } }
-
-            internal.update {
-                it.copy(
-                    name = remote.name,
-                    url = remote.url,
-                    bucket = remote.bucket,
-                    key = remote.key,
-                    secret = remote.secret,
-                    folder = remote.folder,
-                )
-            }
             try {
                 contentBuckets = mediaRepo.getBuckets().keys
             } catch (e: Exception) {
                 // TODO: Exception handling in a lateinit block, inside a viewModelFactory, inside a
                 //  NavHost Composable? Some global error handling?
                 Log.e(TAG, "Failed to initialize minio repo: ${e.message}", e)
-                internal.update {
-                    it.copy(
-                        error = e.message ?: "Unknown error.",
-                    )
-                }
+                _error.update { e.message ?: "Unknown error." }
             }
         }
     }
 
     suspend fun createDiff() {
 
-        val s3Repo = MinioRepository(internal.value.url, internal.value.key, internal.value.secret, internal.value.bucket)
+        val remote = dao.loadById(remoteId)
+        val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
         val syncService = SyncServiceImpl(s3Repo, mediaRepo)
         // Display result of the minio request to the user
-        when (val result = syncService.diff(setOf(uiState.value.folder))) {
+        when (val result = syncService.diff(setOf(remote.folder))) {
             is Result.Success<Diff> -> {
-                internal.update {
-                    it.copy(
-                        diff = result.data
-                    )
-                }
+                _diff.update { result.data }
             }
 
             is Result.Error -> {
                 Log.e(TAG, "Failed to create diff.", result.exception)
 
-                internal.update {
-                    it.copy(
-                        error = result.exception.message ?: "Unknown error.",
-                    )
-                }
+                _error.update { result.exception.message ?: "Unknown error." }
             }
         }
     }
@@ -204,19 +205,20 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
             if (progressState.syncBytes > 0) {
                 progressState.percentage =
-                    progressState.syncBytes.toFloat() / uiState.value.diff.size
+                    progressState.syncBytes.toFloat() / diff.value.size
             }
             progressState
         }
     }
 
-    fun sync(): UUID {
+    suspend fun sync(): UUID {
+        val remote = dao.loadById(remoteId)
         val data = workDataOf(
-            SyncConstants.S3_URL to uiState.value.url,
-            SyncConstants.S3_KEY to uiState.value.key,
-            SyncConstants.S3_SECRET to uiState.value.secret,
-            SyncConstants.S3_BUCKET to uiState.value.bucket,
-            SyncConstants.DEVICE_FOLDER to arrayOf(uiState.value.folder)
+            SyncConstants.S3_URL to remote.url,
+            SyncConstants.S3_KEY to remote.key,
+            SyncConstants.S3_SECRET to remote.secret,
+            SyncConstants.S3_BUCKET to remote.bucket,
+            SyncConstants.DEVICE_FOLDER to arrayOf(remote.folder)
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -235,21 +237,16 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     }
 
     fun clearError() {
-        internal.update { it.copy(error = "") }
+        _error.update { null }
     }
 
-
-    data class UiState(
+    data class RemoteState(
         var name: String = "",
         var url: String = "",
         var key: String = "",
         var secret: String = "",
         var bucket: String = "",
-
         var folder: String = "",
-
-        var diff: Diff = Diff.EMPTY,
-        var error: String = "",
     )
 
     data class Progress(
@@ -274,24 +271,29 @@ fun SyncRemote(
         }
     }),
 ) {
-    val state = viewModel.uiState.collectAsState()
+
+    val remote by viewModel.remoteState.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val diff by viewModel.diff.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
 
-    val progressState by viewModel.progressState.collectAsStateWithLifecycle(SyncModel.Progress())
+    val progress by viewModel.progressState.collectAsStateWithLifecycle(SyncModel.Progress())
 
     SyncCompose(
-        state,
-        progressState,
+        remote,
+        error,
+        diff = diff,
+        progress,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
                 viewModel.sync()
             }
         },
-        diff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
+        createDiff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
         edit = { edit(remoteId) },
         back,
         clearError = { viewModel.clearError() }
@@ -301,20 +303,22 @@ fun SyncRemote(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SyncCompose(
-    state: State<SyncModel.UiState>,
+    remote: SyncModel.RemoteState,
+    error: String?,
+    diff: Diff,
     progress: SyncModel.Progress,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
-    diff: () -> Unit,
+    createDiff: () -> Unit,
     edit: () -> Unit,
     back: () -> Unit,
     clearError: () -> Unit
 ) {
     // If the UI state contains an error, show snackbar
-    if (state.value.error.isNotEmpty()) {
+    if (!error.isNullOrEmpty()) {
         LaunchedEffect(snackbarState) {
             val result = snackbarState.showSnackbar(
-                message = state.value.error,
+                message = error,
                 withDismissAction = true,
                 duration = SnackbarDuration.Indefinite
             )
@@ -332,7 +336,7 @@ private fun SyncCompose(
             TopAppBar(
                 title = {
                     Text(
-                        state.value.name,
+                        remote.name,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -383,14 +387,14 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "URL", textAlign = TextAlign.Left)
-                        Text(state.value.url, textAlign = TextAlign.Right)
+                        Text(remote.url, textAlign = TextAlign.Right)
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Bucket", textAlign = TextAlign.Left)
-                        Text(state.value.bucket)
+                        Text(remote.bucket)
                     }
                 }
             }
@@ -413,28 +417,28 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Remotes")
-                        Text(text = "${state.value.diff.remotes.size}")
+                        Text(text = "${diff.remotes.size}")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Folder")
-                        Text(text = state.value.folder)
+                        Text(text = remote.folder)
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Locales")
-                        Text(text = "${state.value.diff.locals.size}")
+                        Text(text = "${diff.locals.size}")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Diffs / #")
-                        Text(text = "${state.value.diff.diff.size} / ${state.value.diff.size}")
+                        Text(text = "${diff.diff.size} / ${diff.size}")
                     }
                 }
             }
@@ -489,7 +493,7 @@ private fun SyncCompose(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
-                        onClick = diff,
+                        onClick = createDiff,
                         modifier = Modifier.weight(1f),
                         colors = ButtonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -520,25 +524,26 @@ private fun SyncCompose(
 @Composable
 fun SyncPreview() {
 
-    val uiState = SyncModel.UiState(
+    val remote = SyncModel.RemoteState(
         name = "zeitmaschine.io",
         url = "http://10.0.2.2:9000",
         key = "test",
         secret = "testtest",
         bucket = "test-bucket",
-        diff = Diff.EMPTY,
+        folder = "Camera"
     )
     val progressState = SyncModel.Progress()
-    val internal: MutableStateFlow<SyncModel.UiState> = MutableStateFlow(uiState)
     val snackbarState = remember { SnackbarHostState() }
 
 
     ZimzyncTheme {
         SyncCompose(
-            state = internal.collectAsState(),
+            remote = remote,
+            error = null,
+            diff = Diff.EMPTY,
             progressState,
             sync = {},
-            diff = {},
+            createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
