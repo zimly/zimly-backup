@@ -25,3 +25,4 @@ jobs:
           packageName: io.zeitmaschine.zimzync
           releaseFiles: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
           track: alpha
+          whatsNewDirectory: release-notes
