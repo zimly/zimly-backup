@@ -64,8 +64,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -87,9 +88,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         WorkManager.getInstance(getApplication<Application>().applicationContext)
 
     private val contentResolver by lazy { application.contentResolver }
-
-    private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _diff: MutableStateFlow<Diff> = MutableStateFlow(Diff.EMPTY)
     val diff: StateFlow<Diff> = _diff.asStateFlow()
@@ -116,7 +114,18 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     // TODO Don't expose Flow to composable
     var progressState: Flow<Progress> =
-        _syncId.filterNotNull().flatMapConcat { observeSyncProgress(it) }
+        _syncId.filterNotNull().flatMapLatest { observeSyncProgress(it) }
+
+    // mutable error flow, for manually triggered errors
+    private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
+
+    // Merge errors from progress and manually triggered errors into one observable for the UI
+    // TODO there's still a corner case where _error doesn't emit?
+    val error: StateFlow<String?> = merge(_error, progressState.map { it.error }).stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = null,
+    )
 
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
@@ -173,7 +182,9 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     }
 
     private fun observeSyncProgress(id: UUID): Flow<Progress> {
-        return workManager.getWorkInfoByIdFlow(id).map { workInfo ->
+        return workManager.getWorkInfoByIdFlow(id)
+            .filterNotNull()
+            .map { workInfo ->
 
             val progressState = Progress()
 
@@ -211,6 +222,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         }
     }
 
+    // TODO check error handling!
     suspend fun sync(): UUID {
         val remote = dao.loadById(remoteId)
         val data = workDataOf(
