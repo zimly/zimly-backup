@@ -65,8 +65,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -110,22 +112,36 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             initialValue = RemoteState(),
         )
 
-    private val _syncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
+    // Flow created when starting the sync
+    private val _startedSyncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
 
-    // TODO Don't expose Flow to composable
-    var progressState: Flow<Progress> =
-        _syncId.filterNotNull().flatMapLatest { observeSyncProgress(it) }
+    // Flow for already running sync jobs
+    private val _runningSyncId: Flow<UUID?> = flow { loadSyncState() }
+
+    // merge the flows for and observe
+    var progressState: StateFlow<Progress> =
+        merge(_runningSyncId, _startedSyncId)
+            .onEach { Log.i(TAG, "syncId: $it") }
+            .filterNotNull()
+            .flatMapLatest { observeSyncProgress(it) }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = Progress(),
+            )
+
 
     // mutable error flow, for manually triggered errors
     private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
 
     // Merge errors from progress and manually triggered errors into one observable for the UI
     // TODO there's still a corner case where _error doesn't emit?
-    val error: StateFlow<String?> = merge(_error, progressState.map { it.error }).stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = null,
-    )
+    val error: StateFlow<String?> = merge(_error, progressState.map { it.error })
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null,
+        )
 
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
@@ -133,9 +149,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     init {
         viewModelScope.launch {
-            // TODO
-            loadSyncState().let { _syncId.update { it } }
-
             try {
                 contentBuckets = mediaRepo.getBuckets().keys
             } catch (e: Exception) {
@@ -243,7 +256,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             .build()
 
         workManager.enqueueUniqueWork(uniqueWorkIdentifier, ExistingWorkPolicy.KEEP, syncRequest)
-        _syncId.update { syncRequest.id }
+        _startedSyncId.update { syncRequest.id }
 
         return syncRequest.id
     }
@@ -287,12 +300,11 @@ fun SyncRemote(
     val remote by viewModel.remoteState.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val diff by viewModel.diff.collectAsStateWithLifecycle()
+    val progress by viewModel.progressState.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
-
-    val progress by viewModel.progressState.collectAsStateWithLifecycle(SyncModel.Progress())
 
     SyncCompose(
         remote,
