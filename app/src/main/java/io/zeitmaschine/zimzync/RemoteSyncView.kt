@@ -65,7 +65,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
@@ -86,9 +85,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     // This identifier is used to identify already running sync instances and prevent simultaneous
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
-    private val workManager =
-        WorkManager.getInstance(getApplication<Application>().applicationContext)
 
+    private val workManager by lazy { WorkManager.getInstance(application.applicationContext) }
     private val contentResolver by lazy { application.contentResolver }
 
     private val _diff: MutableStateFlow<Diff> = MutableStateFlow(Diff.EMPTY)
@@ -116,7 +114,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     private val _startedSyncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
 
     // Flow for already running sync jobs
-    private val _runningSyncId: Flow<UUID?> = flow { loadSyncState() }
+    private val _runningSyncId: Flow<UUID?> = snapshotFlow { loadSyncState() }
 
     // merge the flows for and observe
     var progressState: StateFlow<Progress> =
