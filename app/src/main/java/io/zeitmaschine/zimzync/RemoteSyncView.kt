@@ -418,6 +418,14 @@ private fun SyncCompose(
                         Text(text = "Bucket", textAlign = TextAlign.Left)
                         Text(remote.bucket)
                     }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Objects")
+                        Text(text = "${diff.remotes.size}")
+                    }
+
                 }
             }
             Card(
@@ -438,13 +446,6 @@ private fun SyncCompose(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "Remotes")
-                        Text(text = "${diff.remotes.size}")
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
                         Text(text = "Folder")
                         Text(text = remote.folder)
                     }
@@ -452,15 +453,8 @@ private fun SyncCompose(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "Locales")
+                        Text(text = "Files")
                         Text(text = "${diff.locals.size}")
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Diffs / #")
-                        Text(text = "${diff.diff.size} / ${diff.size}")
                     }
                 }
             }
@@ -484,14 +478,14 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded")
-                        Text(text = "${progress.syncCount}")
+                        Text(text = "${progress.syncCount} / ${diff.diff.size}")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded KB")
-                        Text(text = "${progress.syncBytes}")
+                        Text(text = "${progress.syncBytes} / ${diff.size}")
                     }
                     Row(
                         modifier = Modifier
