@@ -53,40 +53,26 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.12.0'
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.material3:material3:$material3_version"
-    implementation "com.google.android.material:material:1.11.0"
-    implementation "androidx.compose.material3:material3-window-size-class:$material3_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
-    implementation 'androidx.activity:activity-compose:1.8.2'
-    implementation "androidx.compose.material:material-icons-extended:$compose_version"
-    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.7.0'
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.testcontainers:testcontainers:1.19.7'
-    testImplementation 'io.mockk:mockk:1.13.10'
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
-}
 
-dependencies {
-
-
-    implementation 'androidx.test:core-ktx:1.5.0'
-    implementation 'androidx.work:work-testing:2.9.0'
+    // minio / S3
     implementation 'io.minio:minio:8.5.9'
     // needed for okhttp3/minio
     implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.17.0')
     implementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0')
     implementation("javax.xml.stream:stax-api:1.0-2")
 
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation "androidx.compose.material3:material3:$material3_version"
+    implementation "androidx.compose.material3:material3-window-size-class:$material3_version"
+    implementation "androidx.compose.material:material-icons-extended:$compose_version"
+    implementation "androidx.compose.ui:ui:$compose_version"
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.7.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+    implementation 'androidx.activity:activity-compose:1.8.2'
     implementation 'androidx.navigation:navigation-compose:2.7.7'
+    implementation "com.google.android.material:material:1.11.0"
 
     // https://developer.android.com/codelabs/android-workmanager#2
     def wm_version = '2.9.0'
@@ -102,5 +88,17 @@ dependencies {
 
     // To use Kotlin annotation processing tool (ksp)
     ksp "androidx.room:room-compiler:$room_version"
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.testcontainers:testcontainers:1.19.7'
+    testImplementation 'io.mockk:mockk:1.13.10'
+    testImplementation 'androidx.test:core-ktx:1.5.0'
+    testImplementation 'androidx.work:work-testing:2.9.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 
 }
