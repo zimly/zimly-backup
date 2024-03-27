@@ -64,8 +64,8 @@ dependencies {
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.7.0'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.testcontainers:testcontainers:1.19.6'
-    testImplementation 'io.mockk:mockk:1.13.9'
+    testImplementation 'org.testcontainers:testcontainers:1.19.7'
+    testImplementation 'io.mockk:mockk:1.13.10'
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
@@ -79,10 +79,10 @@ dependencies {
 
     implementation 'androidx.test:core-ktx:1.5.0'
     implementation 'androidx.work:work-testing:2.9.0'
-    implementation 'io.minio:minio:8.5.8'
+    implementation 'io.minio:minio:8.5.9'
     // needed for okhttp3/minio
-    implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.1')
-    implementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1')
+    implementation('com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.17.0')
+    implementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.17.0')
     implementation("javax.xml.stream:stax-api:1.0-2")
 
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
