@@ -519,6 +519,7 @@ private fun SyncCompose(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
+                        enabled = !progress.inProgress,
                         onClick = createDiff,
                         modifier = Modifier.weight(1f),
                         colors = ButtonColors(
