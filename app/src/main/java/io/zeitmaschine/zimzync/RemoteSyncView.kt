@@ -202,23 +202,23 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             when (workInfo.state) {
                 WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
                     val output = workInfo.outputData
-                    progressState.syncCount = output.getInt(SYNC_COUNT, 0)
-                    progressState.syncBytes = output.getLong(SYNC_BYTES, 0)
+                    progressState.syncCount = output.getInt(SyncOutputs.SYNCED_FILES, 0)
+                    progressState.syncBytes = output.getLong(SyncOutputs.SYNCED_BYTES, 0)
                     progressState.inProgress = false
                 }
 
                 WorkInfo.State.RUNNING -> {
                     val progress = workInfo.progress
-                    progressState.syncCount = progress.getInt(SYNC_COUNT, 0)
-                    progressState.syncBytes = progress.getLong(SYNC_BYTES, 0)
+                    progressState.syncCount = progress.getInt(SyncOutputs.SYNCED_FILES, 0)
+                    progressState.syncBytes = progress.getLong(SyncOutputs.SYNCED_BYTES, 0)
                     progressState.inProgress = true
                 }
 
                 WorkInfo.State.FAILED -> {
                     val output = workInfo.outputData
-                    progressState.syncCount = output.getInt(SYNC_COUNT, 0)
-                    progressState.syncBytes = output.getLong(SYNC_BYTES, 0)
-                    progressState.error = output.getString(SYNC_ERROR) ?: "Unknown error."
+                    progressState.syncCount = output.getInt(SyncOutputs.SYNCED_FILES, 0)
+                    progressState.syncBytes = output.getLong(SyncOutputs.SYNCED_BYTES, 0)
+                    progressState.error = output.getString(SyncOutputs.ERROR) ?: "Unknown error."
                     progressState.inProgress = false
                 }
 
@@ -237,11 +237,11 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     suspend fun sync(): UUID {
         val remote = dao.loadById(remoteId)
         val data = workDataOf(
-            SyncConstants.S3_URL to remote.url,
-            SyncConstants.S3_KEY to remote.key,
-            SyncConstants.S3_SECRET to remote.secret,
-            SyncConstants.S3_BUCKET to remote.bucket,
-            SyncConstants.DEVICE_FOLDER to arrayOf(remote.folder)
+            SyncInputs.S3_URL to remote.url,
+            SyncInputs.S3_KEY to remote.key,
+            SyncInputs.S3_SECRET to remote.secret,
+            SyncInputs.S3_BUCKET to remote.bucket,
+            SyncInputs.DEVICE_FOLDER to arrayOf(remote.folder)
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)

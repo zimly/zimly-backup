@@ -6,11 +6,6 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 
-const val SYNC_COUNT = "synced"
-const val SYNC_BYTES = "size"
-const val SYNC_ERROR = "error"
-private const val DIFF_TOTAL = "total"
-
 class SyncWorker(
     context: Context,
     workerParameters: WorkerParameters,
@@ -25,14 +20,14 @@ class SyncWorker(
         Log.i(TAG, "Launching sync...")
 
         val contentBuckets =
-            inputData.getStringArray(SyncConstants.DEVICE_FOLDER)?.toSet() ?: emptySet()
+            inputData.getStringArray(SyncInputs.DEVICE_FOLDER)?.toSet() ?: emptySet()
 
         val diff = try {
             syncService.diffA(contentBuckets)
         } catch (e: Exception) {
             return Result.failure(
                 Data.Builder()
-                    .putString(SYNC_ERROR, e.message)
+                    .putString(SyncOutputs.ERROR, e.message)
                     .build()
             )
         }
@@ -45,9 +40,9 @@ class SyncWorker(
             syncedSize += size
             setProgressAsync(
                 Data.Builder()
-                    .putInt(SYNC_COUNT, synced)
-                    .putLong(SYNC_BYTES, syncedSize)
-                    .putInt(DIFF_TOTAL, total)
+                    .putInt(SyncOutputs.SYNCED_FILES, synced)
+                    .putLong(SyncOutputs.SYNCED_BYTES, syncedSize)
+                    .putInt(SyncOutputs.DIFF_FILES, total)
                     .build()
             )
             Log.i(TAG, " Progress: $synced / $total Traffic: $syncedSize")
@@ -57,18 +52,18 @@ class SyncWorker(
             syncService.sync(diff, ::progress)
             Result.success(
                 Data.Builder()
-                    .putInt(SYNC_COUNT, synced)
-                    .putLong(SYNC_BYTES, syncedSize)
-                    .putInt(DIFF_TOTAL, total)
+                    .putInt(SyncOutputs.SYNCED_FILES, synced)
+                    .putLong(SyncOutputs.SYNCED_BYTES, syncedSize)
+                    .putInt(SyncOutputs.DIFF_FILES, total)
                     .build()
             )
         } catch (e: Exception) {
             Result.failure(
                 Data.Builder()
-                    .putInt(SYNC_COUNT, synced)
-                    .putLong(SYNC_BYTES, syncedSize)
-                    .putInt(DIFF_TOTAL, total)
-                    .putString(SYNC_ERROR, e.message)
+                    .putInt(SyncOutputs.SYNCED_FILES, synced)
+                    .putLong(SyncOutputs.SYNCED_BYTES, syncedSize)
+                    .putInt(SyncOutputs.DIFF_FILES, total)
+                    .putString(SyncOutputs.ERROR, e.message)
                     .build()
             )
         }
@@ -76,10 +71,17 @@ class SyncWorker(
     }
 }
 
-object SyncConstants {
+object SyncInputs {
     const val S3_URL = "url"
     const val S3_KEY = "key"
     const val S3_SECRET = "secret"
     const val S3_BUCKET = "bucket"
     const val DEVICE_FOLDER = "folder"
+}
+
+object SyncOutputs {
+    const val SYNCED_FILES = "synced"
+    const val SYNCED_BYTES = "size"
+    const val DIFF_FILES = "total"
+    const val ERROR = "error"
 }
