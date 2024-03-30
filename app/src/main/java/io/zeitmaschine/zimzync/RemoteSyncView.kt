@@ -124,25 +124,21 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     // Flow for already running sync jobs
     private val _runningSyncId: Flow<UUID?> = snapshotFlow { loadSyncState() }
 
-    // merge the flows for and observe
-    var progressState: StateFlow<Progress> =
-        merge(_runningSyncId, _startedSyncId)
-            .onEach { Log.i(TAG, "syncId: $it") }
-            .filterNotNull()
-            .flatMapLatest { observeSyncProgress(it) }
+    private val _observedProgress = merge(_runningSyncId, _startedSyncId)
+        .onEach { Log.i(TAG, "syncId: $it") }
+        .filterNotNull()
+        .flatMapLatest { observeSyncProgress(it) }
+
+    private val _diff: MutableStateFlow<Diff?> = MutableStateFlow(null)
+    private val _diffProgress: Flow<Progress> = _diff.filterNotNull().map { Progress(diffBytes = it.size, diffCount = it.diff.size)  }
+
+    // merge the flows from observed progress and one time diff
+    var progressState: StateFlow<Progress> = merge(_observedProgress, _diffProgress)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
                 initialValue = Progress(),
             )
-
-    private val _diff: MutableStateFlow<Diff> = MutableStateFlow(Diff.EMPTY)
-    val diff: StateFlow<DiffState> = merge(_diff.map { DiffState(it.diff.size, it.size) }, progressState.map { DiffState(it.progressCount, it.progressBytes) })
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = DiffState(),
-        )
 
     // mutable error flow, for manually triggered errors
     private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -273,12 +269,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         var videos: Int = 0,
     )
 
-    data class DiffState(
-        var count: Int = 0,
-        var bytes: Long = 0,
-    )
-
-
     data class Progress(
         var percentage: Float = 0.0f,
         var progressCount: Int = 0,
@@ -308,7 +298,6 @@ fun SyncRemote(
     val error by viewModel.error.collectAsStateWithLifecycle()
     val folder by viewModel.folderState.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
-    val diff by viewModel.diff.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
@@ -319,7 +308,6 @@ fun SyncRemote(
         error,
         folder,
         progress,
-        diff,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
@@ -340,7 +328,6 @@ private fun SyncCompose(
     error: String?,
     folder: SyncModel.FolderState,
     progress: SyncModel.Progress,
-    diff: SyncModel.DiffState,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
     createDiff: () -> Unit,
@@ -363,7 +350,6 @@ private fun SyncCompose(
 
         }
     }
-
 
     Scaffold(
         topBar = {
@@ -490,14 +476,14 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploads")
-                        Text(text = "${progress.progressCount} / ${diff.count}")
+                        Text(text = "${progress.progressCount} / ${progress.diffCount}")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploads size")
-                        Text(text = "${Formatter.formatShortFileSize(LocalContext.current, progress.progressBytes)} / ${Formatter.formatShortFileSize(LocalContext.current, diff.bytes)}")
+                        Text(text = "${Formatter.formatShortFileSize(LocalContext.current, progress.progressBytes)} / ${Formatter.formatShortFileSize(LocalContext.current, progress.diffBytes)}")
                     }
                     Row(
                         modifier = Modifier
@@ -561,7 +547,6 @@ fun SyncPreview() {
     )
     val progressState = SyncModel.Progress()
     val folderState = SyncModel.FolderState()
-    val diffState = SyncModel.DiffState()
     val snackbarState = remember { SnackbarHostState() }
 
 
@@ -571,7 +556,6 @@ fun SyncPreview() {
             error = null,
             folderState,
             progressState,
-            diffState,
             sync = {},
             createDiff = {},
             edit = {},
