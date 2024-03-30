@@ -32,37 +32,49 @@ class SyncWorker(
             )
         }
 
-        val total = diff.diff.size
-        var synced = 0
-        var syncedSize: Long = 0
+        val diffCount = diff.diff.size
+        val diffBytes = diff.size
+        var progressCount = 0
+        var progressBytes: Long = 0
+        var progressPercentage = 0F
         fun progress(size: Long) {
-            ++synced
-            syncedSize += size
+            ++progressCount
+            progressBytes += size
+
+            if (progressBytes > 0) {
+                progressPercentage = progressBytes.toFloat() / diffBytes
+            }
             setProgressAsync(
                 Data.Builder()
-                    .putInt(SyncOutputs.SYNCED_FILES, synced)
-                    .putLong(SyncOutputs.SYNCED_BYTES, syncedSize)
-                    .putInt(SyncOutputs.DIFF_FILES, total)
+                    .putInt(SyncOutputs.PROGRESS_COUNT, progressCount)
+                    .putLong(SyncOutputs.PROGRESS_BYTES, progressBytes)
+                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, progressPercentage)
+                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
                     .build()
             )
-            Log.i(TAG, " Progress: $synced / $total Traffic: $syncedSize")
+            Log.i(TAG, " Progress: $progressCount / $diffCount Traffic: $progressBytes")
         }
 
         val result = try {
             syncService.sync(diff, ::progress)
             Result.success(
                 Data.Builder()
-                    .putInt(SyncOutputs.SYNCED_FILES, synced)
-                    .putLong(SyncOutputs.SYNCED_BYTES, syncedSize)
-                    .putInt(SyncOutputs.DIFF_FILES, total)
+                    .putInt(SyncOutputs.PROGRESS_COUNT, progressCount)
+                    .putLong(SyncOutputs.PROGRESS_BYTES, progressBytes)
+                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, progressPercentage)
+                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
                     .build()
             )
         } catch (e: Exception) {
             Result.failure(
                 Data.Builder()
-                    .putInt(SyncOutputs.SYNCED_FILES, synced)
-                    .putLong(SyncOutputs.SYNCED_BYTES, syncedSize)
-                    .putInt(SyncOutputs.DIFF_FILES, total)
+                    .putInt(SyncOutputs.PROGRESS_COUNT, progressCount)
+                    .putLong(SyncOutputs.PROGRESS_BYTES, progressBytes)
+                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, progressPercentage)
+                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
                     .putString(SyncOutputs.ERROR, e.message)
                     .build()
             )
@@ -80,8 +92,10 @@ object SyncInputs {
 }
 
 object SyncOutputs {
-    const val SYNCED_FILES = "synced"
-    const val SYNCED_BYTES = "size"
-    const val DIFF_FILES = "total"
+    const val PROGRESS_COUNT = "progress_count"
+    const val PROGRESS_BYTES = "progress_bytes"
+    const val PROGRESS_PERCENTAGE = "progress_percentage"
+    const val DIFF_COUNT = "diff_count"
+    const val DIFF_BYTES = "diff_bytes"
     const val ERROR = "error"
 }

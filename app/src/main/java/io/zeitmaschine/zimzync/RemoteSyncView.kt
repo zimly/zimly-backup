@@ -202,32 +202,36 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             when (workInfo.state) {
                 WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
                     val output = workInfo.outputData
-                    progressState.syncCount = output.getInt(SyncOutputs.SYNCED_FILES, 0)
-                    progressState.syncBytes = output.getLong(SyncOutputs.SYNCED_BYTES, 0)
+                    progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
+                    progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                    progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
+                    progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
+                    progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
                     progressState.inProgress = false
                 }
 
                 WorkInfo.State.RUNNING -> {
                     val progress = workInfo.progress
-                    progressState.syncCount = progress.getInt(SyncOutputs.SYNCED_FILES, 0)
-                    progressState.syncBytes = progress.getLong(SyncOutputs.SYNCED_BYTES, 0)
+                    progressState.progressCount = progress.getInt(SyncOutputs.PROGRESS_COUNT, 0)
+                    progressState.progressBytes = progress.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                    progressState.percentage = progress.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
+                    progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
+                    progressState.diffBytes = progress.getLong(SyncOutputs.DIFF_BYTES, 0)
                     progressState.inProgress = true
                 }
 
                 WorkInfo.State.FAILED -> {
                     val output = workInfo.outputData
-                    progressState.syncCount = output.getInt(SyncOutputs.SYNCED_FILES, 0)
-                    progressState.syncBytes = output.getLong(SyncOutputs.SYNCED_BYTES, 0)
+                    progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
+                    progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                    progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
+                    progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
+                    progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
                     progressState.error = output.getString(SyncOutputs.ERROR) ?: "Unknown error."
                     progressState.inProgress = false
                 }
 
                 else -> {}
-            }
-
-            if (progressState.syncBytes > 0) {
-                progressState.percentage =
-                    progressState.syncBytes.toFloat() / diff.value.size
             }
             progressState
         }
@@ -274,8 +278,10 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     data class Progress(
         var percentage: Float = 0.0f,
-        var syncBytes: Long = 0,
-        var syncCount: Int = 0,
+        var progressCount: Int = 0,
+        var progressBytes: Long = 0,
+        var diffCount: Int = 0,
+        var diffBytes: Long = 0,
         var inProgress: Boolean = false,
         var error: String = "",
     )
@@ -478,14 +484,14 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded")
-                        Text(text = "${progress.syncCount} / ${diff.diff.size}")
+                        Text(text = "${progress.progressCount} / ${progress.diffCount}")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded KB")
-                        Text(text = "${progress.syncBytes} / ${diff.size}")
+                        Text(text = "${progress.progressBytes} / ${progress.diffBytes}")
                     }
                     Row(
                         modifier = Modifier
