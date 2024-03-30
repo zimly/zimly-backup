@@ -1,3 +1,5 @@
-* Re-arrange diff display in sync view
-* Fix state handling in sync view
+* Sync view optimizations
+  * Better state handling, recovers progress when navigating
+  * Simplify display, add human readable sizes
+  * Disable buttons when synchronizing
 * Update libraries
