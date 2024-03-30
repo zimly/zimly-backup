@@ -89,6 +89,8 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     private val workManager by lazy { WorkManager.getInstance(application.applicationContext) }
     private val contentResolver by lazy { application.contentResolver }
 
+    private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
+
     private val _diff: MutableStateFlow<Diff> = MutableStateFlow(Diff.EMPTY)
     val diff: StateFlow<Diff> = _diff.asStateFlow()
 
@@ -99,8 +101,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                 name = it.name,
                 url = it.url,
                 bucket = it.bucket,
-                key = it.key,
-                secret = it.secret,
                 folder = it.folder
             )
         }
@@ -109,6 +109,16 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = RemoteState(),
         )
+
+    var folderState = remoteState.map {
+        val photoCount = mediaRepo.getPhotos(setOf(it.folder)).size
+        val videoCount = mediaRepo.getVideos(setOf(it.folder)).size
+        return@map FolderState(it.folder, photoCount, videoCount)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = FolderState(),
+    )
 
     // Flow created when starting the sync
     private val _startedSyncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
@@ -140,23 +150,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = null,
         )
-
-    private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
-
-    private lateinit var contentBuckets: Set<String>
-
-    init {
-        viewModelScope.launch {
-            try {
-                contentBuckets = mediaRepo.getBuckets().keys
-            } catch (e: Exception) {
-                // TODO: Exception handling in a lateinit block, inside a viewModelFactory, inside a
-                //  NavHost Composable? Some global error handling?
-                Log.e(TAG, "Failed to initialize minio repo: ${e.message}", e)
-                _error.update { e.message ?: "Unknown error." }
-            }
-        }
-    }
 
     suspend fun createDiff() {
 
@@ -270,10 +263,14 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     data class RemoteState(
         var name: String = "",
         var url: String = "",
-        var key: String = "",
-        var secret: String = "",
         var bucket: String = "",
         var folder: String = "",
+    )
+
+    data class FolderState(
+        var folder: String = "",
+        var photos: Int = 0,
+        var videos: Int = 0,
     )
 
     data class Progress(
@@ -304,6 +301,7 @@ fun SyncRemote(
     val remote by viewModel.remoteState.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
     val diff by viewModel.diff.collectAsStateWithLifecycle()
+    val folder by viewModel.folderState.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
 
     // want to go nuts?
@@ -313,7 +311,7 @@ fun SyncRemote(
     SyncCompose(
         remote,
         error,
-        diff = diff,
+        folder,
         progress,
         snackbarState,
         sync = {
@@ -333,7 +331,7 @@ fun SyncRemote(
 private fun SyncCompose(
     remote: SyncModel.RemoteState,
     error: String?,
-    diff: Diff,
+    folder: SyncModel.FolderState,
     progress: SyncModel.Progress,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
@@ -424,14 +422,6 @@ private fun SyncCompose(
                         Text(text = "Bucket", textAlign = TextAlign.Left)
                         Text(remote.bucket)
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Objects")
-                        Text(text = "${diff.remotes.size}")
-                    }
-
                 }
             }
             Card(
@@ -453,15 +443,23 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Folder")
-                        Text(text = remote.folder)
+                        Text(text = folder.folder)
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "Files")
-                        Text(text = "${diff.locals.size}")
+                        Text(text = "Photos")
+                        Text(text = "${folder.photos}")
                     }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(text = "Videos")
+                        Text(text = "${folder.videos}")
+                    }
+
                 }
             }
 
@@ -549,12 +547,11 @@ fun SyncPreview() {
     val remote = SyncModel.RemoteState(
         name = "zeitmaschine.io",
         url = "http://10.0.2.2:9000",
-        key = "test",
-        secret = "testtest",
         bucket = "test-bucket",
         folder = "Camera"
     )
     val progressState = SyncModel.Progress()
+    val folderState = SyncModel.FolderState()
     val snackbarState = remember { SnackbarHostState() }
 
 
@@ -562,7 +559,7 @@ fun SyncPreview() {
         SyncCompose(
             remote = remote,
             error = null,
-            diff = Diff.EMPTY,
+            folderState,
             progressState,
             sync = {},
             createDiff = {},
