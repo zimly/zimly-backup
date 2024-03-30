@@ -91,9 +91,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
-    private val _diff: MutableStateFlow<Diff> = MutableStateFlow(Diff.EMPTY)
-    val diff: StateFlow<Diff> = _diff.asStateFlow()
-
     var remoteState: StateFlow<RemoteState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
         .map {
@@ -138,6 +135,13 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                 initialValue = Progress(),
             )
 
+    private val _diff: MutableStateFlow<Diff> = MutableStateFlow(Diff.EMPTY)
+    val diff: StateFlow<DiffState> = merge(_diff.map { DiffState(it.diff.size, it.size) }, progressState.map { DiffState(it.progressCount, it.progressBytes) })
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = DiffState(),
+        )
 
     // mutable error flow, for manually triggered errors
     private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -157,16 +161,11 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
         val syncService = SyncServiceImpl(s3Repo, mediaRepo)
         // Display result of the minio request to the user
-        when (val result = syncService.diff(setOf(remote.folder))) {
-            is Result.Success<Diff> -> {
-                _diff.update { result.data }
-            }
-
-            is Result.Error -> {
-                Log.e(TAG, "Failed to create diff.", result.exception)
-
-                _error.update { result.exception.message ?: "Unknown error." }
-            }
+        try {
+            val diff = syncService.diff(setOf(remote.folder))
+            _diff.update { diff }
+        } catch (e: Exception) {
+            _error.update { e.message ?: "Unknown error." }
         }
     }
 
@@ -273,6 +272,12 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         var videos: Int = 0,
     )
 
+    data class DiffState(
+        var count: Int = 0,
+        var bytes: Long = 0,
+    )
+
+
     data class Progress(
         var percentage: Float = 0.0f,
         var progressCount: Int = 0,
@@ -300,9 +305,9 @@ fun SyncRemote(
 
     val remote by viewModel.remoteState.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
-    val diff by viewModel.diff.collectAsStateWithLifecycle()
     val folder by viewModel.folderState.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
+    val diff by viewModel.diff.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
@@ -313,6 +318,7 @@ fun SyncRemote(
         error,
         folder,
         progress,
+        diff,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
@@ -333,6 +339,7 @@ private fun SyncCompose(
     error: String?,
     folder: SyncModel.FolderState,
     progress: SyncModel.Progress,
+    diff: SyncModel.DiffState,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
     createDiff: () -> Unit,
@@ -482,14 +489,14 @@ private fun SyncCompose(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded")
-                        Text(text = "${progress.progressCount} / ${progress.diffCount}")
+                        Text(text = "${progress.progressCount} / ${diff.count}")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(text = "Uploaded KB")
-                        Text(text = "${progress.progressBytes} / ${progress.diffBytes}")
+                        Text(text = "${progress.progressBytes} / ${diff.bytes}")
                     }
                     Row(
                         modifier = Modifier
@@ -504,8 +511,7 @@ private fun SyncCompose(
                 }
             }
 
-            Column(
-            ) {
+            Column {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -526,9 +532,10 @@ private fun SyncCompose(
                     }
                     Button(
                         onClick = sync,
+                        enabled = !progress.inProgress,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(text = "Upload")
+                        Text(text = if (progress.inProgress) "Uploading" else "Upload")
                     }
                 }
 
@@ -552,6 +559,7 @@ fun SyncPreview() {
     )
     val progressState = SyncModel.Progress()
     val folderState = SyncModel.FolderState()
+    val diffState = SyncModel.DiffState()
     val snackbarState = remember { SnackbarHostState() }
 
 
@@ -561,6 +569,7 @@ fun SyncPreview() {
             error = null,
             folderState,
             progressState,
+            diffState,
             sync = {},
             createDiff = {},
             edit = {},

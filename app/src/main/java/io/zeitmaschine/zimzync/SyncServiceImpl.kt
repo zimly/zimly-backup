@@ -1,13 +1,6 @@
 package io.zeitmaschine.zimzync
 
 import android.util.Log
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-
-sealed class Result<out R> {
-    data class Success<out T>(val data: T) : Result<T>()
-    data class Error(val exception: Exception) : Result<Nothing>()
-}
 
 class SyncServiceImpl(
     private val s3Repository: S3Repository,
@@ -19,21 +12,7 @@ class SyncServiceImpl(
         val TAG: String? = SyncServiceImpl::class.simpleName
     }
 
-    override suspend fun diff(buckets: Set<String>): Result<Diff> {
-        // Move the execution of the coroutine to the I/O dispatcher
-        return withContext(Dispatchers.IO) {
-            try {
-                val data = diffA(buckets)
-                return@withContext Result.Success(data)
-            } catch (e: Exception) {
-                Log.i(TAG, "${e.message}")
-                return@withContext Result.Error(e)
-            }
-        }
-    }
-
-
-    override fun diffA(buckets: Set<String>): Diff {
+    override fun diff(buckets: Set<String>): Diff {
         try {
             val remotes = s3Repository.listObjects()
             val photos = mediaRepository.getMedia(buckets)
@@ -78,8 +57,7 @@ data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val 
 
 interface SyncService {
 
-    suspend fun diff(buckets: Set<String>): Result<Diff>
-    fun diffA(buckets: Set<String>): Diff
+    fun diff(buckets: Set<String>): Diff
     fun sync(diff: Diff, progress: (size: Long) -> Unit)
 }
 

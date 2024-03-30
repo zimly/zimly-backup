@@ -23,7 +23,7 @@ class SyncWorker(
             inputData.getStringArray(SyncInputs.DEVICE_FOLDER)?.toSet() ?: emptySet()
 
         val diff = try {
-            syncService.diffA(contentBuckets)
+            syncService.diff(contentBuckets)
         } catch (e: Exception) {
             return Result.failure(
                 Data.Builder()

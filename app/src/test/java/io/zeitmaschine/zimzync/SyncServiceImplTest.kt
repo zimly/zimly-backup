@@ -5,7 +5,6 @@ import android.util.Log
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
@@ -46,26 +45,11 @@ class SyncServiceImplTest {
         minioRepository.createBucket(bucket)
     }
 
-    // https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/
-    @Test
-    fun diffA() = runTest {
-        val ss = SyncServiceImpl(minioRepository, mediaRepository)
-
-        when (val result = ss.diff(setOf("Camera"))) {
-            is Result.Success<Diff> -> {
-                assertThat(result.data.remotes.size, `is`(0))
-                assertThat(result.data.locals.size, `is`(1))
-                assertThat(result.data.diff.size, `is`(1))
-            }
-            is Result.Error -> throw Exception("Diff failed", result.exception)
-        }
-    }
-
     @Test
     fun diff() {
         val ss = SyncServiceImpl(minioRepository, mediaRepository)
 
-        val diff = ss.diffA(setOf("Camera"))
+        val diff = ss.diff(setOf("Camera"))
         assertThat(diff.remotes.size, `is`(0))
         assertThat(diff.locals.size, `is`(1))
         assertThat(diff.diff.size, `is`(1))
