@@ -108,11 +108,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
         val photoCount = mediaRepo.getPhotos(setOf(it.folder)).size
         val videoCount = mediaRepo.getVideos(setOf(it.folder)).size
         return@map FolderState(it.folder, photoCount, videoCount)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = FolderState(),
-    )
+    }
 
     // Flow created when starting the sync
     private val _startedSyncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
@@ -296,7 +292,7 @@ fun SyncRemote(
 
     val remote by viewModel.remoteState.collectAsStateWithLifecycle(SyncModel.RemoteState())
     val error by viewModel.error.collectAsStateWithLifecycle()
-    val folder by viewModel.folderState.collectAsStateWithLifecycle()
+    val folder by viewModel.folderState.collectAsStateWithLifecycle(SyncModel.FolderState())
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
 
     // want to go nuts?
