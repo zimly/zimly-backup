@@ -64,6 +64,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -179,21 +180,13 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
     private fun observeSyncProgress(id: UUID): Flow<Progress> {
         return workManager.getWorkInfoByIdFlow(id)
             .filterNotNull()
+            // filter out unhandled states that result in a "nulled" out progress object.
+            .filter { it.state in arrayOf(WorkInfo.State.SUCCEEDED, WorkInfo.State.RUNNING, WorkInfo.State.FAILED) }
             .map { workInfo ->
 
             val progressState = Progress()
 
             when (workInfo.state) {
-                WorkInfo.State.SUCCEEDED, WorkInfo.State.ENQUEUED -> {
-                    val output = workInfo.outputData
-                    progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
-                    progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
-                    progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
-                    progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
-                    progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
-                    progressState.inProgress = false
-                }
-
                 WorkInfo.State.RUNNING -> {
                     val progress = workInfo.progress
                     progressState.progressCount = progress.getInt(SyncOutputs.PROGRESS_COUNT, 0)
@@ -202,6 +195,16 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                     progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
                     progressState.diffBytes = progress.getLong(SyncOutputs.DIFF_BYTES, 0)
                     progressState.inProgress = true
+                }
+
+                WorkInfo.State.SUCCEEDED -> {
+                    val output = workInfo.outputData
+                    progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
+                    progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                    progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
+                    progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
+                    progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
+                    progressState.inProgress = false
                 }
 
                 WorkInfo.State.FAILED -> {
@@ -215,7 +218,9 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                     progressState.inProgress = false
                 }
 
-                else -> {}
+                else -> {
+                    Log.e(TAG, "State '${workInfo.state}' should not be observed.")
+                }
             }
             progressState
         }

@@ -34,6 +34,16 @@ class SyncWorker(
 
         val diffCount = diff.diff.size
         val diffBytes = diff.size
+
+        // Set initial diff numbers
+        setProgress(
+            Data.Builder()
+                .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                .build()
+        )
+
+
         var progressCount = 0
         var progressBytes: Long = 0
         var progressPercentage = 0F
