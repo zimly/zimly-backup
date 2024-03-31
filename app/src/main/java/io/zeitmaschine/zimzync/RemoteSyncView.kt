@@ -92,7 +92,7 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
 
     private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
-    var remoteState: StateFlow<RemoteState> = snapshotFlow { remoteId }
+    var remoteState: Flow<RemoteState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
         .map {
             RemoteState(
@@ -102,11 +102,6 @@ class SyncModel(private val dao: RemoteDao, private val remoteId: Int, applicati
                 folder = it.folder
             )
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = RemoteState(),
-        )
 
     var folderState = remoteState.map {
         val photoCount = mediaRepo.getPhotos(setOf(it.folder)).size
@@ -294,7 +289,7 @@ fun SyncRemote(
     }),
 ) {
 
-    val remote by viewModel.remoteState.collectAsStateWithLifecycle()
+    val remote by viewModel.remoteState.collectAsStateWithLifecycle(SyncModel.RemoteState())
     val error by viewModel.error.collectAsStateWithLifecycle()
     val folder by viewModel.folderState.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
