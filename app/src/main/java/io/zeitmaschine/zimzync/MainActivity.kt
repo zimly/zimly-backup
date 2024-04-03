@@ -26,7 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.room.Room
-import io.zeitmaschine.zimzync.ui.screens.editor.EditRemote
+import io.zeitmaschine.zimzync.ui.screens.editor.EditorScreen
 import io.zeitmaschine.zimzync.ui.screens.list.RemoteScreen
 import io.zeitmaschine.zimzync.ui.screens.sync.SyncRemote
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
                         val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
                         Scaffold(
                             content = {
-                                EditRemote(
+                                EditorScreen(
                                     application = application,
                                     remoteDao = remoteDao,
                                     remoteId = remoteId,
@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Scaffold(
                             content = {
-                                EditRemote(
+                                EditorScreen(
                                     application = application,
                                     remoteDao = remoteDao,
                                     remoteId = null,
