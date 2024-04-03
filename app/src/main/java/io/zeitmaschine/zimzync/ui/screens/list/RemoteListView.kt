@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync.ui.screens
+package io.zeitmaschine.zimzync.ui.screens.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

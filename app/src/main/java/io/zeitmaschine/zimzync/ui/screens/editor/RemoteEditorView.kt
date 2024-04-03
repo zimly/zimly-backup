@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync.ui.screens
+package io.zeitmaschine.zimzync.ui.screens.editor
 
 import android.annotation.SuppressLint
 import android.app.Application

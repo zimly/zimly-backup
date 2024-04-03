@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync.ui.screens
+package io.zeitmaschine.zimzync.ui.screens.sync
 
 import android.app.Application
 import android.text.format.Formatter
