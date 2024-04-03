@@ -28,7 +28,7 @@ import androidx.navigation.navArgument
 import androidx.room.Room
 import io.zeitmaschine.zimzync.ui.screens.editor.EditorScreen
 import io.zeitmaschine.zimzync.ui.screens.list.RemoteScreen
-import io.zeitmaschine.zimzync.ui.screens.sync.SyncRemote
+import io.zeitmaschine.zimzync.ui.screens.sync.SyncScreen
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 
 class MainActivity : ComponentActivity() {
@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
                             val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                             remoteId?.let {
-                                SyncRemote(
+                                SyncScreen(
                                     remoteDao,
                                     remoteId,
                                     application = application,

@@ -52,7 +52,7 @@ import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.launch
 
 @Composable
-fun SyncRemote(
+fun SyncScreen(
     dao: RemoteDao,
     remoteId: Int,
     application: Application,
