@@ -32,11 +32,11 @@ import io.zeitmaschine.zimzync.ui.theme.containerBackground
 
 @Composable
 fun BucketConfiguration(
-    name: EditorViewModel.Field,
-    url: EditorViewModel.Field,
-    key: EditorViewModel.Field,
-    secret: EditorViewModel.Field,
-    bucket: EditorViewModel.Field
+    name: Field,
+    url: Field,
+    key: Field,
+    secret: Field,
+    bucket: Field
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 

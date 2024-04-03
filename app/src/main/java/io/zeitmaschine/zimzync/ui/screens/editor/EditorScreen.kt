@@ -76,12 +76,12 @@ fun EditorScreen(
 private fun EditorCompose(
     state: State<EditorViewModel.UiState>,
     snackbarState: SnackbarHostState,
-    name: EditorViewModel.Field,
-    url: EditorViewModel.Field,
-    key: EditorViewModel.Field,
-    secret: EditorViewModel.Field,
-    bucket: EditorViewModel.Field,
-    folder: EditorViewModel.Field,
+    name: Field,
+    url: Field,
+    key: Field,
+    secret: Field,
+    bucket: Field,
+    folder: Field,
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
@@ -161,22 +161,22 @@ fun EditPreview() {
 
         val snackbarState = remember { SnackbarHostState() }
 
-        val name: EditorViewModel.Field = EditorViewModel.Field(
+        val name: Field = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val url: EditorViewModel.Field = EditorViewModel.Field(
+        val url: Field = Field(
             errorMessage = "Not a valid URL.",
             validate = { URLUtil.isValidUrl(it) })
-        val key: EditorViewModel.Field = EditorViewModel.Field(
+        val key: Field = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val secret: EditorViewModel.Field = EditorViewModel.Field(
+        val secret: Field = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val bucket: EditorViewModel.Field = EditorViewModel.Field(
+        val bucket: Field = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val folder: EditorViewModel.Field = EditorViewModel.Field(
+        val folder: Field = Field(
             errorMessage = "Select a media gallery to synchronize.",
             validate = { it.isNotEmpty() })
 

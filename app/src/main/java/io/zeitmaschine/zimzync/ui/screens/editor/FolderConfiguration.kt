@@ -32,7 +32,7 @@ import io.zeitmaschine.zimzync.ui.theme.containerBackground
 @OptIn(ExperimentalMaterial3Api::class)
 fun FolderConfiguration(
     state: State<EditorViewModel.UiState>,
-    folder: EditorViewModel.Field
+    folder: Field
 ) {
     Card(
         colors = CardDefaults.cardColors(
