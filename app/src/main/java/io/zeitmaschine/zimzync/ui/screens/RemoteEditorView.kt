@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync
+package io.zeitmaschine.zimzync.ui.screens
 
 import android.annotation.SuppressLint
 import android.app.Application
@@ -48,6 +48,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import io.zeitmaschine.zimzync.MediaRepository
+import io.zeitmaschine.zimzync.Remote
+import io.zeitmaschine.zimzync.RemoteDao
+import io.zeitmaschine.zimzync.ResolverBasedRepository
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.flow.MutableStateFlow
