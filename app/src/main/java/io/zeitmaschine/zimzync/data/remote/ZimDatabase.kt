@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync
+package io.zeitmaschine.zimzync.data.remote
 
 import androidx.room.AutoMigration
 import androidx.room.Database

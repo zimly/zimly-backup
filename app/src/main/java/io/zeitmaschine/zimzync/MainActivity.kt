@@ -26,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.room.Room
+import io.zeitmaschine.zimzync.data.remote.ZimDatabase
 import io.zeitmaschine.zimzync.ui.screens.editor.EditorScreen
 import io.zeitmaschine.zimzync.ui.screens.list.RemoteScreen
 import io.zeitmaschine.zimzync.ui.screens.sync.SyncScreen

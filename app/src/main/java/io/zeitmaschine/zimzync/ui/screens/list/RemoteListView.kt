@@ -23,8 +23,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import io.zeitmaschine.zimzync.Remote
-import io.zeitmaschine.zimzync.RemoteDao
+import io.zeitmaschine.zimzync.data.remote.Remote
+import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.flow.flow
