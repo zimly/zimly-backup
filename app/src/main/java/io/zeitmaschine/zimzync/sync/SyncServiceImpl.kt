@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync
+package io.zeitmaschine.zimzync.sync
 
 import android.util.Log
 import io.zeitmaschine.zimzync.data.media.MediaObject

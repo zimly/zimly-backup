@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync
+package io.zeitmaschine.zimzync.sync
 
 import android.content.Context
 import android.util.Log

@@ -10,6 +10,9 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
+import io.zeitmaschine.zimzync.sync.SyncInputs
+import io.zeitmaschine.zimzync.sync.SyncServiceImpl
+import io.zeitmaschine.zimzync.sync.SyncWorker
 
 
 class ZimApplication() : Application(), Configuration.Provider {
