@@ -161,147 +161,169 @@ private fun SyncCompose(
             ) then Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = containerBackground()),
-                modifier = Modifier.fillMaxWidth()
+            Bucket(remote)
+            Folder(folder)
+            Progress(progress)
+            Actions(progress.inProgress, createDiff, sync)
+        }
+    }
+}
+
+@Composable
+private fun Bucket(remote: SyncViewModel.RemoteState) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = containerBackground()),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+            Icon(
+                Icons.Outlined.CloudUpload,
+                "Remote",
+                modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+            )
+        }
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
-                    Icon(
-                        Icons.Outlined.CloudUpload,
-                        "Remote",
-                        modifier = Modifier.padding(top = 8.dp, end = 8.dp)
-                    )
-                }
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "URL", textAlign = TextAlign.Left)
-                        Text(remote.url, textAlign = TextAlign.Right)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Bucket", textAlign = TextAlign.Left)
-                        Text(remote.bucket)
-                    }
-                }
+                Text(text = "URL", textAlign = TextAlign.Left)
+                Text(remote.url, textAlign = TextAlign.Right)
             }
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = containerBackground(),
-                ),
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
-                    Icon(
-                        Icons.Outlined.Photo,
-                        "Media",
-                        modifier = Modifier.padding(top = 8.dp, end = 8.dp)
-                    )
-                }
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Folder")
-                        Text(text = folder.folder)
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Photos")
-                        Text(text = "${folder.photos}")
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Videos")
-                        Text(text = "${folder.videos}")
-                    }
-
-                }
+                Text(text = "Bucket", textAlign = TextAlign.Left)
+                Text(remote.bucket)
             }
+        }
+    }
+}
 
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = containerBackground(),
-                ),
-                modifier = Modifier.fillMaxWidth()
+@Composable
+private fun Folder(folder: SyncViewModel.FolderState) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = containerBackground(),
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+            Icon(
+                Icons.Outlined.Photo,
+                "Media",
+                modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+            )
+        }
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
-                    Icon(
-                        Icons.Outlined.Upload,
-                        "Progress",
-                        modifier = Modifier.padding(top = 8.dp, end = 8.dp)
-                    )
-                }
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Uploads")
-                        Text(text = "${progress.progressCount} / ${progress.diffCount}")
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(text = "Uploads size")
-                        Text(text = "${Formatter.formatShortFileSize(LocalContext.current, progress.progressBytes)} / ${Formatter.formatShortFileSize(LocalContext.current, progress.diffBytes)}")
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp)
-                    ) {
-                        LinearProgressIndicator(
-                            progress = { progress.percentage },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+                Text(text = "Folder")
+                Text(text = folder.folder)
             }
-
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Button(
-                        enabled = !progress.inProgress,
-                        onClick = createDiff,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            disabledContentColor = MaterialTheme.colorScheme.onSurface
-                        ),
-                    ) {
-                        Text(text = "Refresh")
-                    }
-                    Button(
-                        onClick = sync,
-                        enabled = !progress.inProgress,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(text = if (progress.inProgress) "Uploading" else "Upload")
-                    }
-                }
-
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "Photos")
+                Text(text = "${folder.photos}")
             }
-
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "Videos")
+                Text(text = "${folder.videos}")
+            }
 
         }
+    }
+}
+
+@Composable
+private fun Progress(progress: SyncViewModel.Progress) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = containerBackground(),
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+            Icon(
+                Icons.Outlined.Upload,
+                "Progress",
+                modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+            )
+        }
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "Uploads")
+                Text(text = "${progress.progressCount} / ${progress.diffCount}")
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "Uploads size")
+                Text(
+                    text = "${Formatter.formatShortFileSize(LocalContext.current, progress.progressBytes)} / ${Formatter.formatShortFileSize(LocalContext.current, progress.diffBytes)}"
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            ) {
+                LinearProgressIndicator(
+                    progress = { progress.percentage },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun Actions(
+    inProgress: Boolean,
+    createDiff: () -> Unit,
+    sync: () -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Button(
+                enabled = !inProgress,
+                onClick = createDiff,
+                modifier = Modifier.weight(1f),
+                colors = ButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface
+                ),
+            ) {
+                Text(text = "Refresh")
+            }
+            Button(
+                onClick = sync,
+                enabled = !inProgress,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(text = if (inProgress) "Uploading" else "Upload")
+            }
+        }
+
     }
 }
 
