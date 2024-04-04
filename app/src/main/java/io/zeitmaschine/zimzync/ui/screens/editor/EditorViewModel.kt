@@ -4,10 +4,10 @@ import android.app.Application
 import android.webkit.URLUtil
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import io.zeitmaschine.zimzync.MediaRepository
+import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.remote.Remote
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
-import io.zeitmaschine.zimzync.ResolverBasedRepository
+import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

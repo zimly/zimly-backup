@@ -5,6 +5,9 @@ import android.util.Log
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.zeitmaschine.zimzync.data.media.MediaObject
+import io.zeitmaschine.zimzync.data.media.MediaRepository
+import io.zeitmaschine.zimzync.data.s3.MinioRepository
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before

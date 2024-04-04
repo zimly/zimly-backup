@@ -8,6 +8,8 @@ import androidx.work.Configuration
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
+import io.zeitmaschine.zimzync.data.s3.MinioRepository
 
 
 class ZimApplication() : Application(), Configuration.Provider {

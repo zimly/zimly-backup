@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync
+package io.zeitmaschine.zimzync.data.media
 
 import android.content.ContentResolver
 import android.content.ContentUris

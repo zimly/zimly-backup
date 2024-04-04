@@ -1,6 +1,10 @@
 package io.zeitmaschine.zimzync
 
 import android.util.Log
+import io.zeitmaschine.zimzync.data.media.MediaObject
+import io.zeitmaschine.zimzync.data.media.MediaRepository
+import io.zeitmaschine.zimzync.data.s3.S3Object
+import io.zeitmaschine.zimzync.data.s3.S3Repository
 
 class SyncServiceImpl(
     private val s3Repository: S3Repository,

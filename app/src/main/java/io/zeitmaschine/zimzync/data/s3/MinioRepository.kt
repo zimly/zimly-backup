@@ -1,4 +1,4 @@
-package io.zeitmaschine.zimzync
+package io.zeitmaschine.zimzync.data.s3
 
 import android.util.Log
 import io.minio.*

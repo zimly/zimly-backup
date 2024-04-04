@@ -14,10 +14,10 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import io.zeitmaschine.zimzync.Diff
-import io.zeitmaschine.zimzync.MediaRepository
-import io.zeitmaschine.zimzync.MinioRepository
+import io.zeitmaschine.zimzync.data.media.MediaRepository
+import io.zeitmaschine.zimzync.data.s3.MinioRepository
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
-import io.zeitmaschine.zimzync.ResolverBasedRepository
+import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
 import io.zeitmaschine.zimzync.SyncInputs
 import io.zeitmaschine.zimzync.SyncOutputs
 import io.zeitmaschine.zimzync.SyncServiceImpl
