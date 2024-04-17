@@ -5,6 +5,7 @@ import io.minio.*
 import java.io.InputStream
 import java.time.ZonedDateTime
 
+
 data class S3Object(
     var name: String,
     var size: Long,
@@ -57,19 +58,19 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     }
 
     override fun put(stream: InputStream, name: String, contentType: String, size: Long): Boolean {
-        stream.use { stream ->
+        ProgressStream.wrap(stream, Progress(size)).use {
             val param = PutObjectArgs.builder()
                 .bucket(bucket)
                 .`object`(name)
                 .contentType(contentType)
-                .stream(stream, size, -1)
+                .stream(it, size, -1)
                 .build()
             Log.i(TAG, "Uploading $name")
             mc.putObject(param)
             return true
         }
     }
-}
+    }
 
 interface S3Repository {
     fun listObjects(): List<S3Object>
