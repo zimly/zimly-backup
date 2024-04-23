@@ -58,7 +58,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     }
 
     override fun put(stream: InputStream, name: String, contentType: String, size: Long): Boolean {
-        ProgressStream.wrap(stream, Progress(size)).use {
+        ProgressStream.wrap(stream, ProgressTracker(size)).use {
             val param = PutObjectArgs.builder()
                 .bucket(bucket)
                 .`object`(name)
@@ -67,7 +67,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
                 .build()
             Log.i(TAG, "Uploading $name")
             mc.putObject(param)
-            return true
+            return true // TODO Return progressTracker.observe()
         }
     }
     }
