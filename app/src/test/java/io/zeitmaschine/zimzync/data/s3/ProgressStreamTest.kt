@@ -36,6 +36,7 @@ class ProgressStreamTest {
                 .last()
 
             assertThat(lastProgress.readBytes, `is`(size))
+            assertThat(lastProgress.percentage, `is`(1F))
         }
 
         String(wrapped.readAllBytes(), StandardCharsets.UTF_8)

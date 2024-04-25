@@ -57,12 +57,6 @@ class ProgressTracker(private val size: Long) {
         progressFlow.tryEmit(skipped)
     }
 
-/*
-    fun percentage(): Float {
-        return readBytes.toFloat() / size
-    }
-*/
-
     /**
      * Returns kB/s
      */
@@ -92,9 +86,14 @@ class ProgressTracker(private val size: Long) {
     fun observe(): Flow<Progress> {
         return progressFlow
             .takeWhile { it != -1L }
-            .runningReduce{ acc, value -> acc + value }
-            .map { Progress(it) }
+            .map { Progress(it, it.toFloat() / size, size) }
+            .runningReduce{ acc, value ->
+                val totalBytes = acc.readBytes + value.readBytes
+                val percentage = totalBytes.toFloat() / acc.size
+                Progress(readBytes = totalBytes, percentage = percentage, acc.size)
+            }
+            // TODO debounce?
     }
 }
 
-data class Progress(val readBytes: Long)
+data class Progress(val readBytes: Long, val percentage: Float, val size: Long)
