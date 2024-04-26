@@ -2,6 +2,10 @@ package io.zeitmaschine.zimzync.data.s3
 
 import android.util.Log
 import io.minio.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.time.ZonedDateTime
 
@@ -43,7 +47,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
 
     override fun listObjects(): List<S3Object> {
         return mc.listObjects(ListObjectsArgs.builder().bucket(bucket).recursive(true).build())
-            .map { it.get()}
+            .map { it.get() }
             .map {
                 val name = it.objectName()
                 val size = it.size()
@@ -57,24 +61,29 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build())
     }
 
-    override fun put(stream: InputStream, name: String, contentType: String, size: Long): Boolean {
-        ProgressStream.wrap(stream, ProgressTracker(size)).use {
-            val param = PutObjectArgs.builder()
-                .bucket(bucket)
-                .`object`(name)
-                .contentType(contentType)
-                .stream(it, size, -1)
-                .build()
-            Log.i(TAG, "Uploading $name")
-            mc.putObject(param)
-            return true // TODO Return progressTracker.observe()
+    override fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<Progress> {
+        val progress = ProgressTracker(size)
+        runBlocking { // TODO :thinking_face:
+            launch {
+                ProgressStream.wrap(stream, progress).use {
+                    val param = PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .`object`(name)
+                        .contentType(contentType)
+                        .stream(it, size, -1)
+                        .build()
+                    Log.i(TAG, "Uploading $name")
+                    mc.putObject(param)
+                }
+            }
         }
+        return progress.observe()
     }
-    }
+}
 
 interface S3Repository {
     fun listObjects(): List<S3Object>
-    fun put(stream: InputStream, name: String, contentType: String, size: Long): Boolean
+    fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<Progress>
     fun createBucket(bucket: String)
     fun verify(): Boolean
 }
