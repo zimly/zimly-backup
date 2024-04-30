@@ -1,7 +1,7 @@
 version: '3'
 services:
   minio:
-    image: quay.io/minio/minio:LATEST
+    image: minio/minio:latest
     container_name: zm-minio
     ports:
       - 9000:9000
@@ -11,7 +11,7 @@ services:
     command: server /data
 
   createbuckets:
-    image: quay.io/minio/mc:LATEST
+    image: minio/minio:latest
     depends_on:
       - minio
     entrypoint: >
