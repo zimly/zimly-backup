@@ -5,6 +5,9 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.onEach
 
 class SyncWorker(
     context: Context,
@@ -43,53 +46,39 @@ class SyncWorker(
                 .build()
         )
 
-
-        var progressCount = 0
-        var progressBytes: Long = 0
-        var progressPercentage = 0F
-        fun progress(size: Long) {
-            ++progressCount
-            progressBytes += size
-
-            if (progressBytes > 0) {
-                progressPercentage = progressBytes.toFloat() / diffBytes
+        val res = syncService.sync(diff)
+            .onEach {
+                setProgressAsync(
+                    Data.Builder()
+                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
+                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putFloat(
+                            SyncOutputs.PROGRESS_PERCENTAGE,
+                            it.readBytes.toFloat() / diffBytes
+                        )
+                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                        .build()
+                )
+            }.catch {
+                Log.e(TAG, "Failed to sync diff.", it)
+                Result.failure(
+                    Data.Builder()
+                        .putString(SyncOutputs.ERROR, it.message)
+                        .build()
+                )
             }
-            setProgressAsync(
-                Data.Builder()
-                    .putInt(SyncOutputs.PROGRESS_COUNT, progressCount)
-                    .putLong(SyncOutputs.PROGRESS_BYTES, progressBytes)
-                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, progressPercentage)
-                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                    .build()
-            )
-            Log.i(TAG, " Progress: $progressCount / $diffCount Traffic: $progressBytes")
-        }
+            .last()
 
-        val result = try {
-            syncService.sync(diff, ::progress)
-            Result.success(
-                Data.Builder()
-                    .putInt(SyncOutputs.PROGRESS_COUNT, progressCount)
-                    .putLong(SyncOutputs.PROGRESS_BYTES, progressBytes)
-                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, progressPercentage)
-                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                    .build()
-            )
-        } catch (e: Exception) {
-            Result.failure(
-                Data.Builder()
-                    .putInt(SyncOutputs.PROGRESS_COUNT, progressCount)
-                    .putLong(SyncOutputs.PROGRESS_BYTES, progressBytes)
-                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, progressPercentage)
-                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                    .putString(SyncOutputs.ERROR, e.message)
-                    .build()
-            )
-        }
-        return result
+        return Result.success(
+            Data.Builder()
+                .putInt(SyncOutputs.PROGRESS_COUNT, res.uploadedFiles)
+                .putLong(SyncOutputs.PROGRESS_BYTES, res.readBytes)
+                .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, res.readBytes.toFloat() / diffBytes)
+                .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                .build()
+        )
     }
 }
 

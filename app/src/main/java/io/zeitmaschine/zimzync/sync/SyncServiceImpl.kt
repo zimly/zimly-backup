@@ -3,18 +3,14 @@ package io.zeitmaschine.zimzync.sync
 import android.util.Log
 import io.zeitmaschine.zimzync.data.media.MediaObject
 import io.zeitmaschine.zimzync.data.media.MediaRepository
-import io.zeitmaschine.zimzync.data.s3.Progress
 import io.zeitmaschine.zimzync.data.s3.S3Object
 import io.zeitmaschine.zimzync.data.s3.S3Repository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flatMap
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onErrorResume
-import kotlinx.coroutines.flow.reduce
+import kotlinx.coroutines.flow.runningFold
 
 class SyncServiceImpl(
     private val s3Repository: S3Repository,
@@ -41,8 +37,7 @@ class SyncServiceImpl(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun sync(diff: Diff, progress: (size: Long) -> Unit): Flow<Progress> {
-
+    override fun sync(diff: Diff): Flow<SyncProgress> {
         return diff.diff.asFlow()
             .map { mediaObj -> Pair(mediaObj, mediaRepository.getStream(mediaObj.path)) }
             .flatMapConcat { (mediaObj, file) ->
@@ -50,12 +45,19 @@ class SyncServiceImpl(
                     file,
                     mediaObj.name,
                     mediaObj.contentType,
-                    mediaObj.size
-                )}
-            // TODO .reduce(total)
-            .catch { Log.e(TAG, "Failed to sync diff.", it) } // TODO verify exception handling
+                    mediaObj.size)
+            }
+            .runningFold(SyncProgress.EMPTY) {acc, value ->
+                val totalBytes = acc.readBytes + value.readBytes
+                val percentage = totalBytes.toFloat() / diff.size
+                SyncProgress(readBytes = totalBytes, acc.uploadedFiles, percentage, count = acc.count + 1)
+            }
     }
-
+}
+data class SyncProgress(val readBytes: Long, val uploadedFiles: Int, val percentage: Float, val count: Int) {
+    companion object {
+        val EMPTY = SyncProgress(0, 0, 0F, 0)
+    }
 }
 
 data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val diff: List<MediaObject>, val size: Long) {
@@ -67,6 +69,6 @@ data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val 
 interface SyncService {
 
     fun diff(buckets: Set<String>): Diff
-    fun sync(diff: Diff, progress: (size: Long) -> Unit): Flow<Progress>
+    fun sync(diff: Diff): Flow<SyncProgress>
 }
 

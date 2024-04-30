@@ -76,9 +76,10 @@ class SyncServiceImplTest {
 
         val localMediaUri = mockk<Uri>()
         val localMediaObj = MediaObject(name = "", 123L, "avr", localMediaUri)
-        val res = ss.sync(Diff(remotes = emptyList(), locals = listOf(localMediaObj), diff = listOf(localMediaObj), size = 0L)) {}.toList()
+        val res = ss.sync(Diff(remotes = emptyList(), locals = listOf(localMediaObj), diff = listOf(localMediaObj), size = 0L)).toList()
 
-        assertThat(res.size, `is`(1))
-        assertThat(res[0].readBytes, `is`(12L))
+        assertThat(res.size, `is`(2)) // Includes initial EMPTY
+        assertThat(res[1].readBytes, `is`(12L))
+        assertThat(res[1].count, `is`(1))
     }
 }
