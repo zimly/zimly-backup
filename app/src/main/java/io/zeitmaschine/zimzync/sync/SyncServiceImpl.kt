@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
 
 class SyncServiceImpl(
@@ -38,8 +39,10 @@ class SyncServiceImpl(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun sync(diff: Diff): Flow<SyncProgress> {
+        var count = 0
         return diff.diff.asFlow()
             .map { mediaObj -> Pair(mediaObj, mediaRepository.getStream(mediaObj.path)) }
+            .onEach { count++ } // TODO too early, should happen after the upload
             .flatMapConcat { (mediaObj, file) ->
                 s3Repository.put(
                     file,
@@ -48,15 +51,15 @@ class SyncServiceImpl(
                     mediaObj.size)
             }
             .runningFold(SyncProgress.EMPTY) {acc, value ->
-                val totalBytes = acc.readBytes + value.readBytes
+                val totalBytes = acc.readBytes + value.readBytes // Don't sum on totalbytes, double counts
                 val percentage = totalBytes.toFloat() / diff.size
-                SyncProgress(readBytes = totalBytes, acc.uploadedFiles, percentage, count = acc.count + 1)
+                SyncProgress(readBytes = totalBytes, count, percentage)
             }
     }
 }
-data class SyncProgress(val readBytes: Long, val uploadedFiles: Int, val percentage: Float, val count: Int) {
+data class SyncProgress(val readBytes: Long, val uploadedFiles: Int, val percentage: Float) {
     companion object {
-        val EMPTY = SyncProgress(0, 0, 0F, 0)
+        val EMPTY = SyncProgress(0, 0, 0F)
     }
 }
 

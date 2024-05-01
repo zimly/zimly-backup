@@ -1,11 +1,12 @@
 package io.zeitmaschine.zimzync.data.s3
 
 import android.util.Log
-import io.minio.*
+import io.minio.BucketExistsArgs
+import io.minio.ListObjectsArgs
+import io.minio.MakeBucketArgs
+import io.minio.MinioAsyncClient
+import io.minio.PutObjectArgs
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.time.ZonedDateTime
 
@@ -24,11 +25,11 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         val TAG: String? = MinioRepository::class.simpleName
     }
 
-    private var mc: MinioClient
+    private var mc: MinioAsyncClient
 
     init {
         try {
-            mc = MinioClient.builder()
+            mc = MinioAsyncClient.builder()
                 .endpoint(url)
                 .credentials(key, secret)
                 .build()
@@ -39,7 +40,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
 
     override fun verify(): Boolean {
         try {
-            return mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+            return mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()).get();
         } catch (e: Exception) {
             throw Exception("Failed to connect to minio.", e)
         }
@@ -58,24 +59,21 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     }
 
     override fun createBucket(bucket: String) {
-        mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build())
+        mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build()).get()
     }
 
-    override fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<Progress> {
+    override fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<ObjectProgress> {
         val progress = ProgressTracker(size)
-        runBlocking { // TODO :thinking_face:
-            launch {
-                ProgressStream.wrap(stream, progress).use {
-                    val param = PutObjectArgs.builder()
-                        .bucket(bucket)
-                        .`object`(name)
-                        .contentType(contentType)
-                        .stream(it, size, -1)
-                        .build()
-                    Log.i(TAG, "Uploading $name")
-                    mc.putObject(param)
-                }
-            }
+        ProgressStream.wrap(stream, progress).use {
+            val param = PutObjectArgs.builder()
+                .bucket(bucket)
+                .`object`(name)
+                .contentType(contentType)
+                .stream(it, size, -1)
+                .build()
+            Log.i(TAG, "Uploading $name")
+            // non-blocking
+            mc.putObject(param).get()
         }
         return progress.observe()
     }
@@ -83,7 +81,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
 
 interface S3Repository {
     fun listObjects(): List<S3Object>
-    fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<Progress>
+    fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<ObjectProgress>
     fun createBucket(bucket: String)
     fun verify(): Boolean
 }

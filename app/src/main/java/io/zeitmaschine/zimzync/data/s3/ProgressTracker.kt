@@ -3,7 +3,7 @@ package io.zeitmaschine.zimzync.data.s3
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.runningReduce
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.takeWhile
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -83,17 +83,22 @@ class ProgressTracker(private val size: Long) {
         return readBytes.toFloat() / duration
     }*/
 
-    fun observe(): Flow<Progress> {
+    fun observe(): Flow<ObjectProgress> {
         return progressFlow
             .takeWhile { it != -1L }
-            .map { Progress(it, it.toFloat() / size, size) }
-            .runningReduce{ acc, value ->
+            .map { StreamProgress(it, size) }
+            .runningFold(ObjectProgress.EMPTY){ acc, value ->
                 val totalBytes = acc.readBytes + value.readBytes
                 val percentage = totalBytes.toFloat() / acc.size
-                Progress(readBytes = totalBytes, percentage = percentage, acc.size)
+                ObjectProgress(readBytes = value.readBytes, totalBytes, percentage = percentage, acc.size)
             }
             // TODO debounce?
     }
 }
 
-data class Progress(val readBytes: Long, val percentage: Float, val size: Long)
+data class StreamProgress(val readBytes: Long, val size: Long)
+data class ObjectProgress(val readBytes: Long, val totalReadBytes: Long, val percentage: Float, val size: Long) {
+    companion object {
+        val EMPTY = ObjectProgress(0, 0, 0F, 0)
+    }
+}

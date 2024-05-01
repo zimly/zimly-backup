@@ -3,7 +3,6 @@ package io.zeitmaschine.zimzync.data.s3
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -31,7 +30,7 @@ class ProgressStreamTest {
         // https://developer.android.com/kotlin/flow/test
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
 
-            val lastProgress: Progress = progress.observe()
+            val lastProgress: ObjectProgress = progress.observe()
                 .onEach { println("$it") }
                 .last()
 

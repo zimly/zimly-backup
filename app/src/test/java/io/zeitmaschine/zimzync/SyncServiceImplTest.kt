@@ -8,7 +8,7 @@ import io.mockk.mockkStatic
 import io.zeitmaschine.zimzync.data.media.MediaObject
 import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
-import io.zeitmaschine.zimzync.data.s3.Progress
+import io.zeitmaschine.zimzync.data.s3.ObjectProgress
 import io.zeitmaschine.zimzync.data.s3.S3Repository
 import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
@@ -67,19 +67,22 @@ class SyncServiceImplTest {
     }
 
     @Test
-    fun sync() = runTest {
-        val s3Repo: S3Repository = mockk()
-        every { s3Repo.put(any(), any(), any(), any()) } returns flowOf(Progress(12L, 3F, 24L))
-        every { mediaRepository.getStream(any()) } returns ByteArrayInputStream("textavdfbad".toByteArray())
+    fun sync() {
+        val flowOf = flowOf(ObjectProgress(25L, 25L, 25F, 100L), ObjectProgress(25L, 50L, 50F, 100L), ObjectProgress(25L, 75L, 75F, 100L), ObjectProgress(25L, 100L, 100F, 100L))
+        runTest {
+            val s3Repo: S3Repository = mockk()
+            every { s3Repo.put(any(), any(), any(), any()) } returns flowOf
+            every { mediaRepository.getStream(any()) } returns ByteArrayInputStream("textavdfbad".toByteArray())
 
-        val ss = SyncServiceImpl(s3Repo, mediaRepository)
+            val ss = SyncServiceImpl(s3Repo, mediaRepository)
 
-        val localMediaUri = mockk<Uri>()
-        val localMediaObj = MediaObject(name = "", 123L, "avr", localMediaUri)
-        val res = ss.sync(Diff(remotes = emptyList(), locals = listOf(localMediaObj), diff = listOf(localMediaObj), size = 0L)).toList()
+            val localMediaUri = mockk<Uri>()
+            val localMediaObj = MediaObject(name = "", 100L, "avr", localMediaUri)
+            val res = ss.sync(Diff(remotes = emptyList(), locals = listOf(localMediaObj), diff = listOf(localMediaObj), size = 0L)).toList()
 
-        assertThat(res.size, `is`(2)) // Includes initial EMPTY
-        assertThat(res[1].readBytes, `is`(12L))
-        assertThat(res[1].count, `is`(1))
+            assertThat(res.size, `is`(5)) // Includes initial EMPTY
+            assertThat(res[4].readBytes, `is`(100L))
+            assertThat(res[4].uploadedFiles, `is`(1))
+        }
     }
 }
