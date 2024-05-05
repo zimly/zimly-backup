@@ -67,9 +67,11 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build()).get()
     }
 
-    override fun get(name: String): GetObjectResponse {
-        val param = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
-        return mc.getObject(param).get()
+    override suspend fun get(name: String): GetObjectResponse {
+        return suspendCoroutine { continuation ->
+            val params = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
+            mc.getObject(params).thenAccept { continuation.resume(it) }
+        }
     }
 
     override suspend fun put(
@@ -84,7 +86,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         return flow { }
     }
 
-    suspend fun doPut(
+    private suspend fun doPut(
         stream: InputStream,
         name: String,
         contentType: String,
@@ -118,5 +120,5 @@ interface S3Repository {
 
     fun createBucket(bucket: String)
     fun verify(): Boolean
-    fun get(name: String): GetObjectResponse
+    suspend fun get(name: String): GetObjectResponse
 }
