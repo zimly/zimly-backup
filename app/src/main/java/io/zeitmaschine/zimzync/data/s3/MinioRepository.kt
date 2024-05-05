@@ -1,12 +1,14 @@
 package io.zeitmaschine.zimzync.data.s3
 
-import android.util.Log
 import io.minio.BucketExistsArgs
+import io.minio.GetObjectArgs
+import io.minio.GetObjectResponse
 import io.minio.ListObjectsArgs
 import io.minio.MakeBucketArgs
 import io.minio.MinioAsyncClient
 import io.minio.PutObjectArgs
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import java.io.InputStream
 import java.time.ZonedDateTime
 
@@ -40,7 +42,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
 
     override fun verify(): Boolean {
         try {
-            return mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()).get();
+            return mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()).get()
         } catch (e: Exception) {
             throw Exception("Failed to connect to minio.", e)
         }
@@ -62,26 +64,37 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build()).get()
     }
 
-    override fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<ObjectProgress> {
-        val progress = ProgressTracker(size)
-        ProgressStream.wrap(stream, progress).use {
+    override fun get(name: String): GetObjectResponse {
+        val param = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
+        return mc.getObject(param).get()
+    }
+
+    override fun put(
+        stream: InputStream,
+        name: String,
+        contentType: String,
+        size: Long
+    ): Flow<Progress> {
+        // Launch a new coroutine
+        stream.use {
             val param = PutObjectArgs.builder()
                 .bucket(bucket)
                 .`object`(name)
                 .contentType(contentType)
                 .stream(it, size, -1)
                 .build()
-            Log.i(TAG, "Uploading $name")
-            // non-blocking
+
             mc.putObject(param).get()
         }
-        return progress.observe()
+        return flow { }
     }
+
 }
 
 interface S3Repository {
     fun listObjects(): List<S3Object>
-    fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<ObjectProgress>
+    fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<Progress>
     fun createBucket(bucket: String)
     fun verify(): Boolean
+    fun get(name: String): GetObjectResponse
 }

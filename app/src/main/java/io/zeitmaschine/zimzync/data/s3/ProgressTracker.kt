@@ -1,8 +1,9 @@
 package io.zeitmaschine.zimzync.data.s3
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.takeWhile
 import java.io.FilterInputStream
@@ -41,64 +42,48 @@ class ProgressStream(private val delegate: InputStream, private val progress: Pr
         this.progress.stepTo(readBytes)
         return readBytes
     }
+
+    override fun close() {
+        super.close()
+        this.progress.close()
+
+    }
 }
 
 class ProgressTracker(private val size: Long) {
 
-    private val progressFlow = MutableStateFlow(0L)
+    private val progressFlow = MutableSharedFlow<Long>(1)
     // https://stackoverflow.com/questions/70935356/how-can-i-calculate-min-max-average-of-continuous-flow-in-kotlin
     // https://docs.oracle.com/javase/8/docs/api/java/util/DoubleSummaryStatistics.html
 
     fun stepBy(read: Int) {
-        progressFlow.tryEmit(read.toLong())
+        val emit = progressFlow.tryEmit(read.toLong())
+        println("read stream $read, emitted: $emit")
     }
 
     fun stepTo(skipped: Long) {
-        progressFlow.tryEmit(skipped)
+        val emit = progressFlow.tryEmit(skipped)
+        println("read stream $skipped, emitted: $emit")
     }
 
-    /**
-     * Returns kB/s
-     */
-/*
-    fun currentSpeed(): Float {
-        if (completed > -1) {
-            return 0F
-        }
-
-        var duration = lastTick - started
-        duration = if (duration > 0) duration else 1 // quard against infinity
-        println(duration)
-        return readBytes.toFloat() / duration
-    }
-*/
-
-    /**
-     * Returns kB/s
-     */
-    /*fun avgSpeed(): Float {
-        var duration = lastTick - completed
-        duration = if (duration > 0) duration else 1
-        println(duration)
-        return readBytes.toFloat() / duration
-    }*/
-
-    fun observe(): Flow<ObjectProgress> {
+    fun observe(): Flow<Progress> {
         return progressFlow
             .takeWhile { it != -1L }
-            .map { StreamProgress(it, size) }
-            .runningFold(ObjectProgress.EMPTY){ acc, value ->
-                val totalBytes = acc.readBytes + value.readBytes
-                val percentage = totalBytes.toFloat() / acc.size
-                ObjectProgress(readBytes = value.readBytes, totalBytes, percentage = percentage, acc.size)
+            .onEach { println("read flow $it") }
+            .runningFold(Progress.EMPTY){ acc, value ->
+                val totalBytes = acc.totalReadBytes + value
+                val percentage = totalBytes.toFloat() / size
+                Progress(readBytes = value, totalBytes, percentage = percentage, size)
             }
-            // TODO debounce?
+    }
+
+    fun close() {
+        //progressFlow.tryEmit(-1)
     }
 }
 
-data class StreamProgress(val readBytes: Long, val size: Long)
-data class ObjectProgress(val readBytes: Long, val totalReadBytes: Long, val percentage: Float, val size: Long) {
+data class Progress(val readBytes: Long, val totalReadBytes: Long, val percentage: Float, val size: Long) {
     companion object {
-        val EMPTY = ObjectProgress(0, 0, 0F, 0)
+        val EMPTY = Progress(0, 0, 0F, 0)
     }
 }

@@ -91,7 +91,7 @@ dependencies {
     ksp "androidx.room:room-compiler:$room_version"
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.testcontainers:testcontainers:1.19.7'
+    testImplementation 'org.testcontainers:minio:1.19.7'
     testImplementation 'io.mockk:mockk:1.13.10'
     testImplementation 'androidx.test:core-ktx:1.5.0'
     testImplementation 'androidx.work:work-testing:2.9.0'

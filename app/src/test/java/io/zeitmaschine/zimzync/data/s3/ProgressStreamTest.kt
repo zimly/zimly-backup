@@ -9,8 +9,6 @@ import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
-import java.io.ByteArrayInputStream
-import java.io.InputStream
 import java.nio.charset.StandardCharsets
 
 
@@ -19,22 +17,22 @@ class ProgressStreamTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun name() = runTest {
-        val initialString = "textavdfbad"
-        val input: InputStream = ByteArrayInputStream(initialString.toByteArray())
-
-        val size = initialString.toByteArray().size.toLong()
+        val image = "/testdata/test_image.png"
+        val stream =
+            javaClass.getResourceAsStream(image) ?: throw Error("Could not open test resource.")
+        val size = stream.available().toLong()
 
         val progress = ProgressTracker(size)
-        val wrapped = ProgressStream.wrap(input, progress)
+        val wrapped = ProgressStream.wrap(stream, progress)
 
         // https://developer.android.com/kotlin/flow/test
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
 
-            val lastProgress: ObjectProgress = progress.observe()
+            val lastProgress: Progress = progress.observe()
                 .onEach { println("$it") }
                 .last()
 
-            assertThat(lastProgress.readBytes, `is`(size))
+            assertThat(lastProgress.totalReadBytes, `is`(size))
             assertThat(lastProgress.percentage, `is`(1F))
         }
 

@@ -8,7 +8,7 @@ import io.mockk.mockkStatic
 import io.zeitmaschine.zimzync.data.media.MediaObject
 import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
-import io.zeitmaschine.zimzync.data.s3.ObjectProgress
+import io.zeitmaschine.zimzync.data.s3.Progress
 import io.zeitmaschine.zimzync.data.s3.S3Repository
 import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
@@ -21,8 +21,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.shaded.com.google.common.net.MediaType
 import org.testcontainers.utility.DockerImageName
 import java.io.ByteArrayInputStream
+import java.io.InputStream
 
 class SyncServiceImplTest {
     private lateinit var mediaRepository: MediaRepository
@@ -68,7 +70,7 @@ class SyncServiceImplTest {
 
     @Test
     fun sync() {
-        val flowOf = flowOf(ObjectProgress(25L, 25L, 25F, 100L), ObjectProgress(25L, 50L, 50F, 100L), ObjectProgress(25L, 75L, 75F, 100L), ObjectProgress(25L, 100L, 100F, 100L))
+        val flowOf = flowOf(Progress(25L, 25L, 25F, 100L), Progress(25L, 50L, 50F, 100L), Progress(25L, 75L, 75F, 100L), Progress(25L, 100L, 100F, 100L))
         runTest {
             val s3Repo: S3Repository = mockk()
             every { s3Repo.put(any(), any(), any(), any()) } returns flowOf
@@ -85,4 +87,29 @@ class SyncServiceImplTest {
             assertThat(res[4].uploadedFiles, `is`(1))
         }
     }
+
+    @Test
+    fun syncIT() {
+        runTest {
+            // TODO real stream
+            val initialString = "textavdfbad"
+            val stream: InputStream = ByteArrayInputStream(initialString.toByteArray())
+            val size = initialString.toByteArray().size.toLong()
+
+            every { mediaRepository.getStream(any()) } returns stream
+
+            val ss = SyncServiceImpl(minioRepository, mediaRepository)
+
+            val localMediaUri = mockk<Uri>()
+            val obj1 = MediaObject(name = "test1", size, MediaType.OCTET_STREAM.type(), localMediaUri)
+            val obj2 = MediaObject(name = "test2", size, MediaType.OCTET_STREAM.type(), localMediaUri)
+            val diff = Diff(remotes = emptyList(), locals = listOf(obj1, obj2), diff = listOf(obj1, obj2), size = size*2)
+            val res = ss.sync(diff).toList()
+
+            assertThat(res.size, `is`(5)) // Includes initial EMPTY
+            assertThat(res[4].readBytes, `is`(100L))
+            assertThat(res[4].uploadedFiles, `is`(1))
+        }
+    }
+
 }
