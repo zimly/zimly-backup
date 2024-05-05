@@ -10,6 +10,8 @@ import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
 import io.zeitmaschine.zimzync.data.s3.Progress
 import io.zeitmaschine.zimzync.data.s3.S3Repository
+import io.zeitmaschine.zimzync.data.s3.minioPwd
+import io.zeitmaschine.zimzync.data.s3.minioUser
 import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
 import kotlinx.coroutines.flow.flowOf
@@ -21,6 +23,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.shaded.com.google.common.net.MediaType
 import org.testcontainers.utility.DockerImageName
 import java.io.ByteArrayInputStream
@@ -29,14 +32,15 @@ import java.io.InputStream
 class SyncServiceImplTest {
     private lateinit var mediaRepository: MediaRepository
     private lateinit var minioRepository: MinioRepository
+
     private val containerName = "minio/minio:latest"
     private val minioPort = 9000
 
     @get:Rule
-    val minioContainer: GenericContainer<*> = GenericContainer(DockerImageName.parse(containerName))
-            .withEnv(mapOf("MINIO_ACCESS_KEY" to "test", "MINIO_SECRET_KEY" to "testtest"))
-            .withCommand("server /data")
-            .withExposedPorts(minioPort)
+    val minioContainer: MinIOContainer = MinIOContainer(containerName)
+        .withUserName(minioUser)
+        .withPassword(minioPwd)
+        .withExposedPorts(minioPort)
 
     @Before
     fun setUp() {
@@ -52,9 +56,8 @@ class SyncServiceImplTest {
 
         every { mediaRepository.getMedia(setOf("Camera")) } returns listOf(MediaObject("name", 1234, "jpeg", uri))
 
-        val url = "http://" + minioContainer.host + ":" + minioContainer.getMappedPort(minioPort)
         val bucket = "test-bucket"
-        minioRepository = MinioRepository(url, "test", "testtest", bucket)
+        minioRepository = MinioRepository(minioContainer.s3URL, minioUser, minioPwd, bucket)
         minioRepository.createBucket(bucket)
     }
 
@@ -92,21 +95,24 @@ class SyncServiceImplTest {
     fun syncIT() {
         runTest {
             // TODO real stream
-            val initialString = "textavdfbad"
-            val stream: InputStream = ByteArrayInputStream(initialString.toByteArray())
-            val size = initialString.toByteArray().size.toLong()
+            val image = "/testdata/test_image.png"
+            val stream =
+                javaClass.getResourceAsStream(image) ?: throw Error("Could not open test resource.")
+            val size = stream.available().toLong()
 
             every { mediaRepository.getStream(any()) } returns stream
 
             val ss = SyncServiceImpl(minioRepository, mediaRepository)
 
             val localMediaUri = mockk<Uri>()
-            val obj1 = MediaObject(name = "test1", size, MediaType.OCTET_STREAM.type(), localMediaUri)
-            val obj2 = MediaObject(name = "test2", size, MediaType.OCTET_STREAM.type(), localMediaUri)
-            val diff = Diff(remotes = emptyList(), locals = listOf(obj1, obj2), diff = listOf(obj1, obj2), size = size*2)
+            val obj1 = MediaObject(name = "test1", size, "image/png", localMediaUri)
+            val diff = Diff(remotes = emptyList(), locals = listOf(obj1), diff = listOf(obj1), size = size*2)
             val res = ss.sync(diff).toList()
 
-            assertThat(res.size, `is`(5)) // Includes initial EMPTY
+            val name = minioRepository.get("test1").`object`()
+            assertThat(name, `is`("test1"))
+
+            assertThat(res.size, `is`(1)) // Includes initial EMPTY
             assertThat(res[4].readBytes, `is`(100L))
             assertThat(res[4].uploadedFiles, `is`(1))
         }
