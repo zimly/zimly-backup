@@ -70,5 +70,18 @@ class MinioRepositoryTest {
             assertThat(name, `is`("testObj"))
         }
         minioRepository.put(ProgressStream.wrap(stream, tracker), "testObj", "image/png", size)
+
+        /* TODO: Instead the test should look like:
+
+        val lastProgress =
+            minioRepository.put(stream, "testObj", "image/png", size)
+                .onEach { println(it) }
+                .last()
+
+        assertThat(lastProgress.percentage, `is`(1))
+        val name = minioRepository.get("testObj").`object`()
+        assertThat(name, `is`("testObj"))
+
+         */
     }
 }

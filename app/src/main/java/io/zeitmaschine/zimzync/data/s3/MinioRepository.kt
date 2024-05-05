@@ -82,8 +82,20 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     ): Flow<Progress> {
 
         doPut(stream, name, contentType, size)
-
         return flow { }
+
+        /* TODO: init progress tracker and stream wrapper here and return the real flow:
+
+        val progressTracker = ProgressTracker(size)
+        val obs =  progressTracker.observe()
+        coroutineScope {
+            launch(Dispatchers.IO) {
+                doPut(ProgressStream.wrap(stream, progressTracker), name, contentType, size)
+            }
+        }
+        return obs;
+
+         */
     }
 
     private suspend fun doPut(
