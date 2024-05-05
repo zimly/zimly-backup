@@ -6,11 +6,14 @@ import io.minio.GetObjectResponse
 import io.minio.ListObjectsArgs
 import io.minio.MakeBucketArgs
 import io.minio.MinioAsyncClient
+import io.minio.ObjectWriteResponse
 import io.minio.PutObjectArgs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.InputStream
 import java.time.ZonedDateTime
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 data class S3Object(
@@ -69,31 +72,50 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         return mc.getObject(param).get()
     }
 
-    override fun put(
+    override suspend fun put(
         stream: InputStream,
         name: String,
         contentType: String,
         size: Long
     ): Flow<Progress> {
-        // Launch a new coroutine
-        stream.use {
+
+        doPut(stream, name, contentType, size)
+
+        return flow { }
+    }
+
+    suspend fun doPut(
+        stream: InputStream,
+        name: String,
+        contentType: String,
+        size: Long
+    ): ObjectWriteResponse {
+
+
+        return suspendCoroutine { continuation ->
+            // stream.use { ss -> // // Autoclosing!!!
             val param = PutObjectArgs.builder()
                 .bucket(bucket)
                 .`object`(name)
                 .contentType(contentType)
-                .stream(it, size, -1)
+                .stream(stream, size, -1)
                 .build()
 
-            mc.putObject(param).get()
+            mc.putObject(param).thenAccept { continuation.resume(it) }
         }
-        return flow { }
     }
 
 }
 
 interface S3Repository {
     fun listObjects(): List<S3Object>
-    fun put(stream: InputStream, name: String, contentType: String, size: Long): Flow<Progress>
+    suspend fun put(
+        stream: InputStream,
+        name: String,
+        contentType: String,
+        size: Long
+    ): Flow<Progress>
+
     fun createBucket(bucket: String)
     fun verify(): Boolean
     fun get(name: String): GetObjectResponse
