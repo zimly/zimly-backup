@@ -42,11 +42,6 @@ class ProgressStream(private val delegate: InputStream, private val progress: Pr
         return readBytes
     }
 
-    override fun close() {
-        super.close()
-        //this.progress.close()
-
-    }
 }
 
 class ProgressTracker(private val size: Long) {
@@ -77,9 +72,6 @@ class ProgressTracker(private val size: Long) {
             }
     }
 
-    fun close() {
-        //progressFlow.tryEmit(-1)
-    }
 }
 
 data class Progress(val readBytes: Long, val totalReadBytes: Long, val percentage: Float, val size: Long) {
