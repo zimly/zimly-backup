@@ -9,7 +9,9 @@ import io.minio.MinioAsyncClient
 import io.minio.ObjectWriteResponse
 import io.minio.PutObjectArgs
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.transformWhile
+import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.time.ZonedDateTime
 import kotlin.coroutines.resume
@@ -79,23 +81,16 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         name: String,
         contentType: String,
         size: Long
-    ): Flow<Progress> {
-
-        doPut(stream, name, contentType, size)
-        return flow { }
-
-        /* TODO: init progress tracker and stream wrapper here and return the real flow:
+    ): Flow<Progress> = channelFlow {
 
         val progressTracker = ProgressTracker(size)
-        val obs =  progressTracker.observe()
-        coroutineScope {
-            launch(Dispatchers.IO) {
-                doPut(ProgressStream.wrap(stream, progressTracker), name, contentType, size)
-            }
+        launch {
+            progressTracker.observe().collect { send(it) }
         }
-        return obs;
-
-         */
+        doPut(ProgressStream.wrap(stream, progressTracker), name, contentType, size)
+    }.transformWhile {
+        emit(it)
+        it.percentage < 1F
     }
 
     private suspend fun doPut(
