@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.InputStream
 import java.time.ZonedDateTime
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 
 
@@ -70,9 +72,18 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     }
 
     override suspend fun get(name: String): GetObjectResponse {
-        return suspendCoroutine { continuation ->
+        return suspendCancellableCoroutine { continuation ->
+
             val params = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
-            mc.getObject(params).thenAccept { continuation.resume(it) }
+
+            mc.getObject(params).whenComplete { result, exception ->
+                if (exception == null) {
+                    continuation.resume(result)
+                } else {
+                    continuation.resumeWithException(exception)
+                }
+            }
+
         }
     }
 
@@ -101,7 +112,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
     ): ObjectWriteResponse {
 
 
-        return suspendCoroutine { continuation ->
+        return suspendCancellableCoroutine { continuation ->
             // stream.use { ss -> // // Autoclosing!!!
             val param = PutObjectArgs.builder()
                 .bucket(bucket)
@@ -110,7 +121,13 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
                 .stream(stream, size, -1)
                 .build()
 
-            mc.putObject(param).thenAccept { continuation.resume(it) }
+            mc.putObject(param).whenComplete { result, exception ->
+                if (exception == null) {
+                    continuation.resume(result)
+                } else {
+                    continuation.resumeWithException(exception)
+                }
+            }
         }
     }
 
