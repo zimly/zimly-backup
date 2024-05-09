@@ -114,7 +114,6 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
 
         return suspendCoroutine { continuation ->
 
-            // stream.use { ss -> // // Autoclosing!!!
             val param = PutObjectArgs.builder()
                 .bucket(bucket)
                 .`object`(name)
@@ -123,6 +122,7 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
                 .build()
 
             mc.putObject(param).whenComplete { result, exception ->
+                with(stream) { close() } // Instead of stream.close()
                 if (exception == null) {
                     continuation.resume(result)
                 } else {
