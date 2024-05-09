@@ -58,8 +58,6 @@ class MinioRepositoryTest {
 
         assertThat(lastProgress.percentage, `is`(1f))
 
-        // TODO something is wrong here
-        Thread.sleep(1000) // wait for minio to get it's sh** together
         val name = minioRepository.get("testObj").`object`()
         assertThat(name, `is`("testObj"))
 
