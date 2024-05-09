@@ -5,6 +5,7 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -40,7 +41,7 @@ class MinioRepositoryTest {
 
         val bucket = "test-bucket"
         minioRepository = MinioRepository(minioContainer.s3URL, minioUser, minioPwd, bucket)
-        minioRepository.createBucket(bucket)
+        runBlocking { minioRepository.createBucket(bucket) }
     }
 
 

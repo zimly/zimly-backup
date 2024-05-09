@@ -47,11 +47,16 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         }
     }
 
-    override fun verify(): Boolean {
-        try {
-            return mc.bucketExists(BucketExistsArgs.builder().bucket(bucket).build()).get()
-        } catch (e: Exception) {
-            throw Exception("Failed to connect to minio.", e)
+    override suspend fun verify(): Boolean {
+        return suspendCancellableCoroutine { continuation ->
+            val param = BucketExistsArgs.builder().bucket(bucket).build()
+            mc.bucketExists(param).whenComplete { result, exception ->
+                if (exception == null) {
+                    continuation.resume(result)
+                } else {
+                    continuation.resumeWithException(exception)
+                }
+            }
         }
     }
 
@@ -67,8 +72,17 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
             }
     }
 
-    override fun createBucket(bucket: String) {
-        mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build()).get()
+    override suspend fun createBucket(bucket: String) {
+        return suspendCancellableCoroutine { continuation ->
+            mc.makeBucket(MakeBucketArgs.builder().bucket(bucket).build())
+                .whenComplete { _, exception ->
+                    if (exception == null) {
+                        continuation.resume(Unit)
+                    } else {
+                        continuation.resumeWithException(exception)
+                    }
+                }
+        }
     }
 
     override suspend fun get(name: String): GetObjectResponse {
@@ -144,7 +158,7 @@ interface S3Repository {
         size: Long
     ): Flow<Progress>
 
-    fun createBucket(bucket: String)
-    fun verify(): Boolean
+    suspend fun createBucket(bucket: String)
+    suspend fun verify(): Boolean
     suspend fun get(name: String): GetObjectResponse
 }

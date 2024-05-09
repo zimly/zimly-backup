@@ -18,6 +18,7 @@ import io.zeitmaschine.zimzync.sync.SyncServiceImpl
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.CoreMatchers.`is`
@@ -55,7 +56,8 @@ class SyncServiceImplTest {
 
         val bucket = "test-bucket"
         minioRepository = MinioRepository(minioContainer.s3URL, minioUser, minioPwd, bucket)
-        minioRepository.createBucket(bucket)
+
+        runBlocking { minioRepository.createBucket(bucket) }
     }
 
     @Test
