@@ -47,7 +47,7 @@ class ProgressStream(private val delegate: InputStream, private val progress: Pr
 class ProgressTracker(private val size: Long) {
 
     // Important: MutableStateFlow does not emit same values!
-    private val progressFlow = MutableSharedFlow<Long>(50)
+    private val progressFlow = MutableSharedFlow<Long>(500)
     // https://stackoverflow.com/questions/70935356/how-can-i-calculate-min-max-average-of-continuous-flow-in-kotlin
     // https://docs.oracle.com/javase/8/docs/api/java/util/DoubleSummaryStatistics.html
 
