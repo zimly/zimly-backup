@@ -1,5 +1,1 @@
-* Sync view optimizations
-  * Better state handling, recovers progress when navigating
-  * Simplify display, add human readable sizes
-  * Disable buttons when synchronizing
-* Update libraries
+* More fine-grained progress indicator during synchronization
