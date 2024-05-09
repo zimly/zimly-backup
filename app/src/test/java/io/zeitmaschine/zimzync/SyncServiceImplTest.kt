@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
@@ -32,13 +33,11 @@ class SyncServiceImplTest {
     private lateinit var minioRepository: MinioRepository
 
     private val containerName = "minio/minio:latest"
-    private val minioPort = 9000
 
     @get:Rule
     val minioContainer: MinIOContainer = MinIOContainer(containerName)
         .withUserName(minioUser)
         .withPassword(minioPwd)
-        .withExposedPorts(minioPort)
 
     @Before
     fun setUp() {
@@ -92,38 +91,46 @@ class SyncServiceImplTest {
 
     @Test
     fun syncIT() {
+        val image1 = "test_image.png"
+        val image2 = "test_image2.png"
         runTest {
 
             // GIVEN
-            val image = "/testdata/test_image.png"
+            val path1 = "/testdata/$image1"
+            val path2 = "/testdata/$image2"
             val stream1 =
-                javaClass.getResourceAsStream(image) ?: throw Error("Could not open test resource.")
+                javaClass.getResourceAsStream(path1) ?: throw Error("Could not open test resource.")
             val stream2 =
-                javaClass.getResourceAsStream(image) ?: throw Error("Could not open test resource.")
-            val size = stream1.available().toLong() + stream2.available().toLong()
+                javaClass.getResourceAsStream(path2) ?: throw Error("Could not open test resource.")
+            val size1 = stream1.available().toLong()
+            val size2 = stream2.available().toLong()
+            val totalSize = size1 + size2
 
             every { mediaRepository.getStream(any()) } returns stream1 andThen stream2
 
             val ss = SyncServiceImpl(minioRepository, mediaRepository)
 
             val localMediaUri = mockk<Uri>()
-            val obj1 = MediaObject(name = "test1", size, "image/png", localMediaUri)
-            val obj2 = MediaObject(name = "test2", size, "image/png", localMediaUri)
-            val diff = Diff(remotes = emptyList(), locals = listOf(obj1, obj2), diff = listOf(obj1, obj2), size = size)
+            val obj1 = MediaObject(name = image1, size1, "image/png", localMediaUri)
+            val obj2 = MediaObject(name = image2, size2, "image/png", localMediaUri)
+            val diff = Diff(remotes = emptyList(), locals = listOf(obj1, obj2), diff = listOf(obj1, obj2), size = totalSize)
 
             // WHEN
             val res = ss.sync(diff).last()
 
             // THEN
             assertThat(res.uploadedFiles, `is`(2))
-            assertThat(res.readBytes, `is`(size))
+            assertThat(res.readBytes, `is`(totalSize))
             assertThat(res.readBytes, `is`(diff.size))
             assertThat(res.percentage, `is`(1f))
 
-            // TODO something is wrong here
-            Thread.sleep(10000) // wait for minio to get it's sh** together
-            val name = minioRepository.get("test1").`object`()
-            assertThat(name, `is`("test1"))
+            //Thread.sleep(3000)
+            val objs = minioRepository.listObjects()
+            assertThat(objs.size, `is`(2))
+            assertThat(objs.map { it.name }, hasItems(image1, image2))
+
+            val name = minioRepository.get(image1).`object`()
+            assertThat(name, `is`(image1))
 
         }
     }
