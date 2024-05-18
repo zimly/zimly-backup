@@ -7,6 +7,7 @@ import androidx.work.Data
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
 class SyncWorker(
@@ -46,39 +47,40 @@ class SyncWorker(
                 .build()
         )
 
-        val res = syncService.sync(diff)
+        return syncService.sync(diff)
             .onEach {
                 setProgressAsync(
                     Data.Builder()
                         .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
                         .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
-                        .putFloat(
-                            SyncOutputs.PROGRESS_PERCENTAGE,
-                            it.readBytes.toFloat() / diffBytes
-                        )
+                        .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
                         .putInt(SyncOutputs.DIFF_COUNT, diffCount)
                         .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
                         .build()
                 )
-            }.catch {
-                Log.e(TAG, "Failed to sync diff.", it)
-                Result.failure(
+            }
+            .map {
+                Result.success(
                     Data.Builder()
-                        .putString(SyncOutputs.ERROR, it.message)
+                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
+                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
+                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
                         .build()
                 )
             }
+            .catch {
+                Log.e(TAG, "Failed to sync diff.", it)
+                emit(
+                    Result.failure(
+                        Data.Builder()
+                            .putString(SyncOutputs.ERROR, it.message)
+                            .build()
+                    )
+                )
+            }
             .last()
-
-        return Result.success(
-            Data.Builder()
-                .putInt(SyncOutputs.PROGRESS_COUNT, res.uploadedFiles)
-                .putLong(SyncOutputs.PROGRESS_BYTES, res.readBytes)
-                .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, res.readBytes.toFloat() / diffBytes)
-                .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                .build()
-        )
     }
 }
 
