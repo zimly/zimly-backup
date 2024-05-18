@@ -15,6 +15,9 @@ android {
         versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // Used for mockk in android tests:
+        // https://github.com/mockk/mockk/issues/819#issuecomment-1731796944
+        testOptions { packagingOptions { jniLibs { useLegacyPackaging = true } } }
         vectorDrawables {
             useSupportLibrary true
         }
@@ -45,8 +48,9 @@ android {
         kotlinCompilerExtensionVersion = "1.5.11"
     }
     packagingOptions {
+        // https://stackoverflow.com/a/76389741
         resources {
-            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes += '/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}'
         }
     }
     namespace 'io.zeitmaschine.zimzync'
@@ -94,11 +98,14 @@ dependencies {
     testImplementation 'org.testcontainers:minio:1.19.7'
     testImplementation 'io.mockk:mockk:1.13.10'
     testImplementation 'androidx.test:core-ktx:1.5.0'
-    testImplementation 'androidx.work:work-testing:2.9.0'
     testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    androidTestImplementation 'androidx.work:work-testing:2.9.0'
+    androidTestImplementation 'io.mockk:mockk-android:1.13.10'
+
+
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 
