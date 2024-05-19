@@ -6,8 +6,10 @@ import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.s3.S3Object
 import io.zeitmaschine.zimzync.data.s3.S3Repository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -37,8 +39,8 @@ class SyncServiceImpl(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun sync(diff: Diff): Flow<SyncProgress> {
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    override fun sync(diff: Diff, debounce: Long): Flow<SyncProgress> {
         var count = 0
         return diff.diff.asFlow()
             .map { mediaObj -> Pair(mediaObj, mediaRepository.getStream(mediaObj.path)) }
@@ -54,7 +56,7 @@ class SyncServiceImpl(
                 val totalBytes = acc.readBytes + value.readBytes // Don't sum on totalbytes, double counts
                 val percentage = totalBytes.toFloat() / diff.size
                 SyncProgress(readBytes = totalBytes, count, percentage)
-            }
+            }.debounce(debounce)
     }
 }
 data class SyncProgress(val readBytes: Long, val uploadedFiles: Int, val percentage: Float) {
@@ -72,6 +74,6 @@ data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val 
 interface SyncService {
 
     fun diff(buckets: Set<String>): Diff
-    fun sync(diff: Diff): Flow<SyncProgress>
+    fun sync(diff: Diff, debounce: Long = 0L): Flow<SyncProgress>
 }
 

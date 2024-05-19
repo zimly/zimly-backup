@@ -47,7 +47,7 @@ class SyncWorker(
                 .build()
         )
 
-        return syncService.sync(diff)
+        return syncService.sync(diff, 500)
             .onEach {
                 setProgressAsync(
                     Data.Builder()
