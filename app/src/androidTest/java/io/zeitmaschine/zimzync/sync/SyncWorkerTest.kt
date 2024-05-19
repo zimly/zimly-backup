@@ -35,7 +35,7 @@ class SyncWorkerTest {
         val syncService: SyncService= mockk()
         val locals = listOf(MediaObject("DCIM01213.png", 1234L, "image/png", mockk()))
         every { syncService.diff(any()) } returns Diff(emptyList(), locals, locals, 1234L)
-        every { syncService.sync(any()) } returns flowOf(SyncProgress(1234L, 1, 1f))
+        every { syncService.sync(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f))
 
         val worker = TestListenableWorkerBuilder<SyncWorker>(context)
             .setWorkerFactory(TestWorkerFactors(syncService))
@@ -56,7 +56,7 @@ class SyncWorkerTest {
         val syncService: SyncService= mockk()
         val locals = listOf(MediaObject("DCIM01213.png", 1234L, "image/png", mockk()))
         every { syncService.diff(any()) } returns Diff(emptyList(), locals, locals, 1234L)
-        every { syncService.sync(any()) } returns
+        every { syncService.sync(any(), any()) } returns
                 flow {
                     emit(SyncProgress(12L, 0, 0.10f))
                     error("fml")

@@ -1,5 +1,5 @@
 name: Run Android Tests
-on: workflow_dispatch
+on: [push]
 
 jobs:
   test:
