@@ -1,5 +1,5 @@
 
-# Zim Sync
+# Zimly
 
 A straightforward Android application designed for synchronizing your local media, such as photos and videos, with any S3-compatible storage solution, whether it's self-hosted using platforms like Minio, or Cloud Storage options like AWS S3.
 
@@ -13,4 +13,4 @@ Key Features:
 
 
 Google Play store:
-[Zim Sync](https://play.google.com/store/apps/details?id=io.zeitmaschine.zimzync)
+[Zimly](https://play.google.com/store/apps/details?id=io.zeitmaschine.zimzync)
