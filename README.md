@@ -15,4 +15,4 @@ Key Features:
 Google Play store:
 [Zimly](https://play.google.com/store/apps/details?id=io.zeitmaschine.zimzync)
 
-Visit [zimly.app](https://play.google.com/store/apps/details?id=io.zeitmaschine.zimzync)
+Visit [zimly.app](https://www.zimly.app)
