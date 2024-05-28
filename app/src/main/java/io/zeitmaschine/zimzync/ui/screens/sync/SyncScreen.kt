@@ -46,6 +46,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.WorkManager
+import io.zeitmaschine.zimzync.data.media.MediaRepository
+import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
@@ -60,7 +63,9 @@ fun SyncScreen(
     back: () -> Unit,
     viewModel: SyncViewModel = viewModel(factory = viewModelFactory {
         initializer {
-            SyncViewModel(dao, remoteId, application)
+            val workManager = WorkManager.getInstance(application.applicationContext)
+            val mediaRepo: MediaRepository = ResolverBasedRepository(application.contentResolver)
+            SyncViewModel(dao, remoteId, workManager, mediaRepo)
         }
     }),
 ) {
