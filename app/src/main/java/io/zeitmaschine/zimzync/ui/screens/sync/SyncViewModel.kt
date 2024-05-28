@@ -113,12 +113,13 @@ class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, appli
 
     suspend fun createDiff() {
 
-        val remote = dao.loadById(remoteId)
-        val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
-        val syncService = SyncServiceImpl(s3Repo, mediaRepo)
-        // Display result of the minio request to the user
         try {
+            val remote = dao.loadById(remoteId)
+            val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
+            val syncService = SyncServiceImpl(s3Repo, mediaRepo)
+
             val diff = syncService.diff(setOf(remote.folder))
+            // Display result of the minio request to the user
             _diff.update { diff }
         } catch (e: Exception) {
             _error.update { e.message ?: "Unknown error." }
