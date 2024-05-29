@@ -93,7 +93,7 @@ fun SyncScreen(
         createDiff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
         edit = { edit(remoteId) },
         back,
-        clearError = { viewModel.clearError() }
+        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } }
     )
 }
 

@@ -22,6 +22,7 @@ import io.zeitmaschine.zimzync.sync.SyncServiceImpl
 import io.zeitmaschine.zimzync.sync.SyncWorker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -72,6 +73,7 @@ class SyncViewModel(
     }
 
     // Flow created when starting the sync
+    // TODO change to MutableSharedFlow as well!?
     private val _startedSyncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
 
     // Flow for already running sync jobs
@@ -99,10 +101,9 @@ class SyncViewModel(
         )
 
     // mutable error flow, for manually triggered errors
-    private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _error: MutableSharedFlow<String?> = MutableSharedFlow()
 
     // Merge errors from progress and manually triggered errors into one observable for the UI
-    // TODO there's still a corner case where _error doesn't emit?
     val error: StateFlow<String?> = merge(_error, progressState.mapNotNull { it.error })
         .stateIn(
             scope = viewModelScope,
@@ -121,7 +122,7 @@ class SyncViewModel(
             // Display result of the minio request to the user
             _diff.update { diff }
         } catch (e: Exception) {
-            _error.update { e.message ?: "Unknown error." }
+            _error.emit( e.message ?: "Unknown error." )
         }
     }
 
@@ -215,8 +216,8 @@ class SyncViewModel(
         return syncRequest.id
     }
 
-    fun clearError() {
-        _error.update { null }
+    suspend fun clearError() {
+        _error.emit( null)
     }
 
     data class RemoteState(

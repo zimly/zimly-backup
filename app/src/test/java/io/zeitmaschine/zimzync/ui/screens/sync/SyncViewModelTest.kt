@@ -90,8 +90,10 @@ class SyncViewModelTest {
         val job = viewModel.error
             .onEach { res.add(it) }
             .launchIn(CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
+
+        runCurrent() // Boilerplate: Sort of flushes pending tasks on the test scheduler
         viewModel.createDiff()
-        runCurrent()  // Weird boilerplate for StateFlow tests
+        runCurrent()
 
         assertThat(res.size, `is`(2))
         assertThat(res, hasItems(null, "Failed to initialize S3 client: invalid Amazon AWS host zimly.s3.eu-central-2.amazonaws.com"))
