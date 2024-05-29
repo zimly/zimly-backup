@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -102,7 +103,7 @@ class SyncViewModel(
 
     // Merge errors from progress and manually triggered errors into one observable for the UI
     // TODO there's still a corner case where _error doesn't emit?
-    val error: StateFlow<String?> = merge(_error, progressState.map { it.error })
+    val error: StateFlow<String?> = merge(_error, progressState.mapNotNull { it.error })
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -238,6 +239,6 @@ class SyncViewModel(
         var diffCount: Int = 0,
         var diffBytes: Long = 0,
         var inProgress: Boolean = false,
-        var error: String = "",
+        var error: String? = null,
     )
 }
