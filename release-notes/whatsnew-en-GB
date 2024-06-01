@@ -1,1 +1,2 @@
-* More fine-grained progress indicator during synchronization
+* Rename App to Zimly
+* Fix crash when using a wrong AWS S3 URL
