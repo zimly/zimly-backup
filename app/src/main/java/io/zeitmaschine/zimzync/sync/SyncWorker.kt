@@ -5,26 +5,33 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
+import io.zeitmaschine.zimzync.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 
 class SyncWorker(
-    context: Context,
+    private val context: Context,
     workerParameters: WorkerParameters,
-    private val syncService: SyncService
 ) : CoroutineWorker(context, workerParameters) {
 
-    companion object {
-        val TAG: String? = SyncWorker::class.simpleName
-    }
-
     override suspend fun doWork(): Result {
-        Log.i(TAG, "Launching sync...")
 
-        val contentBuckets =
-            inputData.getStringArray(SyncInputs.DEVICE_FOLDER)?.toSet() ?: emptySet()
+        val syncService = try {
+            initSyncService(context, inputData)
+        } catch (e: Exception) {
+            return Result.failure(
+                Data.Builder()
+                    .putString(SyncOutputs.ERROR, "Failed to initiate sync: ${e.message}")
+                    .build()
+            )
+        }
+
+        val contentBuckets = inputData.getStringArray(SyncInputs.DEVICE_FOLDER)?.toSet() ?: emptySet()
+
+        Log.i(TAG, "Launching sync...")
 
         val diff = try {
             syncService.diff(contentBuckets)
@@ -81,6 +88,29 @@ class SyncWorker(
                 )
             }
             .last()
+    }
+
+    companion object {
+        val TAG: String? = SyncWorker::class.simpleName
+
+        fun initSyncService(context: Context, inputData: Data): SyncService {
+            val url = inputData.getString(SyncInputs.S3_URL)
+            requireNotNull(url) { "URL cannot be empty" }
+
+            val key = inputData.getString(SyncInputs.S3_KEY)
+            requireNotNull(key) { "Bucket key cannot be empty" }
+
+            val secret = inputData.getString(SyncInputs.S3_SECRET)
+            requireNotNull(secret) { "Bucket secret cannot be empty" }
+
+            val bucket = inputData.getString(SyncInputs.S3_BUCKET)
+            requireNotNull(bucket) { "Bucket secret cannot be empty" }
+
+            val s3Repository = MinioRepository(url, key, secret, bucket)
+            val mediaRepository = ResolverBasedRepository(context.contentResolver)
+
+            return SyncServiceImpl(s3Repository, mediaRepository)
+        }
     }
 }
 

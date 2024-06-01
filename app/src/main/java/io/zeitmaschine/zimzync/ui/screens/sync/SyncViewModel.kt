@@ -1,9 +1,8 @@
 package io.zeitmaschine.zimzync.ui.screens.sync
 
-import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -13,24 +12,26 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
-import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.data.media.MediaRepository
-import io.zeitmaschine.zimzync.data.s3.MinioRepository
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
-import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
+import io.zeitmaschine.zimzync.data.s3.MinioRepository
+import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.sync.SyncInputs
 import io.zeitmaschine.zimzync.sync.SyncOutputs
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
 import io.zeitmaschine.zimzync.sync.SyncWorker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -38,8 +39,12 @@ import kotlinx.coroutines.flow.update
 import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, application: Application) :
-    AndroidViewModel(application) {
+class SyncViewModel(
+    private val dao: RemoteDao,
+    private val remoteId: Int,
+    private val workManager: WorkManager,
+    private val mediaRepo: MediaRepository
+): ViewModel() {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
     companion object {
@@ -49,11 +54,6 @@ class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, appli
     // This identifier is used to identify already running sync instances and prevent simultaneous
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
-
-    private val workManager by lazy { WorkManager.getInstance(application.applicationContext) }
-    private val contentResolver by lazy { application.contentResolver }
-
-    private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
 
     var remoteState: Flow<RemoteState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
@@ -73,10 +73,11 @@ class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, appli
     }
 
     // Flow created when starting the sync
+    // TODO change to MutableSharedFlow as well!?
     private val _startedSyncId: MutableStateFlow<UUID?> = MutableStateFlow(null)
 
     // Flow for already running sync jobs
-    private val _runningSyncId: Flow<UUID?> = snapshotFlow { loadSyncState() }
+    private val _runningSyncId: Flow<UUID?> = loadSyncState()
 
     private val _observedProgress = merge(_runningSyncId, _startedSyncId)
         .onEach { Log.i(TAG, "syncId: $it") }
@@ -93,18 +94,17 @@ class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, appli
 
     // merge the flows from observed progress and one time diff
     var progressState: StateFlow<Progress> = merge(_observedProgress, _diffProgress)
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = Progress(),
-            )
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = Progress(),
+        )
 
     // mutable error flow, for manually triggered errors
-    private val _error: MutableStateFlow<String?> = MutableStateFlow(null)
+    private val _error: MutableSharedFlow<String?> = MutableSharedFlow()
 
     // Merge errors from progress and manually triggered errors into one observable for the UI
-    // TODO there's still a corner case where _error doesn't emit?
-    val error: StateFlow<String?> = merge(_error, progressState.map { it.error })
+    val error: StateFlow<String?> = merge(_error, progressState.mapNotNull { it.error })
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -113,30 +113,28 @@ class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, appli
 
     suspend fun createDiff() {
 
-        val remote = dao.loadById(remoteId)
-        val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
-        val syncService = SyncServiceImpl(s3Repo, mediaRepo)
-        // Display result of the minio request to the user
         try {
+            val remote = dao.loadById(remoteId)
+            val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
+            val syncService = SyncServiceImpl(s3Repo, mediaRepo)
+
             val diff = syncService.diff(setOf(remote.folder))
+            // Display result of the minio request to the user
             _diff.update { diff }
         } catch (e: Exception) {
-            _error.update { e.message ?: "Unknown error." }
+            _error.emit( e.message ?: "Unknown error." )
         }
     }
 
     // TODO https://code.luasoftware.com/tutorials/android/jetpack-compose-load-data
-    private fun loadSyncState(): UUID? {
+    private fun loadSyncState(): Flow<UUID> {
         val query = WorkQuery.Builder.fromUniqueWorkNames(listOf(uniqueWorkIdentifier))
             .addStates(listOf(WorkInfo.State.RUNNING))
             .build()
-        val running = workManager.getWorkInfos(query).get()
-
-        return when (running.size) {
-            0 -> null // empty
-            1 -> running.first().id
-            else -> throw Error("More than one unique sync job in progress. This should not happen.")
-        }
+        return workManager.getWorkInfosFlow(query)
+            .onEach { require(it.size < 2)  { "More than one unique sync job in progress. This should not happen." } }
+            .flatMapLatest { it.asFlow() }
+            .map { it.id }
     }
 
     private fun observeSyncProgress(id: UUID): Flow<Progress> {
@@ -218,8 +216,8 @@ class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, appli
         return syncRequest.id
     }
 
-    fun clearError() {
-        _error.update { null }
+    suspend fun clearError() {
+        _error.emit( null)
     }
 
     data class RemoteState(
@@ -242,6 +240,6 @@ class SyncViewModel(private val dao: RemoteDao, private val remoteId: Int, appli
         var diffCount: Int = 0,
         var diffBytes: Long = 0,
         var inProgress: Boolean = false,
-        var error: String = "",
+        var error: String? = null,
     )
 }
