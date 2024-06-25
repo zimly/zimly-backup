@@ -95,15 +95,11 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("remoteId") { nullable = false })
                     ) { backStackEntry ->
                         val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
-                        Scaffold(
-                            content = {
-                                EditorScreen(
-                                    application = application,
-                                    remoteDao = remoteDao,
-                                    remoteId = remoteId,
-                                    back = { navController.popBackStack() }
-                                )
-                            },
+                        EditorScreen(
+                            application = application,
+                            remoteDao = remoteDao,
+                            remoteId = remoteId,
+                            back = { navController.popBackStack() }
                         )
                     }
 
@@ -111,15 +107,11 @@ class MainActivity : ComponentActivity() {
                         "remote-editor/create",
                         arguments = listOf(navArgument("remoteId") { nullable = true })
                     ) {
-                        Scaffold(
-                            content = {
-                                EditorScreen(
-                                    application = application,
-                                    remoteDao = remoteDao,
-                                    remoteId = null,
-                                    back = { navController.popBackStack() }
-                                )
-                            },
+                        EditorScreen(
+                            application = application,
+                            remoteDao = remoteDao,
+                            remoteId = null,
+                            back = { navController.popBackStack() }
                         )
                     }
 
@@ -127,17 +119,15 @@ class MainActivity : ComponentActivity() {
                         "remote-sync?remoteId={remoteId}",
                         arguments = listOf(navArgument("remoteId") { nullable = false })
                     ) { backStackEntry ->
-                        Scaffold {
-                            val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                        val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
-                            remoteId?.let {
-                                SyncScreen(
-                                    remoteDao,
-                                    remoteId,
-                                    application = application,
-                                    edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
-                                    back = { navController.popBackStack() })
-                            }
+                        remoteId?.let {
+                            SyncScreen(
+                                remoteDao,
+                                remoteId,
+                                application = application,
+                                edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
+                                back = { navController.popBackStack() })
                         }
                     }
                 }
