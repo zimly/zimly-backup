@@ -1,6 +1,5 @@
 package io.zeitmaschine.zimzync.ui.screens.list
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,7 +7,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,16 +14,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -79,14 +80,32 @@ fun RemoteScreen(
     addRemote: () -> Unit,
 ) {
     val remotes = viewModel.remotesState.collectAsState(initial = emptyList())
-    RemoteComponent(remotes = remotes.value, syncRemote = syncRemote, addRemote = addRemote) { viewModel.select(it) }
+    RemoteComponent(
+        remotes = remotes.value,
+        syncRemote = syncRemote,
+        addRemote = addRemote
+    ) { viewModel.select(it) }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun RemoteComponent(remotes: List<RemoteView>, syncRemote: (Int) -> Unit, addRemote: () -> Unit, select: (Int) -> Unit) {
+fun RemoteComponent(
+    remotes: List<RemoteView>,
+    syncRemote: (Int) -> Unit,
+    addRemote: () -> Unit,
+    select: (Int) -> Unit
+) {
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Zimly",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                })
+        },
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
             FloatingActionButton(onClick = {
@@ -95,10 +114,13 @@ fun RemoteComponent(remotes: List<RemoteView>, syncRemote: (Int) -> Unit, addRem
                 Icon(Icons.Filled.Add, "Add Remote")
             }
         })
-    {
+    { innerPadding ->
         LazyColumn(
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
+                top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding()
+            ) then Modifier.fillMaxWidth()
         ) {
             items(remotes) { remote ->
                 Box(
