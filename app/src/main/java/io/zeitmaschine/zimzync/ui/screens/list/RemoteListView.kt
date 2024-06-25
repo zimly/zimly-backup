@@ -17,7 +17,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,16 +29,24 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
-    val selected = mutableStateListOf<Int>()
 
-    val uiState = flow {
-        val items = dataStore.getAll().map { RemoteView(it.uid!!, it.name, it.url, selected.contains(it.uid)) }
+    private val selected = mutableListOf<Int>()
+    private val _selectedState = MutableStateFlow(emptyList<Int>())
+
+    private val _remotes = flow {
+        val items = dataStore.getAll()
         emit(items)
     }
+
+    val remotesState = combine(_remotes, _selectedState)
+    { remotes, sel -> remotes.map { RemoteView(it.uid!!, it.name, it.url, sel.contains(it.uid)) } }
+
 
     fun select(remoteId: Int) {
         if (selected.contains(remoteId)) {
@@ -47,6 +54,8 @@ class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
         } else {
             selected.add(remoteId)
         }
+        // Trigger state update
+        _selectedState.value = selected.toList()
     }
 }
 
@@ -61,13 +70,13 @@ fun RemoteScreen(
     }),
     openSync: (Int) -> Unit,
 ) {
-    val remotes = viewModel.uiState.collectAsState(initial = emptyList())
-    RemoteComponent(remotes = remotes.value, openSync = openSync, selected = viewModel.selected) { viewModel.select(it) }
+    val remotes = viewModel.remotesState.collectAsState(initial = emptyList())
+    RemoteComponent(remotes = remotes.value, openSync = openSync) { viewModel.select(it) }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RemoteComponent(remotes: List<RemoteView>, openSync: (Int) -> Unit, selected: List<Int>, select: (Int) -> Unit) {
+fun RemoteComponent(remotes: List<RemoteView>, openSync: (Int) -> Unit, select: (Int) -> Unit) {
 
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
@@ -79,7 +88,13 @@ fun RemoteComponent(remotes: List<RemoteView>, openSync: (Int) -> Unit, selected
                     // Note: Order matters!
                     .clip(RoundedCornerShape(12.dp))
                     .background(color = containerBackground())
-                    .then(if (selected.contains(remote.uid)) Modifier.border(width = Dp(2f), color = MaterialTheme.colorScheme.secondary, shape = RoundedCornerShape(12.dp)) else Modifier)
+                    .then(
+                        if (remote.selected) Modifier.border(
+                            width = Dp(2f),
+                            color = MaterialTheme.colorScheme.secondary,
+                            shape = RoundedCornerShape(12.dp)
+                        ) else Modifier
+                    )
                     .fillMaxWidth()
                     .combinedClickable(
                         onClick = { openSync(remote.uid) },
@@ -107,7 +122,7 @@ fun DefaultPreview() {
             )
         }.toList()
 
-        RemoteComponent(remotes = remotes, selected = listOf(), openSync = {}) {}
+        RemoteComponent(remotes = remotes, openSync = {}) {}
     }
 }
 
