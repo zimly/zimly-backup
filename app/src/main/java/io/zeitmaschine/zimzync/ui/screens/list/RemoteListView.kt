@@ -1,5 +1,6 @@
 package io.zeitmaschine.zimzync.ui.screens.list
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,7 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -68,46 +75,59 @@ fun RemoteScreen(
             MainViewModel(remoteDao)
         }
     }),
-    openSync: (Int) -> Unit,
+    syncRemote: (Int) -> Unit,
+    addRemote: () -> Unit,
 ) {
     val remotes = viewModel.remotesState.collectAsState(initial = emptyList())
-    RemoteComponent(remotes = remotes.value, openSync = openSync) { viewModel.select(it) }
+    RemoteComponent(remotes = remotes.value, syncRemote = syncRemote, addRemote = addRemote) { viewModel.select(it) }
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RemoteComponent(remotes: List<RemoteView>, openSync: (Int) -> Unit, select: (Int) -> Unit) {
-
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(remotes) { remote ->
-            Box(
-                modifier = Modifier
-                    // Note: Order matters!
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(color = containerBackground())
-                    .then(
-                        if (remote.selected) Modifier.border(
-                            width = Dp(2f),
-                            color = MaterialTheme.colorScheme.secondary,
-                            shape = RoundedCornerShape(12.dp)
-                        ) else Modifier
-                    )
-                    .fillMaxWidth()
-                    .combinedClickable(
-                        onClick = { openSync(remote.uid) },
-                        onLongClick = { select(remote.uid) })
-                    .padding(16.dp)
+fun RemoteComponent(remotes: List<RemoteView>, syncRemote: (Int) -> Unit, addRemote: () -> Unit, select: (Int) -> Unit) {
+    Scaffold(
+        floatingActionButtonPosition = FabPosition.End,
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                addRemote()
+            }) {
+                Icon(Icons.Filled.Add, "Add Remote")
+            }
+        })
+    {
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(remotes) { remote ->
+                Box(
+                    modifier = Modifier
+                        // Note: Order matters!
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(color = containerBackground())
+                        .then(
+                            if (remote.selected) Modifier.border(
+                                width = Dp(2f),
+                                color = MaterialTheme.colorScheme.secondary,
+                                shape = RoundedCornerShape(12.dp)
+                            ) else Modifier
+                        )
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = { syncRemote(remote.uid) },
+                            onLongClick = { select(remote.uid) })
+                        .padding(16.dp)
                 ) {
-                Column {
-                    Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
-                    Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column {
+                        Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
+                        Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
     }
+
 }
 
 @Preview(showBackground = true)
@@ -122,8 +142,13 @@ fun DefaultPreview() {
             )
         }.toList()
 
-        RemoteComponent(remotes = remotes, openSync = {}) {}
+        RemoteComponent(remotes = remotes, syncRemote = {}, addRemote = {}) {}
     }
 }
 
-data class RemoteView(val uid: Int, val name: String, val url: String, val selected: Boolean = false)
+data class RemoteView(
+    val uid: Int,
+    val name: String,
+    val url: String,
+    val selected: Boolean = false
+)

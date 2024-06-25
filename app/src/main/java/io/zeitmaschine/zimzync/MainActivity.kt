@@ -10,12 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,20 +68,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("remotes-list") {
-                        Scaffold(
-                            floatingActionButtonPosition = FabPosition.End,
-                            floatingActionButton = {
-                                FloatingActionButton(onClick = {
-                                    navController.navigate("remote-editor/create")
-                                }) {
-                                    Icon(Icons.Filled.Add, "Add Remote")
-                                }
-                            },
-                            content = {
-                                RemoteScreen(
-                                    remoteDao,
-                                    openSync = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") })
-                            })
+                        RemoteScreen(
+                            remoteDao,
+                            syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
+                            addRemote = { navController.navigate("remote-editor/create") })
                     }
 
                     composable(
