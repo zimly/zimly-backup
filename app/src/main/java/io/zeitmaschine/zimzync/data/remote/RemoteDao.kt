@@ -17,6 +17,9 @@ interface RemoteDao {
     @Delete
     suspend fun delete(remote: Remote)
 
+    @Query("DELETE FROM remote WHERE uid = :remoteId")
+    suspend fun deleteById(remoteId: Int);
+
     @Update
     suspend fun update(remote: Remote)
 
