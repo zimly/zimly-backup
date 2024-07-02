@@ -45,7 +45,6 @@ import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
@@ -54,10 +53,7 @@ class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
     private val selected = mutableListOf<Int>()
     private val _selectedState = MutableStateFlow(emptyList<Int>())
 
-    private val _remotes = flow {
-        val items = dataStore.getAll()
-        emit(items)
-    }
+    private val _remotes = dataStore.getAll()
 
     val remotesState = combine(_remotes, _selectedState)
     { remotes, sel -> remotes.map { RemoteView(it.uid!!, it.name, it.url, sel.contains(it.uid)) } }
@@ -85,15 +81,17 @@ class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
     suspend fun delete() {
         selected.forEach { dataStore.deleteById(it) }
+        resetSelect()
     }
 
     suspend fun copy() {
         selected.forEach {
             val sel = dataStore.loadById(it)
-            val copy = Remote(null, sel.name, sel.url, sel.key, sel.secret, sel.bucket, sel.folder)
+            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.folder)
 
             dataStore.insert(copy)
         }
+        resetSelect()
     }
 }
 
@@ -210,7 +208,7 @@ fun RemoteComponent(
                         )
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClick = { syncRemote(remote.uid) },
+                            onClick = { if (numSelected > 0) select(remote.uid) else syncRemote(remote.uid) },
                             onLongClick = { select(remote.uid) })
                         .padding(16.dp)
                 ) {
