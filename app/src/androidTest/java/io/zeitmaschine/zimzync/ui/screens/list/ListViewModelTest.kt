@@ -18,10 +18,10 @@ import org.junit.runner.RunWith
 import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
-class MainViewModelTest {
+class ListViewModelTest {
     private lateinit var db: ZimDatabase
     private lateinit var dao: RemoteDao
-    private lateinit var viewModel: MainViewModel
+    private lateinit var viewModel: ListViewModel
 
     @Before
     fun createDb() {
@@ -32,7 +32,7 @@ class MainViewModelTest {
 
 
         this.dao = db.remoteDao()
-        this.viewModel = MainViewModel(dao)
+        this.viewModel = ListViewModel(dao)
 
         runBlocking {
             dao.insert(

@@ -47,8 +47,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
-class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
-
+class ListViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
     private val selected = mutableListOf<Int>()
     private val _selectedState = MutableStateFlow(emptyList<Int>())
@@ -96,19 +95,19 @@ class MainViewModel(private val dataStore: RemoteDao) : ViewModel() {
 }
 
 @Composable
-fun RemoteScreen(
+fun ListScreen(
     remoteDao: RemoteDao,
     // https://programmer.ink/think/a-new-way-to-create-a-viewmodel-creationextras.html
-    viewModel: MainViewModel = viewModel(factory = viewModelFactory {
+    viewModel: ListViewModel = viewModel(factory = viewModelFactory {
         initializer {
-            MainViewModel(remoteDao)
+            ListViewModel(remoteDao)
         }
     }),
     syncRemote: (Int) -> Unit,
     addRemote: () -> Unit,
 ) {
     val remotes = viewModel.remotesState.collectAsState(initial = emptyList())
-    RemoteComponent(
+    ListCompose(
         remotes = remotes.value,
         syncRemote = syncRemote,
         addRemote = addRemote,
@@ -122,7 +121,7 @@ fun RemoteScreen(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun RemoteComponent(
+private fun ListCompose(
     remotes: List<RemoteView>,
     syncRemote: (Int) -> Unit,
     addRemote: () -> Unit,
@@ -235,7 +234,7 @@ fun DefaultPreview() {
             )
         }.toList()
 
-        RemoteComponent(
+        ListCompose(
             remotes = remotes,
             syncRemote = {},
             addRemote = {},

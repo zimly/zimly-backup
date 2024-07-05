@@ -22,7 +22,7 @@ import androidx.navigation.navArgument
 import androidx.room.Room
 import io.zeitmaschine.zimzync.data.remote.ZimDatabase
 import io.zeitmaschine.zimzync.ui.screens.editor.EditorScreen
-import io.zeitmaschine.zimzync.ui.screens.list.RemoteScreen
+import io.zeitmaschine.zimzync.ui.screens.list.ListScreen
 import io.zeitmaschine.zimzync.ui.screens.sync.SyncScreen
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 
@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("remotes-list") {
-                        RemoteScreen(
+                        ListScreen(
                             remoteDao,
                             syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
                             addRemote = { navController.navigate("remote-editor/create") })
