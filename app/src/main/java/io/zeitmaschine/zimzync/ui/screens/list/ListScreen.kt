@@ -24,11 +24,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,8 +65,15 @@ fun ListScreen(
     addRemote: () -> Unit,
 ) {
     val remotes by viewModel.remotesState.collectAsState(initial = emptyList())
+    val notification by viewModel.notificationState.collectAsState()
+
+    val snackbarState = remember { SnackbarHostState() }
+
     ListCompose(
         remotes = remotes,
+        snackbarState,
+        notification,
+        clearMessage = { viewModel.clearMessage() },
         syncRemote = syncRemote,
         addRemote = addRemote,
         select = { viewModel.select(it) },
@@ -74,6 +88,9 @@ fun ListScreen(
 @Composable
 private fun ListCompose(
     remotes: List<RemoteView>,
+    snackbarState: SnackbarHostState,
+    notification: String?,
+    clearMessage: () -> Unit,
     syncRemote: (Int) -> Unit,
     addRemote: () -> Unit,
     select: (Int) -> Unit,
@@ -82,6 +99,21 @@ private fun ListCompose(
     delete: () -> Unit,
     numSelected: Int
 ) {
+
+    // Show snackbar when message
+    if (notification != null) {
+        LaunchedEffect(snackbarState) {
+            val result = snackbarState.showSnackbar(
+                message = notification,
+                duration = SnackbarDuration.Short
+            )
+            when (result) {
+                SnackbarResult.Dismissed -> clearMessage()
+                SnackbarResult.ActionPerformed -> clearMessage()
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             if (numSelected > 0) {
@@ -134,6 +166,9 @@ private fun ListCompose(
             }) {
                 Icon(Icons.Filled.Add, "Add Remote")
             }
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarState)
         })
     { innerPadding ->
         LazyColumn(
@@ -158,7 +193,11 @@ private fun ListCompose(
                         )
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClick = { if (numSelected > 0) select(remote.uid) else syncRemote(remote.uid) },
+                            onClick = {
+                                if (numSelected > 0) select(remote.uid) else syncRemote(
+                                    remote.uid
+                                )
+                            },
                             onLongClick = { select(remote.uid) })
                         .padding(16.dp)
                 ) {
@@ -185,8 +224,14 @@ fun DefaultPreview() {
             )
         }.toList()
 
+        val snackbarState = remember { SnackbarHostState() }
+        val notification by remember { mutableStateOf<String?>(null) }
+
         ListCompose(
             remotes = remotes,
+            snackbarState,
+            notification,
+            {},
             syncRemote = {},
             addRemote = {},
             {},
