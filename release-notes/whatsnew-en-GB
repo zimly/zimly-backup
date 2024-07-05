@@ -1,2 +1,2 @@
-* Rename App to Zimly
-* Fix crash when using a wrong AWS S3 URL
+* Implement copy and delete operations: Press and hold a configuration in the list view to select one or multiple entries for copy/delete.
+* Library updates
