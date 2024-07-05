@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,9 +57,9 @@ fun ListScreen(
     syncRemote: (Int) -> Unit,
     addRemote: () -> Unit,
 ) {
-    val remotes = viewModel.remotesState.collectAsState(initial = emptyList())
+    val remotes by viewModel.remotesState.collectAsState(initial = emptyList())
     ListCompose(
-        remotes = remotes.value,
+        remotes = remotes,
         syncRemote = syncRemote,
         addRemote = addRemote,
         select = { viewModel.select(it) },
