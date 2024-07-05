@@ -34,65 +34,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import io.zeitmaschine.zimzync.data.remote.Remote
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
-class ListViewModel(private val dataStore: RemoteDao) : ViewModel() {
-
-    private val selected = mutableListOf<Int>()
-    private val _selectedState = MutableStateFlow(emptyList<Int>())
-
-    private val _remotes = dataStore.getAll()
-
-    val remotesState = combine(_remotes, _selectedState)
-    { remotes, sel -> remotes.map { RemoteView(it.uid!!, it.name, it.url, sel.contains(it.uid)) } }
-
-
-    fun select(remoteId: Int) {
-        if (selected.contains(remoteId)) {
-            selected.remove(remoteId)
-        } else {
-            selected.add(remoteId)
-        }
-        // Trigger state update
-        _selectedState.value = selected.toList()
-    }
-
-    fun numSelected(): Int {
-        return selected.size
-    }
-
-    fun resetSelect() {
-        selected.removeAll { true }
-        // Trigger state update
-        _selectedState.value = selected.toList()
-    }
-
-    suspend fun delete() {
-        selected.forEach { dataStore.deleteById(it) }
-        resetSelect()
-    }
-
-    suspend fun copy() {
-        selected.forEach {
-            val sel = dataStore.loadById(it)
-            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.folder)
-
-            dataStore.insert(copy)
-        }
-        resetSelect()
-    }
-}
 
 @Composable
 fun ListScreen(
