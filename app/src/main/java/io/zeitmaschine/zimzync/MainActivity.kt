@@ -10,12 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +22,7 @@ import androidx.navigation.navArgument
 import androidx.room.Room
 import io.zeitmaschine.zimzync.data.remote.ZimDatabase
 import io.zeitmaschine.zimzync.ui.screens.editor.EditorScreen
-import io.zeitmaschine.zimzync.ui.screens.list.RemoteScreen
+import io.zeitmaschine.zimzync.ui.screens.list.ListScreen
 import io.zeitmaschine.zimzync.ui.screens.sync.SyncScreen
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 
@@ -74,20 +68,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("remotes-list") {
-                        Scaffold(
-                            floatingActionButtonPosition = FabPosition.End,
-                            floatingActionButton = {
-                                FloatingActionButton(onClick = {
-                                    navController.navigate("remote-editor/create")
-                                }) {
-                                    Icon(Icons.Filled.Add, "Add Remote")
-                                }
-                            },
-                            content = {
-                                RemoteScreen(
-                                    remoteDao,
-                                    openSync = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") })
-                            })
+                        ListScreen(
+                            remoteDao,
+                            syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
+                            addRemote = { navController.navigate("remote-editor/create") })
                     }
 
                     composable(
@@ -95,15 +79,11 @@ class MainActivity : ComponentActivity() {
                         arguments = listOf(navArgument("remoteId") { nullable = false })
                     ) { backStackEntry ->
                         val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
-                        Scaffold(
-                            content = {
-                                EditorScreen(
-                                    application = application,
-                                    remoteDao = remoteDao,
-                                    remoteId = remoteId,
-                                    back = { navController.popBackStack() }
-                                )
-                            },
+                        EditorScreen(
+                            application = application,
+                            remoteDao = remoteDao,
+                            remoteId = remoteId,
+                            back = { navController.popBackStack() }
                         )
                     }
 
@@ -111,15 +91,11 @@ class MainActivity : ComponentActivity() {
                         "remote-editor/create",
                         arguments = listOf(navArgument("remoteId") { nullable = true })
                     ) {
-                        Scaffold(
-                            content = {
-                                EditorScreen(
-                                    application = application,
-                                    remoteDao = remoteDao,
-                                    remoteId = null,
-                                    back = { navController.popBackStack() }
-                                )
-                            },
+                        EditorScreen(
+                            application = application,
+                            remoteDao = remoteDao,
+                            remoteId = null,
+                            back = { navController.popBackStack() }
                         )
                     }
 
@@ -127,17 +103,15 @@ class MainActivity : ComponentActivity() {
                         "remote-sync?remoteId={remoteId}",
                         arguments = listOf(navArgument("remoteId") { nullable = false })
                     ) { backStackEntry ->
-                        Scaffold {
-                            val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                        val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
-                            remoteId?.let {
-                                SyncScreen(
-                                    remoteDao,
-                                    remoteId,
-                                    application = application,
-                                    edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
-                                    back = { navController.popBackStack() })
-                            }
+                        remoteId?.let {
+                            SyncScreen(
+                                remoteDao,
+                                remoteId,
+                                application = application,
+                                edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
+                                back = { navController.popBackStack() })
                         }
                     }
                 }
