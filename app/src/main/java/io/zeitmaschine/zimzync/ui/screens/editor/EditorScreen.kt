@@ -1,6 +1,5 @@
 package io.zeitmaschine.zimzync.ui.screens.editor
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +19,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -151,7 +154,6 @@ private fun EditorCompose(
 }
 
 
-@SuppressLint("UnrememberedMutableState")
 @Preview(showBackground = true)
 @Composable
 fun EditPreview() {
@@ -161,22 +163,22 @@ fun EditPreview() {
 
         val snackbarState = remember { SnackbarHostState() }
 
-        val name: Field = Field(
+        val name = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val url: Field = Field(
+        val url = Field(
             errorMessage = "Not a valid URL.",
             validate = { URLUtil.isValidUrl(it) })
-        val key: Field = Field(
+        val key = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val secret: Field = Field(
+        val secret = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val bucket: Field = Field(
+        val bucket = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val folder: Field = Field(
+        val folder = Field(
             errorMessage = "Select a media gallery to synchronize.",
             validate = { it.isNotEmpty() })
 
