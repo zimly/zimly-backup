@@ -126,7 +126,12 @@ class SyncViewModel(
         }
     }
 
-    // TODO https://code.luasoftware.com/tutorials/android/jetpack-compose-load-data
+    /**
+     * Queries and returns the UUID of any [WorkInfo] in [WorkInfo.State.RUNNING] state, identified
+     * by [uniqueWorkIdentifier].
+     *
+     * @throws IllegalArgumentException in case more than 1 is found.
+     */
     private fun loadSyncState(): Flow<UUID> {
         val query = WorkQuery.Builder.fromUniqueWorkNames(listOf(uniqueWorkIdentifier))
             .addStates(listOf(WorkInfo.State.RUNNING))
@@ -137,6 +142,9 @@ class SyncViewModel(
             .map { it.id }
     }
 
+    /**
+     * Creates a [Flow] of [Progress] objects for observing the progress of a given [WorkInfo].
+     */
     private fun observeSyncProgress(id: UUID): Flow<Progress> {
         return workManager.getWorkInfoByIdFlow(id)
             .filterNotNull()
@@ -190,7 +198,6 @@ class SyncViewModel(
         }
     }
 
-    // TODO check error handling!
     suspend fun sync(): UUID {
         val remote = dao.loadById(remoteId)
         val data = workDataOf(
