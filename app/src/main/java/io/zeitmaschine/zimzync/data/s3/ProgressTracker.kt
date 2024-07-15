@@ -49,23 +49,23 @@ class ProgressTracker(private val size: Long) {
     private val timeSource = TimeSource.Monotonic
 
     // Important: MutableStateFlow does not emit same values!
-    private val progressFlow = MutableSharedFlow<ProgressIncrement>(500)
+    private val progressFlow = MutableSharedFlow<Long>(500)
     // https://stackoverflow.com/questions/70935356/how-can-i-calculate-min-max-average-of-continuous-flow-in-kotlin
     // https://docs.oracle.com/javase/8/docs/api/java/util/DoubleSummaryStatistics.html
 
     fun stepBy(read: Int) {
-        progressFlow.tryEmit(ProgressIncrement(read.toLong()))
+        progressFlow.tryEmit(read.toLong())
     }
 
     fun stepTo(skipped: Long) {
-        progressFlow.tryEmit(ProgressIncrement(skipped))
+        progressFlow.tryEmit(skipped)
     }
 
     fun observe(): Flow<Progress> {
         return progressFlow
-            .takeWhile { it.readBytes != -1L }
+            .takeWhile { it != -1L }
             .runningFold(Progress.EMPTY){ acc, inc ->
-                val totalBytes = acc.totalReadBytes + inc.readBytes
+                val totalBytes = acc.totalReadBytes + inc
                 val percentage = totalBytes.toFloat() / size
 
                 val timeMark = timeSource.markNow()
@@ -75,14 +75,13 @@ class ProgressTracker(private val size: Long) {
                 duration = if (duration > 0) duration else 1
 
                 // Bytes/µs to Bytes/s
-                val bytesPerSec = inc.readBytes * 1000_000 / duration
-                Progress(inc.readBytes, totalBytes, percentage, size, bytesPerSec, timeMark)
+                val bytesPerSec = inc * 1000_000 / duration
+                Progress(inc, totalBytes, percentage, size, bytesPerSec, timeMark)
             }
     }
 
 }
 
-private data class ProgressIncrement(val readBytes: Long, val timestamp: Long = System.currentTimeMillis())
 data class Progress(val readBytes: Long, val totalReadBytes: Long, val percentage: Float, val size: Long, val bytesPerSec: Long, val timeMark: TimeSource.Monotonic.ValueTimeMark) {
     companion object {
         val EMPTY = Progress(0, 0, 0F, 0, 0, TimeSource.Monotonic.markNow())
