@@ -34,6 +34,8 @@ class ProgressStreamTest {
 
             assertThat(lastProgress.totalReadBytes, `is`(size))
             assertThat(lastProgress.percentage, `is`(1F))
+            // TODO not a very smart assertion, can be 0
+            assertThat(lastProgress.bytesPerSec > 0, `is`(true))
         }
 
         String(wrapped.readAllBytes(), StandardCharsets.UTF_8)

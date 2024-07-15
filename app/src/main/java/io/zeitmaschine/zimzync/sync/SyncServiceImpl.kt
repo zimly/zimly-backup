@@ -29,7 +29,8 @@ class SyncServiceImpl(
         try {
             val remotes = s3Repository.listObjects()
             val photos = mediaRepository.getMedia(buckets)
-            val diff = photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
+            val diff =
+                photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
             val size = diff.sumOf { it.size }
 
             return Diff(remotes, photos, diff, size)
@@ -50,22 +51,36 @@ class SyncServiceImpl(
                     file,
                     mediaObj.name,
                     mediaObj.contentType,
-                    mediaObj.size)
+                    mediaObj.size
+                )
             }
-            .runningFold(SyncProgress.EMPTY) {acc, value ->
-                val totalBytes = acc.readBytes + value.readBytes // Don't sum on totalbytes, double counts
+            .runningFold(SyncProgress.EMPTY) { acc, value ->
+                val totalBytes =
+                    acc.readBytes + value.readBytes // Don't sum on totalbytes, double counts
                 val percentage = totalBytes.toFloat() / diff.size
-                SyncProgress(readBytes = totalBytes, count, percentage)
-            }.debounce(debounce)
-    }
-}
-data class SyncProgress(val readBytes: Long, val uploadedFiles: Int, val percentage: Float) {
-    companion object {
-        val EMPTY = SyncProgress(0, 0, 0F)
+                SyncProgress(readBytes = totalBytes, count, percentage, value.bytesPerSec)
+            }
+            .debounce(debounce)
     }
 }
 
-data class Diff(val remotes: List<S3Object>, val locals: List<MediaObject>, val diff: List<MediaObject>, val size: Long) {
+data class SyncProgress(
+    val readBytes: Long,
+    val uploadedFiles: Int,
+    val percentage: Float,
+    val bytesPerSecond: Long
+) {
+    companion object {
+        val EMPTY = SyncProgress(0, 0, 0F, 0)
+    }
+}
+
+data class Diff(
+    val remotes: List<S3Object>,
+    val locals: List<MediaObject>,
+    val diff: List<MediaObject>,
+    val size: Long
+) {
     companion object {
         val EMPTY = Diff(emptyList(), emptyList(), emptyList(), 0)
     }

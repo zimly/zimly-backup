@@ -2,22 +2,17 @@ package io.zeitmaschine.zimzync
 
 import android.net.Uri
 import android.util.Log
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.zeitmaschine.zimzync.data.media.MediaObject
 import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
-import io.zeitmaschine.zimzync.data.s3.Progress
-import io.zeitmaschine.zimzync.data.s3.S3Repository
 import io.zeitmaschine.zimzync.data.s3.minioPwd
 import io.zeitmaschine.zimzync.data.s3.minioUser
 import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.hasItems
@@ -27,7 +22,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
-import java.io.ByteArrayInputStream
 
 class SyncServiceImplTest {
     private lateinit var mediaRepository: MediaRepository
@@ -71,27 +65,6 @@ class SyncServiceImplTest {
     }
 
     @Test
-    fun sync() {
-        val flowOf = flowOf(Progress(25L, 25L, 25F, 100L), Progress(25L, 50L, 50F, 100L), Progress(25L, 75L, 75F, 100L), Progress(25L, 100L, 100F, 100L))
-        runTest {
-            val s3Repo: S3Repository = mockk()
-
-            coEvery { s3Repo.put(any(), any(), any(), any()) } returns flowOf
-            every { mediaRepository.getStream(any()) } returns ByteArrayInputStream("textavdfbad".toByteArray())
-
-            val ss = SyncServiceImpl(s3Repo, mediaRepository)
-
-            val localMediaUri = mockk<Uri>()
-            val localMediaObj = MediaObject(name = "", 100L, "avr", localMediaUri)
-            val res = ss.sync(Diff(remotes = emptyList(), locals = listOf(localMediaObj), diff = listOf(localMediaObj), size = 0L)).toList()
-
-            assertThat(res.size, `is`(5)) // Includes initial EMPTY
-            assertThat(res[4].readBytes, `is`(100L))
-            assertThat(res[4].uploadedFiles, `is`(1))
-        }
-    }
-
-    @Test
     fun syncIT() {
         val image1 = "test_image.png"
         val image2 = "test_image2.png"
@@ -125,6 +98,7 @@ class SyncServiceImplTest {
             assertThat(res.readBytes, `is`(totalSize))
             assertThat(res.readBytes, `is`(diff.size))
             assertThat(res.percentage, `is`(1f))
+            assertThat(res.bytesPerSecond > 0, `is`(true))
 
             //Thread.sleep(3000)
             val objs = minioRepository.listObjects()

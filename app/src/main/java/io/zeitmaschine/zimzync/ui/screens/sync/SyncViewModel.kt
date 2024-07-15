@@ -163,6 +163,7 @@ class SyncViewModel(
                     val progress = workInfo.progress
                     progressState.progressCount = progress.getInt(SyncOutputs.PROGRESS_COUNT, 0)
                     progressState.progressBytes = progress.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                    progressState.progressBytesPerSec = progress.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
                     progressState.percentage = progress.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                     progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
                     progressState.diffBytes = progress.getLong(SyncOutputs.DIFF_BYTES, 0)
@@ -173,6 +174,7 @@ class SyncViewModel(
                     val output = workInfo.outputData
                     progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
                     progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                    progressState.progressBytesPerSec = output.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
                     progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                     progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
                     progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
@@ -183,6 +185,7 @@ class SyncViewModel(
                     val output = workInfo.outputData
                     progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
                     progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                    progressState.progressBytesPerSec = output.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
                     progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                     progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
                     progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
@@ -242,8 +245,10 @@ class SyncViewModel(
 
     data class Progress(
         var percentage: Float = 0.0f,
+        var remaining: String = "3min",
         var progressCount: Int = 0,
         var progressBytes: Long = 0,
+        var progressBytesPerSec: Long = 0,
         var diffCount: Int = 0,
         var diffBytes: Long = 0,
         var inProgress: Boolean = false,

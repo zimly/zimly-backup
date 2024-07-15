@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -53,6 +54,7 @@ import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.launch
+import org.bouncycastle.math.raw.Mod
 
 @Composable
 fun SyncScreen(
@@ -277,7 +279,12 @@ private fun Progress(progress: SyncViewModel.Progress) {
             ) {
                 Text(text = "Uploads size")
                 Text(
-                    text = "${Formatter.formatShortFileSize(LocalContext.current, progress.progressBytes)} / ${Formatter.formatShortFileSize(LocalContext.current, progress.diffBytes)}"
+                    text = "${
+                        Formatter.formatShortFileSize(
+                            LocalContext.current,
+                            progress.progressBytes
+                        )
+                    } / ${Formatter.formatShortFileSize(LocalContext.current, progress.diffBytes)}"
                 )
             }
             Row(
@@ -285,10 +292,29 @@ private fun Progress(progress: SyncViewModel.Progress) {
                     .fillMaxWidth()
                     .padding(top = 16.dp)
             ) {
-                LinearProgressIndicator(
-                    progress = { progress.percentage },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 25.dp),
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        if (progress.inProgress) {
+                            val speed = Formatter.formatShortFileSize(LocalContext.current, progress.progressBytesPerSec)
+                            Text(
+                                text = "$speed/s"
+                            )
+                        }
+                    }
+                    Row {
+                        LinearProgressIndicator(
+                            progress = { progress.percentage },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
             }
         }
     }

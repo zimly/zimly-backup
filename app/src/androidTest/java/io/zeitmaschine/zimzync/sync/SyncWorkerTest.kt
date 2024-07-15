@@ -38,7 +38,7 @@ class SyncWorkerTest {
 
         val locals = listOf(MediaObject("DCIM01213.png", 1234L, "image/png", mockk()))
         every { syncService.diff(any()) } returns Diff(emptyList(), locals, locals, 1234L)
-        every { syncService.sync(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f))
+        every { syncService.sync(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f, 1024L))
 
         val worker = TestListenableWorkerBuilder<SyncWorker>(context)
             .build()
@@ -48,6 +48,7 @@ class SyncWorkerTest {
             assertThat(result.outputData.getInt(SyncOutputs.PROGRESS_COUNT, -1), `is`(1))
             assertThat(result.outputData.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, -1f), `is`(1f))
             assertThat(result.outputData.getLong(SyncOutputs.PROGRESS_BYTES, -1), `is`(1234L))
+            assertThat(result.outputData.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, -1), `is`(1024L))
             assertThat(result.outputData.getLong(SyncOutputs.DIFF_BYTES, -1L), `is`(1234L))
             assertThat(result.outputData.getInt(SyncOutputs.DIFF_COUNT, -1), `is`(1))
         }
@@ -63,7 +64,7 @@ class SyncWorkerTest {
         every { syncService.diff(any()) } returns Diff(emptyList(), locals, locals, 1234L)
         every { syncService.sync(any(), any()) } returns
                 flow {
-                    emit(SyncProgress(12L, 0, 0.10f))
+                    emit(SyncProgress(12L, 0, 0.10f, 1024L))
                     error("fml")
                 }
 

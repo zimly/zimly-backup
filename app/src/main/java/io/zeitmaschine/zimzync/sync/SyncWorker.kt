@@ -60,6 +60,7 @@ class SyncWorker(
                     Data.Builder()
                         .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
                         .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
                         .putInt(SyncOutputs.DIFF_COUNT, diffCount)
                         .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
@@ -71,6 +72,7 @@ class SyncWorker(
                     Data.Builder()
                         .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
                         .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
                         .putInt(SyncOutputs.DIFF_COUNT, diffCount)
                         .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
@@ -125,6 +127,7 @@ object SyncInputs {
 object SyncOutputs {
     const val PROGRESS_COUNT = "progress_count"
     const val PROGRESS_BYTES = "progress_bytes"
+    const val PROGRESS_BYTES_PER_SEC = "progress_bytes_per_sec"
     const val PROGRESS_PERCENTAGE = "progress_percentage"
     const val DIFF_COUNT = "diff_count"
     const val DIFF_BYTES = "diff_bytes"
