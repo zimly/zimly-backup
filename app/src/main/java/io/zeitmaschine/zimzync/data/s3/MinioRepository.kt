@@ -8,6 +8,7 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioAsyncClient
 import io.minio.ObjectWriteResponse
 import io.minio.PutObjectArgs
+import io.minio.RemoveObjectArgs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.transformWhile
@@ -97,6 +98,21 @@ class MinioRepository(url: String, key: String, secret: String, private val buck
         }
     }
 
+    override suspend fun remove(name: String) {
+        return suspendCancellableCoroutine { continuation ->
+
+            val params = RemoveObjectArgs.builder().bucket(bucket).`object`(name).build()
+
+            mc.removeObject(params).whenComplete { _, exception ->
+                if (exception == null) {
+                    continuation.resume(Unit)
+                } else {
+                    continuation.resumeWithException(exception)
+                }
+            }
+        }
+    }
+
     override suspend fun put(
         stream: InputStream,
         name: String,
@@ -157,4 +173,5 @@ interface S3Repository {
     suspend fun createBucket(bucket: String)
     suspend fun verify(): Boolean
     suspend fun get(name: String): GetObjectResponse
+    suspend fun remove(name: String)
 }
