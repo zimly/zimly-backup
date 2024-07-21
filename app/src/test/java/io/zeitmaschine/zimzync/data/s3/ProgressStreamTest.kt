@@ -20,8 +20,6 @@ import kotlin.concurrent.Volatile
 import kotlin.random.Random
 
 
-private const val l = 500
-
 class ProgressStreamTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
