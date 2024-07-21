@@ -8,7 +8,6 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioAsyncClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
-import io.minio.http.HttpUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.transformWhile
@@ -16,9 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import java.io.IOException
 import java.io.InputStream
-import java.security.GeneralSecurityException
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
@@ -50,7 +47,11 @@ class MinioRepository(
         throw Exception("Failed to initialize S3 client: ${e.message}", e)
     }
 
-    // Copied from io.minio.http.HttpUtils.newDefaultHttpClient
+    /**
+     * Creates a http client with optional [ProgressInterceptor].
+     *
+     * Partly taken from io.minio.http.HttpUtils.newDefaultHttpClient.
+     */
     private fun client(progressTracker: ProgressTracker?): OkHttpClient {
         val timeout = TimeUnit.MINUTES.toMillis(5)
 
@@ -61,19 +62,10 @@ class MinioRepository(
             .readTimeout(timeout, TimeUnit.MILLISECONDS)
             .protocols(listOf(Protocol.HTTP_1_1))
 
+        // attach interceptor if given
         progressTracker?.let { builder.addInterceptor(ProgressInterceptor(it)) }
-        var httpClient = builder.build()
-        val filename = System.getenv("SSL_CERT_FILE")
-        if (filename != null && filename.isNotEmpty()) {
-            try {
-                httpClient = HttpUtils.enableExternalCertificates(httpClient, filename)
-            } catch (e: GeneralSecurityException) {
-                throw RuntimeException(e)
-            } catch (e: IOException) {
-                throw RuntimeException(e)
-            }
-        }
-        return httpClient
+
+        return builder.build()
     }
 
     override suspend fun verify(): Boolean {
