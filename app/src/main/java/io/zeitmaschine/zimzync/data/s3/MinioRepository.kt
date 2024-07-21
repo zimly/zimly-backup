@@ -14,18 +14,8 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import okhttp3.Interceptor
-import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.Response
-import okio.Buffer
-import okio.BufferedSink
-import okio.ForwardingSink
-import okio.Sink
-import okio.buffer
 import java.io.IOException
 import java.io.InputStream
 import java.security.GeneralSecurityException
@@ -203,50 +193,5 @@ interface S3Repository {
     suspend fun verify(): Boolean
     suspend fun get(name: String): GetObjectResponse
     suspend fun remove(name: String)
-}
-
-/**
- * https://medium.com/@PaulinaSadowska/display-progress-of-multipart-request-with-retrofit-and-rxjava-23a4a779e6ba
- * https://getstream.io/blog/android-upload-progress/
- * https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/Progress.java
- */
-internal class ProgressInterceptor(private val progressTracker: ProgressTracker) : Interceptor {
-    override fun intercept(chain: Interceptor.Chain): Response {
-        var req = chain.request()
-        if (req.method == "PUT")
-            req = wrapRequest(req, progressTracker)
-        return chain.proceed(req)
-    }
-
-    private fun wrapRequest(request: Request, progressCallback: ProgressTracker): Request {
-        return request.newBuilder()
-            // Assume that any request tagged with a ProgressCallback is a POST
-            // request and has a non-null body
-            .put(ProgressRequestBody(request.body!!, progressCallback))
-            .build()
-    }
-}
-
-internal class ProgressRequestBody(
-    private val delegate: RequestBody,
-    private val progressTracker: ProgressTracker
-) : RequestBody() {
-    override fun contentType(): MediaType? = delegate.contentType()
-    override fun contentLength(): Long = delegate.contentLength()
-
-    override fun writeTo(sink: BufferedSink) {
-        val countingSink = CountingSink(sink).buffer()
-        delegate.writeTo(countingSink)
-        countingSink.flush()
-    }
-
-    private inner class CountingSink(delegate: Sink) : ForwardingSink(delegate) {
-
-        override fun write(source: Buffer, byteCount: Long) {
-            super.write(source, byteCount)
-            progressTracker.stepBy(byteCount.toInt())
-        }
-    }
-
 }
 
