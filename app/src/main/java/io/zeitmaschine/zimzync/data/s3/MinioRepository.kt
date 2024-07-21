@@ -6,7 +6,6 @@ import io.minio.GetObjectResponse
 import io.minio.ListObjectsArgs
 import io.minio.MakeBucketArgs
 import io.minio.MinioAsyncClient
-import io.minio.ObjectWriteResponse
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
 import io.minio.http.HttpUtils
@@ -65,12 +64,12 @@ class MinioRepository(
     private fun client(progressTracker: ProgressTracker?): OkHttpClient {
         val timeout = TimeUnit.MINUTES.toMillis(5)
 
-            val builder = OkHttpClient()
-                .newBuilder()
-                .connectTimeout(timeout, TimeUnit.MILLISECONDS)
-                .writeTimeout(timeout, TimeUnit.MILLISECONDS)
-                .readTimeout(timeout, TimeUnit.MILLISECONDS)
-                .protocols(listOf(Protocol.HTTP_1_1))
+        val builder = OkHttpClient()
+            .newBuilder()
+            .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+            .writeTimeout(timeout, TimeUnit.MILLISECONDS)
+            .readTimeout(timeout, TimeUnit.MILLISECONDS)
+            .protocols(listOf(Protocol.HTTP_1_1))
 
         progressTracker?.let { builder.addInterceptor(ProgressInterceptor(it)) }
         var httpClient = builder.build()
@@ -167,22 +166,7 @@ class MinioRepository(
         launch {
             progressTracker.observe().collect { send(it) }
         }
-        doPut(stream, name, contentType, size, progressTracker)
-    }.transformWhile {
-        emit(it)
-        it.percentage < 1F
-    }
-
-    private suspend fun doPut(
-        stream: InputStream,
-        name: String,
-        contentType: String,
-        size: Long,
-        progressTracker: ProgressTracker
-    ): ObjectWriteResponse {
-
-
-        return suspendCoroutine { continuation ->
+        suspendCoroutine { continuation ->
 
             val param = PutObjectArgs.builder()
                 .bucket(bucket)
@@ -191,17 +175,19 @@ class MinioRepository(
                 .stream(stream, size, -1)
                 .build()
 
-            mc(progressTracker).putObject(param).whenComplete { result, exception ->
+            mc(progressTracker).putObject(param).whenComplete { _, exception ->
                 with(stream) { close() } // Instead of stream.close()
                 if (exception == null) {
-                    continuation.resume(result)
+                    continuation.resume(Unit)
                 } else {
                     continuation.resumeWithException(exception)
                 }
             }
         }
+    }.transformWhile {
+        emit(it)
+        it.percentage < 1F
     }
-
 }
 
 interface S3Repository {
