@@ -10,7 +10,6 @@ import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.OkHttpClient
@@ -166,9 +165,6 @@ class MinioRepository(
                 }
             }
         }
-    }.transformWhile {
-        emit(it)
-        it.percentage < 1F
     }
 }
 

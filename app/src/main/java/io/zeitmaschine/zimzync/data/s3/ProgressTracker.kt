@@ -3,9 +3,7 @@ package io.zeitmaschine.zimzync.data.s3
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.runningFold
-import kotlinx.coroutines.flow.takeWhile
-import java.io.FilterInputStream
-import java.io.InputStream
+import kotlinx.coroutines.flow.transformWhile
 import kotlin.time.TimeSource
 
 
@@ -28,8 +26,7 @@ class ProgressTracker(private val size: Long) {
 
     fun observe(): Flow<Progress> {
         return progressFlow
-            .takeWhile { it != -1L }
-            .runningFold(Progress.EMPTY){ acc, inc ->
+            .runningFold(Progress.EMPTY) { acc, inc ->
                 val totalBytes = acc.totalReadBytes + inc
                 val percentage = totalBytes.toFloat() / size
 
@@ -42,6 +39,10 @@ class ProgressTracker(private val size: Long) {
                 // Bytes/µs to Bytes/s
                 val bytesPerSec = inc * 1000_000 / duration
                 Progress(inc, totalBytes, percentage, size, bytesPerSec, timeMark)
+            }
+            .transformWhile {
+                emit(it)
+                it.percentage < 1F
             }
     }
 }
