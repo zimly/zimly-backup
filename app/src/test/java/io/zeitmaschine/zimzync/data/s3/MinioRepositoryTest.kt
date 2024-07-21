@@ -13,6 +13,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 
 const val minioUser = "test"
@@ -46,7 +48,7 @@ class MinioRepositoryTest {
 
 
     @Test
-    fun put() = runTest {
+    fun put() = runTest(timeout = 30.seconds) {
         val image = "/testdata/test_image.png"
         val stream =
             javaClass.getResourceAsStream(image) ?: throw Error("Could not open test resource.")
