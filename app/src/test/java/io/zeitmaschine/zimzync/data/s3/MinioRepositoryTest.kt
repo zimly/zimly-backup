@@ -48,7 +48,7 @@ class MinioRepositoryTest {
 
 
     @Test
-    fun put() = runTest(timeout = 30.seconds) {
+    fun put() = runBlocking {
         val image = "/testdata/test_image.png"
         val stream =
             javaClass.getResourceAsStream(image) ?: throw Error("Could not open test resource.")
