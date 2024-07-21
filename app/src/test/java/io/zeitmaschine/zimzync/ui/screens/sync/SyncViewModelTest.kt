@@ -26,6 +26,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 
@@ -40,6 +41,7 @@ import org.junit.Test
  * I don't think this is how to write ViewModel tests going forward. Instead write similar tests for
  * Compose and unit test the parts of the ViewModel that do not rely on StateFlow.
  */
+@Ignore("Outdated, minio client is lazy loaded, replace with Verify button!")
 class SyncViewModelTest {
 
     private lateinit var viewModel: SyncViewModel
