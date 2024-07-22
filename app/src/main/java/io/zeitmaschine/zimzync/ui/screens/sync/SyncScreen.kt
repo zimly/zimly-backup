@@ -38,9 +38,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -54,7 +57,6 @@ import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
 import kotlinx.coroutines.launch
-import org.bouncycastle.math.raw.Mod
 
 @Composable
 fun SyncScreen(
@@ -287,34 +289,42 @@ private fun Progress(progress: SyncViewModel.Progress) {
                     } / ${Formatter.formatShortFileSize(LocalContext.current, progress.diffBytes)}"
                 )
             }
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp)
             ) {
-                Column {
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .defaultMinSize(minHeight = 25.dp),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        if (progress.inProgress) {
-                            val speed = Formatter.formatShortFileSize(LocalContext.current, progress.progressBytesPerSec)
-                            Text(
-                                text = "$speed/s"
-                            )
-                        }
-                    }
-                    Row {
-                        LinearProgressIndicator(
-                            progress = { progress.percentage },
-                            modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 25.dp),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    if (progress.inProgress) {
+                        val speed = Formatter.formatShortFileSize(
+                            LocalContext.current,
+                            progress.progressBytesPerSec
+                        )
+                        val sp = speed.split(" ")
+                        Text(
+                            text = sp[0],
+                            fontWeight = FontWeight.Light,
+                            letterSpacing = TextUnit(-1.5F, TextUnitType.Sp),
+                            fontSize = TextUnit(24F, TextUnitType.Sp),
+                        )
+                        Text(
+                            text = " ${sp[1]}/s",
+                            fontSize = TextUnit(12F, TextUnitType.Sp),
+                            modifier = Modifier.align(Alignment.Bottom)
                         )
                     }
                 }
-
+                Row {
+                    LinearProgressIndicator(
+                        progress = { progress.percentage },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }
@@ -369,7 +379,12 @@ fun SyncPreview() {
         bucket = "test-bucket",
         folder = "Camera"
     )
-    val progressState = SyncViewModel.Progress()
+    val progressState = SyncViewModel.Progress(
+        inProgress = true,
+        progressBytesPerSec = 5342634,
+        percentage = 0.77F,
+        remaining = "3 minutes remaining.."
+    )
     val folderState = SyncViewModel.FolderState()
     val snackbarState = remember { SnackbarHostState() }
 
