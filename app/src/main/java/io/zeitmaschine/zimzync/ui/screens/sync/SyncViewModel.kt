@@ -15,7 +15,6 @@ import androidx.work.workDataOf
 import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
-import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.sync.SyncInputs
 import io.zeitmaschine.zimzync.sync.SyncOutputs
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
@@ -44,7 +43,7 @@ class SyncViewModel(
     private val remoteId: Int,
     private val workManager: WorkManager,
     private val mediaRepo: MediaRepository
-): ViewModel() {
+) : ViewModel() {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
     companion object {
@@ -84,16 +83,10 @@ class SyncViewModel(
         .filterNotNull()
         .flatMapLatest { observeSyncProgress(it) }
 
-    private val _diff: MutableStateFlow<Diff?> = MutableStateFlow(null)
-    private val _diffProgress: Flow<Progress> = _diff.filterNotNull().map {
-        Progress(
-            diffBytes = it.size,
-            diffCount = it.diff.size
-        )
-    }
+    private val _progress: MutableStateFlow<Progress> = MutableStateFlow(Progress())
 
     // merge the flows from observed progress and one time diff
-    var progressState: StateFlow<Progress> = merge(_observedProgress, _diffProgress)
+    var progressState: StateFlow<Progress> = merge(_observedProgress, _progress)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -113,6 +106,11 @@ class SyncViewModel(
 
     suspend fun createDiff() {
 
+        _progress.update {
+            Progress(
+                status = Status.CALCULATING
+            )
+        }
         try {
             val remote = dao.loadById(remoteId)
             val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
@@ -120,9 +118,16 @@ class SyncViewModel(
 
             val diff = syncService.diff(setOf(remote.folder))
             // Display result of the minio request to the user
-            _diff.update { diff }
+            _progress.update {
+                Progress(
+                    diffBytes = diff.size,
+                    diffCount = diff.diff.size,
+                    status = null
+                )
+            }
         } catch (e: Exception) {
-            _error.emit( e.message ?: "Unknown error." )
+            // TODO progress.error instead? Basically back to one state object
+            _error.emit(e.message ?: "Unknown error.")
         }
     }
 
@@ -137,7 +142,7 @@ class SyncViewModel(
             .addStates(listOf(WorkInfo.State.RUNNING))
             .build()
         return workManager.getWorkInfosFlow(query)
-            .onEach { require(it.size < 2)  { "More than one unique sync job in progress. This should not happen." } }
+            .onEach { require(it.size < 2) { "More than one unique sync job in progress. This should not happen." } }
             .flatMapLatest { it.asFlow() }
             .map { it.id }
     }
@@ -167,7 +172,7 @@ class SyncViewModel(
                     progressState.percentage = progress.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                     progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
                     progressState.diffBytes = progress.getLong(SyncOutputs.DIFF_BYTES, 0)
-                    progressState.inProgress = true
+                    progressState.status = Status.IN_PROGRESS
                 }
 
                 WorkInfo.State.SUCCEEDED -> {
@@ -178,7 +183,7 @@ class SyncViewModel(
                     progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                     progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
                     progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
-                    progressState.inProgress = false
+                    progressState.status = Status.COMPLETED
                 }
 
                 WorkInfo.State.FAILED -> {
@@ -190,7 +195,7 @@ class SyncViewModel(
                     progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
                     progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
                     progressState.error = output.getString(SyncOutputs.ERROR) ?: "Unknown error."
-                    progressState.inProgress = false
+                    progressState.status = Status.COMPLETED
                 }
 
                 else -> {
@@ -251,7 +256,11 @@ class SyncViewModel(
         var progressBytesPerSec: Long = 0,
         var diffCount: Int = 0,
         var diffBytes: Long = 0,
-        var inProgress: Boolean = false,
+        var status: Status? = null,
         var error: String? = null,
     )
+    enum class Status {
+        CALCULATING, IN_PROGRESS, COMPLETED,
+    }
+
 }

@@ -16,7 +16,7 @@ import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -173,7 +173,11 @@ private fun SyncCompose(
             Bucket(remote)
             Folder(folder)
             Progress(progress)
-            Actions(progress.inProgress, createDiff, sync)
+            val enableActions = progress.status !in setOf(
+                SyncViewModel.Status.CALCULATING,
+                SyncViewModel.Status.IN_PROGRESS
+            )
+            Actions(enableActions, createDiff, sync)
         }
     }
 }
@@ -297,10 +301,10 @@ private fun Progress(progress: SyncViewModel.Progress) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .defaultMinSize(minHeight = 25.dp),
+                        .defaultMinSize(minHeight = 32.dp),
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    if (progress.inProgress) {
+                    if (progress.status == SyncViewModel.Status.IN_PROGRESS) {
                         val speed = Formatter.formatShortFileSize(
                             LocalContext.current,
                             progress.progressBytesPerSec
@@ -318,12 +322,27 @@ private fun Progress(progress: SyncViewModel.Progress) {
                             modifier = Modifier.align(Alignment.Bottom)
                         )
                     }
+                    else if (progress.status == SyncViewModel.Status.CALCULATING) {
+                        Text(
+                            text = "Calculating...",
+                            fontSize = TextUnit(12F, TextUnitType.Sp),
+                            modifier = Modifier.align(Alignment.Bottom)
+                        )
+                    }
                 }
                 Row {
-                    LinearProgressIndicator(
-                        progress = { progress.percentage },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (progress.status == SyncViewModel.Status.CALCULATING) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        )
+                    }
+                    else {
+                        LinearProgressIndicator(
+                            progress = { progress.percentage },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
         }
@@ -332,7 +351,7 @@ private fun Progress(progress: SyncViewModel.Progress) {
 
 @Composable
 private fun Actions(
-    inProgress: Boolean,
+    enableActions: Boolean,
     createDiff: () -> Unit,
     sync: () -> Unit
 ) {
@@ -344,24 +363,22 @@ private fun Actions(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
-                enabled = !inProgress,
+                enabled = enableActions,
                 onClick = createDiff,
                 modifier = Modifier.weight(1f),
-                colors = ButtonColors(
+                colors = ButtonDefaults.buttonColors().copy(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     contentColor = MaterialTheme.colorScheme.onSurface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurface
                 ),
             ) {
                 Text(text = "Refresh")
             }
             Button(
                 onClick = sync,
-                enabled = !inProgress,
+                enabled = enableActions,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = if (inProgress) "Uploading" else "Upload")
+                Text(text = if (enableActions) "Upload" else "Uploading")
             }
         }
 
@@ -380,7 +397,7 @@ fun SyncPreview() {
         folder = "Camera"
     )
     val progressState = SyncViewModel.Progress(
-        inProgress = true,
+        status = SyncViewModel.Status.IN_PROGRESS,
         progressBytesPerSec = 5342634,
         percentage = 0.77F,
         remaining = "3 minutes remaining.."
