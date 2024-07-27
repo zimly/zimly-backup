@@ -128,6 +128,11 @@ class SyncViewModel(
         } catch (e: Exception) {
             // TODO progress.error instead? Basically back to one state object
             _error.emit(e.message ?: "Unknown error.")
+            _progress.update {
+                Progress(
+                    status = null
+                )
+            }
         }
     }
 
