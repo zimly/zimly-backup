@@ -390,7 +390,7 @@ private fun Actions(
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 ),
             ) {
-                Text(text = "Refresh")
+                Text(text = "Calculate")
             }
             Button(
                 onClick = sync,
