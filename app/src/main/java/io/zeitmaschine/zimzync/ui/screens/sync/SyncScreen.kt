@@ -312,6 +312,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
             .defaultMinSize(minHeight = 32.dp),
         horizontalArrangement = Arrangement.Center,
     ) {
+
         if (progress.status == SyncViewModel.Status.IN_PROGRESS) {
             val speed = Formatter.formatShortFileSize(
                 LocalContext.current,
@@ -323,6 +324,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
                 fontWeight = FontWeight.Light,
                 letterSpacing = TextUnit(-1.5F, TextUnitType.Sp),
                 fontSize = TextUnit(24F, TextUnitType.Sp),
+                modifier = Modifier.align(Alignment.CenterVertically)
             )
             Text(
                 text = " ${sp[1]}/s",
