@@ -269,8 +269,8 @@ class SyncViewModel(
         var progressCount: Int = 0,
         var progressBytes: Long = 0,
         var progressBytesPerSec: Long = 0,
-        var diffCount: Int = 0,
-        var diffBytes: Long = 0,
+        var diffCount: Int = -1,
+        var diffBytes: Long = -1,
         var status: Status? = null,
         var error: String? = null,
     )

@@ -277,21 +277,35 @@ private fun Progress(progress: SyncViewModel.Progress) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Uploads")
-                Text(text = "${progress.progressCount} / ${progress.diffCount}")
+                if (progress.diffCount > -1) {
+                    Text(text = "${progress.progressCount} / ${progress.diffCount}")
+                } else {
+                    Text(text = "-")
+                }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Uploads size")
-                Text(
-                    text = "${
-                        Formatter.formatShortFileSize(
-                            LocalContext.current,
-                            progress.progressBytes
-                        )
-                    } / ${Formatter.formatShortFileSize(LocalContext.current, progress.diffBytes)}"
-                )
+                if (progress.diffBytes > -1) {
+                    Text(
+                        text = "${
+                            Formatter.formatShortFileSize(
+                                LocalContext.current,
+                                progress.progressBytes
+                            )
+                        } / ${
+                            Formatter.formatShortFileSize(
+                                LocalContext.current,
+                                progress.diffBytes
+                            )
+                        }"
+                    )
+                } else {
+                    Text(text = "-")
+                }
+
             }
             Column(
                 modifier = Modifier
