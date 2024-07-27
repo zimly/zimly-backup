@@ -154,56 +154,66 @@ class SyncViewModel(
         return workManager.getWorkInfoByIdFlow(id)
             .filterNotNull()
             // filter out unhandled states that result in a "nulled" out progress object.
-            .filter { it.state in arrayOf(
-                WorkInfo.State.SUCCEEDED,
-                WorkInfo.State.RUNNING,
-                WorkInfo.State.FAILED
-            ) }
+            .filter {
+                it.state in arrayOf(
+                    WorkInfo.State.SUCCEEDED,
+                    WorkInfo.State.RUNNING,
+                    WorkInfo.State.FAILED
+                )
+            }
             .map { workInfo ->
 
-            val progressState = Progress()
+                val progressState = Progress()
 
-            when (workInfo.state) {
-                WorkInfo.State.RUNNING -> {
-                    val progress = workInfo.progress
-                    progressState.progressCount = progress.getInt(SyncOutputs.PROGRESS_COUNT, 0)
-                    progressState.progressBytes = progress.getLong(SyncOutputs.PROGRESS_BYTES, 0)
-                    progressState.progressBytesPerSec = progress.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
-                    progressState.percentage = progress.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
-                    progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
-                    progressState.diffBytes = progress.getLong(SyncOutputs.DIFF_BYTES, 0)
-                    progressState.status = Status.IN_PROGRESS
-                }
+                when (workInfo.state) {
+                    WorkInfo.State.RUNNING -> {
+                        val progress = workInfo.progress
+                        progressState.progressCount = progress.getInt(SyncOutputs.PROGRESS_COUNT, 0)
+                        progressState.progressBytes =
+                            progress.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                        progressState.progressBytesPerSec =
+                            progress.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
+                        progressState.percentage =
+                            progress.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
+                        progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
+                        progressState.diffBytes = progress.getLong(SyncOutputs.DIFF_BYTES, 0)
+                        progressState.status = Status.IN_PROGRESS
+                    }
 
-                WorkInfo.State.SUCCEEDED -> {
-                    val output = workInfo.outputData
-                    progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
-                    progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
-                    progressState.progressBytesPerSec = output.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
-                    progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
-                    progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
-                    progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
-                    progressState.status = Status.COMPLETED
-                }
+                    WorkInfo.State.SUCCEEDED -> {
+                        val output = workInfo.outputData
+                        progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
+                        progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                        progressState.progressBytesPerSec =
+                            output.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
+                        progressState.percentage =
+                            output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
+                        progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
+                        progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
+                        progressState.status = Status.COMPLETED
+                    }
 
-                WorkInfo.State.FAILED -> {
-                    val output = workInfo.outputData
-                    progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
-                    progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
-                    progressState.progressBytesPerSec = output.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
-                    progressState.percentage = output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
-                    progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
-                    progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
-                    progressState.error = output.getString(SyncOutputs.ERROR) ?: "Unknown error."
-                    progressState.status = Status.COMPLETED
-                }
+                    WorkInfo.State.FAILED -> {
+                        val output = workInfo.outputData
+                        progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
+                        progressState.progressBytes = output.getLong(SyncOutputs.PROGRESS_BYTES, 0)
+                        progressState.progressBytesPerSec =
+                            output.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
+                        progressState.percentage =
+                            output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
+                        progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
+                        progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
+                        progressState.error =
+                            output.getString(SyncOutputs.ERROR) ?: "Unknown error."
+                        progressState.status = Status.COMPLETED
+                    }
 
-                else -> {
-                    Log.e(TAG, "State '${workInfo.state}' should not be observed.")
+                    else -> {
+                        Log.e(TAG, "State '${workInfo.state}' should not be observed.")
+                    }
                 }
+                progressState
             }
-            progressState
-        }
     }
 
     suspend fun sync(): UUID {
@@ -232,7 +242,7 @@ class SyncViewModel(
     }
 
     suspend fun clearError() {
-        _error.emit( null)
+        _error.emit(null)
     }
 
     data class RemoteState(
@@ -259,6 +269,7 @@ class SyncViewModel(
         var status: Status? = null,
         var error: String? = null,
     )
+
     enum class Status {
         CALCULATING, IN_PROGRESS, COMPLETED,
     }
