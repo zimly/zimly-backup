@@ -298,53 +298,56 @@ private fun Progress(progress: SyncViewModel.Progress) {
                     .fillMaxWidth()
                     .padding(top = 16.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .defaultMinSize(minHeight = 32.dp),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    if (progress.status == SyncViewModel.Status.IN_PROGRESS) {
-                        val speed = Formatter.formatShortFileSize(
-                            LocalContext.current,
-                            progress.progressBytesPerSec
-                        )
-                        val sp = speed.split(" ")
-                        Text(
-                            text = sp[0],
-                            fontWeight = FontWeight.Light,
-                            letterSpacing = TextUnit(-1.5F, TextUnitType.Sp),
-                            fontSize = TextUnit(24F, TextUnitType.Sp),
-                        )
-                        Text(
-                            text = " ${sp[1]}/s",
-                            fontSize = TextUnit(12F, TextUnitType.Sp),
-                            modifier = Modifier.align(Alignment.Bottom)
-                        )
-                    }
-                    else if (progress.status == SyncViewModel.Status.CALCULATING) {
-                        Text(
-                            text = "Calculating...",
-                            fontSize = TextUnit(12F, TextUnitType.Sp),
-                            modifier = Modifier.align(Alignment.Bottom)
-                        )
-                    }
-                }
-                Row {
-                    if (progress.status == SyncViewModel.Status.CALCULATING) {
-                        LinearProgressIndicator(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        )
-                    }
-                    else {
-                        LinearProgressIndicator(
-                            progress = { progress.percentage },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
+                ProgressBar(progress)
             }
+        }
+    }
+}
+
+@Composable
+private fun ProgressBar(progress: SyncViewModel.Progress) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 32.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        if (progress.status == SyncViewModel.Status.IN_PROGRESS) {
+            val speed = Formatter.formatShortFileSize(
+                LocalContext.current,
+                progress.progressBytesPerSec
+            )
+            val sp = speed.split(" ")
+            Text(
+                text = sp[0],
+                fontWeight = FontWeight.Light,
+                letterSpacing = TextUnit(-1.5F, TextUnitType.Sp),
+                fontSize = TextUnit(24F, TextUnitType.Sp),
+            )
+            Text(
+                text = " ${sp[1]}/s",
+                fontSize = TextUnit(12F, TextUnitType.Sp),
+                modifier = Modifier.align(Alignment.Bottom)
+            )
+        } else if (progress.status == SyncViewModel.Status.CALCULATING) {
+            Text(
+                text = "Calculating...",
+                fontSize = TextUnit(12F, TextUnitType.Sp),
+                modifier = Modifier.align(Alignment.Bottom)
+            )
+        }
+    }
+    Row {
+        if (progress.status == SyncViewModel.Status.CALCULATING) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+        } else {
+            LinearProgressIndicator(
+                progress = { progress.percentage },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
