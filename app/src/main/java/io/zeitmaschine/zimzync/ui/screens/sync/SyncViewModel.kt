@@ -265,7 +265,6 @@ class SyncViewModel(
 
     data class Progress(
         var percentage: Float = 0.0f,
-        var remaining: String = "3min",
         var progressCount: Int = 0,
         var progressBytes: Long = 0,
         var progressBytesPerSec: Long = 0,

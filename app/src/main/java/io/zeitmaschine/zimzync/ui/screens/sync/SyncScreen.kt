@@ -407,21 +407,28 @@ private fun Actions(
 
 @Preview(showBackground = true)
 @Composable
-fun SyncPreview() {
+fun InProgressPreview() {
 
     val remote = SyncViewModel.RemoteState(
-        name = "zeitmaschine.io",
-        url = "http://10.0.2.2:9000",
-        bucket = "test-bucket",
+        name = "Camera Backup",
+        url = "https://my-backup.dyndns.com",
+        bucket = "zimly-backup",
         folder = "Camera"
     )
     val progressState = SyncViewModel.Progress(
         status = SyncViewModel.Status.IN_PROGRESS,
-        progressBytesPerSec = 5342634,
+        progressBytesPerSec = 36426334,
         percentage = 0.77F,
-        remaining = "3 minutes remaining.."
+        diffCount = 51,
+        diffBytes = 51*5*1_000_000,
+        progressCount = 40,
+        progressBytes = 233*1_000_000,
     )
-    val folderState = SyncViewModel.FolderState()
+    val folderState = SyncViewModel.FolderState(
+        "Camera",
+        photos = 3984,
+        videos = 273
+    )
     val snackbarState = remember { SnackbarHostState() }
 
 
