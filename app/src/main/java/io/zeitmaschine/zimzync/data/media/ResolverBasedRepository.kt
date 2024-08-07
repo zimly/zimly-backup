@@ -38,7 +38,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
 
         // https://stackoverflow.com/questions/30654774/android-is-external-content-uri-enough-for-a-photo-gallery
         val contentUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-        Log.i(TAG, contentUri.path ?: "whoops")
+        Log.d(TAG, "Content URI path: ${contentUri.path ?: "null"}")
 
         val photos = mutableListOf<MediaObject>()
         val contentBuckets = buckets.joinToString(separator = ",", transform = {bucket -> "'${bucket}'"})
@@ -54,26 +54,23 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
             val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
-            val bucketIdColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_ID)
             val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
 
-            Log.i(TAG, "Number of images: ${cursor.count}")
+            Log.d(TAG, "Number of images: ${cursor.count}")
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val name = cursor.getString(nameColumn)
                 val mimeType = cursor.getString(mimeTypeColumn)
                 val size = cursor.getLong(sizeColumn)
-                val bucketId: Long = cursor.getLong(bucketIdColumn)
                 val bucketName = cursor.getString(bucketNameColumn)
-                var contentUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
-
+                // Get location data using the Exifinterface library.
+                // Exception occurs if ACCESS_MEDIA_LOCATION permission isn't granted.
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
-                contentUri= MediaStore.setRequireOriginal(contentUri)
-
-                Log.d(TAG, "Name: $name bucketName: $bucketName bucketId: $bucketId")
+                var photoUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
+                photoUri= MediaStore.setRequireOriginal(photoUri)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                photos.add(MediaObject(objectName, size, mimeType, contentUri))
+                photos.add(MediaObject(objectName, size, mimeType, photoUri))
             }
         }
         return photos.toList()
@@ -111,26 +108,21 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
             val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
-            val bucketIdColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_ID)
             val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
 
-            Log.i(TAG, "Number of videos: ${cursor.count}")
+            Log.d(TAG, "Number of videos: ${cursor.count}")
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
                 val name = cursor.getString(nameColumn)
                 val mimeType = cursor.getString(mimeTypeColumn)
                 val size = cursor.getLong(sizeColumn)
-                val bucketId: Long = cursor.getLong(bucketIdColumn)
                 val bucketName = cursor.getString(bucketNameColumn)
-                var contentUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
 
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
-                contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
-
-                Log.d(TAG, "Name: $name bucketName: $bucketName bucketId: $bucketId")
+                val videoUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                videos.add(MediaObject(objectName, size, mimeType, contentUri))
+                videos.add(MediaObject(objectName, size, mimeType, videoUri))
             }
         }
         return videos.toList()
@@ -176,7 +168,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
             null
         )?.use(bucketCollector)
 
-        buckets.forEach { (b, c) -> Log.i(TAG, "Bucket: $b count: $c" ) }
+        buckets.forEach { (b, c) -> Log.d(TAG, "Bucket: $b count: $c" ) }
 
         return buckets
     }
