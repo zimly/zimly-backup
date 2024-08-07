@@ -104,6 +104,14 @@ class SyncViewModel(
             initialValue = null,
         )
 
+    /**
+     * Calculate the diff between remote bucket and the local gallery. This is a "heavy" computation.
+     * Use e.g. [kotlinx.coroutines.Dispatchers.Default] to not block the Main thread. As the UI
+     * [_progress] state updates use a Flow, we don't have to switch back..
+     *
+     * Ref:
+     * https://proandroiddev.com/mutablestate-or-mutablestateflow-a-perspective-on-what-to-use-in-jetpack-compose-ccec0af7abbf
+     */
     suspend fun createDiff() {
 
         _progress.update {

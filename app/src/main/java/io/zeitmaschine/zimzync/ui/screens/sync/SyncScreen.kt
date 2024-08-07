@@ -56,6 +56,7 @@ import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
 import io.zeitmaschine.zimzync.data.remote.RemoteDao
 import io.zeitmaschine.zimzync.ui.theme.ZimzyncTheme
 import io.zeitmaschine.zimzync.ui.theme.containerBackground
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -94,7 +95,8 @@ fun SyncScreen(
                 viewModel.sync()
             }
         },
-        createDiff = { viewModel.viewModelScope.launch { viewModel.createDiff() } },
+        // Use Dispatchers.Default to not block Main thread
+        createDiff = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } },
         edit = { edit(remoteId) },
         back,
         clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } }
