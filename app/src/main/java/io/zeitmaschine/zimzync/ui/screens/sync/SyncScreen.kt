@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -360,11 +361,14 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(1.dp)
             )
         } else {
             LinearProgressIndicator(
                 progress = { progress.percentage },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
             )
         }
     }
@@ -399,7 +403,7 @@ private fun Actions(
                 enabled = enableActions,
                 modifier = Modifier.weight(1f)
             ) {
-                Text(text = if (enableActions) "Upload" else "Uploading")
+                Text(text = "Upload")
             }
         }
 
