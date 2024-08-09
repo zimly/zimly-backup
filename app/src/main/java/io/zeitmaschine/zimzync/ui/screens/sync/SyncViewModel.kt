@@ -249,6 +249,7 @@ class SyncViewModel(
             .build()
 
         workManager.enqueueUniqueWork(uniqueWorkIdentifier, ExistingWorkPolicy.KEEP, syncRequest)
+
         _startedSyncId.update { syncRequest.id }
 
         return syncRequest.id

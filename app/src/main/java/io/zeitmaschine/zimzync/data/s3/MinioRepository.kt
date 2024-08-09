@@ -46,26 +46,29 @@ class MinioRepository(
         throw Exception("Failed to initialize S3 client: ${e.message}", e)
     }
 
-    /**
-     * Creates a http client with optional [ProgressInterceptor].
-     *
-     * Partly taken from io.minio.http.HttpUtils.newDefaultHttpClient.
-     */
-    private fun client(progressTracker: ProgressTracker?): OkHttpClient {
-        val timeout = TimeUnit.MINUTES.toMillis(5)
+    companion object {
+        /**
+         * Creates a http client with optional [ProgressInterceptor].
+         *
+         * Partly taken from io.minio.http.HttpUtils.newDefaultHttpClient.
+         */
+        fun client(progressTracker: ProgressTracker?): OkHttpClient {
+            val timeout = TimeUnit.MINUTES.toMillis(5)
 
-        val builder = OkHttpClient()
-            .newBuilder()
-            .connectTimeout(timeout, TimeUnit.MILLISECONDS)
-            .writeTimeout(timeout, TimeUnit.MILLISECONDS)
-            .readTimeout(timeout, TimeUnit.MILLISECONDS)
-            .protocols(listOf(Protocol.HTTP_1_1))
+            val builder = OkHttpClient()
+                .newBuilder()
+                .connectTimeout(timeout, TimeUnit.MILLISECONDS)
+                .writeTimeout(timeout, TimeUnit.MILLISECONDS)
+                .readTimeout(timeout, TimeUnit.MILLISECONDS)
+                .protocols(listOf(Protocol.HTTP_1_1))
 
-        // attach interceptor if given
-        progressTracker?.let { builder.addInterceptor(ProgressInterceptor(it)) }
+            // attach interceptor if given
+            progressTracker?.let { builder.addInterceptor(ProgressInterceptor(it)) }
 
-        return builder.build()
+            return builder.build()
+        }
     }
+
 
     override suspend fun verify(): Boolean {
         return suspendCancellableCoroutine { continuation ->
