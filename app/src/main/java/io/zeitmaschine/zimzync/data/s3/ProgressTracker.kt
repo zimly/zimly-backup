@@ -12,7 +12,6 @@ class ProgressTracker(private val size: Long) {
 
     private val timeSource = TimeSource.Monotonic
 
-    // TODO the markNow() is too close to the first emit. Putting it on the Response should help?
     private val start = Progress(0, 0, 0F, size, 0, timeSource.markNow())
 
     // Important: MutableStateFlow does not emit same values!
@@ -37,7 +36,7 @@ class ProgressTracker(private val size: Long) {
                 // Divide by zero safe guard
                 duration = if (duration > 0) duration else 1
 
-                // Bytes/µs to Bytes/s
+                // Bytes/ms to Bytes/s
                 val bytesPerSec = readBytes * 1000 / duration
                 Progress(readBytes, totalBytes, percentage, size, bytesPerSec, timeMark)
             }

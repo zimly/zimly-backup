@@ -50,7 +50,7 @@ class MinioRepository(
         /**
          * Creates a http client with optional [ProgressInterceptor].
          *
-         * Partly taken from io.minio.http.HttpUtils.newDefaultHttpClient.
+         * Partly taken from [io.minio.http.HttpUtils.newDefaultHttpClient]
          */
         fun client(progressTracker: ProgressTracker?): OkHttpClient {
             val timeout = TimeUnit.MINUTES.toMillis(5)
@@ -64,6 +64,8 @@ class MinioRepository(
 
             // attach interceptor if given
             progressTracker?.let { builder.addInterceptor(ProgressInterceptor(it)) }
+            // Alternatively attach a builder#eventListenerFactory and listen to requestBodyEnd, but same problems
+            // with request body returning too early. Might still be slicker than the interceptor
 
             return builder.build()
         }
