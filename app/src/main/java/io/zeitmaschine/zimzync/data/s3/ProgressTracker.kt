@@ -3,7 +3,7 @@ package io.zeitmaschine.zimzync.data.s3
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.runningFold
-import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.transformWhile
 import kotlin.time.ComparableTimeMark
 import kotlin.time.TimeSource
 
@@ -40,8 +40,12 @@ class ProgressTracker(private val size: Long) {
                 // Bytes/µs to Bytes/s
                 val bytesPerSec = readBytes * 1000 / duration
                 Progress(readBytes, totalBytes, percentage, size, bytesPerSec, timeMark)
-            }.takeWhile { it.percentage <= 1.0 }
-
+            }
+            // takeWhile { it.percentage <= 1.0 } does not work ¯\_(ツ)_/¯
+            .transformWhile {
+                emit(it)
+                it.percentage < 1.0
+            }
     }
 }
 
