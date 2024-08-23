@@ -35,6 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -323,6 +324,11 @@ private fun Progress(progress: SyncViewModel.Progress) {
 
 @Composable
 private fun ProgressBar(progress: SyncViewModel.Progress) {
+
+    val bytesPerSec = remember {
+        mutableLongStateOf(0)
+    }
+    progress.progressBytesPerSec?.let { bytesPerSec.longValue = it }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -333,7 +339,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         if (progress.status == SyncViewModel.Status.IN_PROGRESS) {
             val speed = Formatter.formatShortFileSize(
                 LocalContext.current,
-                progress.progressBytesPerSec
+                bytesPerSec.longValue
             )
             val sp = speed.split(" ")
             Text(

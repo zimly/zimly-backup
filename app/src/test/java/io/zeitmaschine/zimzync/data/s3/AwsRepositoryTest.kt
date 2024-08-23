@@ -60,7 +60,7 @@ class AwsRepositoryTest {
         val name = s3Repository.get("testObj").`object`()
         assertThat(name, `is`("testObj"))
 
-        val avgSpeed = res.sumOf { it.bytesPerSec } / res.size
+        val avgSpeed = res.filter { it.bytesPerSec != null }.sumOf { it.bytesPerSec!! } / res.size
 
         assertTrue("Expected avgSpeed to be in ballpark of $bytesPerSec, but was $avgSpeed", avgSpeed.toDouble() in bytesPerSec*0.8..bytesPerSec*1.2)
 

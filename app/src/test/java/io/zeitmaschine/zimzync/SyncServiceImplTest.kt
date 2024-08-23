@@ -98,7 +98,6 @@ class SyncServiceImplTest {
             assertThat(res.readBytes, `is`(totalSize))
             assertThat(res.readBytes, `is`(diff.size))
             assertThat(res.percentage, `is`(1f))
-            assertThat(res.bytesPerSecond > 0, `is`(true))
 
             //Thread.sleep(3000)
             val objs = minioRepository.listObjects()

@@ -19,6 +19,7 @@ import io.zeitmaschine.zimzync.sync.SyncInputs
 import io.zeitmaschine.zimzync.sync.SyncOutputs
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
 import io.zeitmaschine.zimzync.sync.SyncWorker
+import io.zeitmaschine.zimzync.sync.getNullable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -185,7 +186,7 @@ class SyncViewModel(
                         progressState.progressBytes =
                             progress.getLong(SyncOutputs.PROGRESS_BYTES, 0)
                         progressState.progressBytesPerSec =
-                            progress.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, 0)
+                            progress.getNullable(SyncOutputs.PROGRESS_BYTES_PER_SEC)
                         progressState.percentage =
                             progress.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                         progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
@@ -276,7 +277,7 @@ class SyncViewModel(
         var percentage: Float = 0.0f,
         var progressCount: Int = 0,
         var progressBytes: Long = 0,
-        var progressBytesPerSec: Long = 0,
+        var progressBytesPerSec: Long? = null,
         var diffCount: Int = -1,
         var diffBytes: Long = -1,
         var status: Status? = null,

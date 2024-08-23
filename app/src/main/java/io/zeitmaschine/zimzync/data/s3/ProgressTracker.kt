@@ -12,7 +12,7 @@ class ProgressTracker(private val size: Long) {
 
     private val timeSource = TimeSource.Monotonic
 
-    private val start = Progress(0, 0, 0F, size, 0, timeSource.markNow())
+    private val start = Progress(0, 0, 0F, size, null, timeSource.markNow())
 
     // Important: MutableStateFlow does not emit same values!
     private val progressFlow = MutableSharedFlow<Pair<Long, ComparableTimeMark>>(500)
@@ -53,6 +53,6 @@ data class Progress(
     val totalReadBytes: Long,
     val percentage: Float,
     val size: Long,
-    val bytesPerSec: Long,
+    val bytesPerSec: Long?,
     val timeMark: ComparableTimeMark
 )

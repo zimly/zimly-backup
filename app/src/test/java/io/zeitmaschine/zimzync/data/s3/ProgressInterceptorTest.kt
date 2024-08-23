@@ -65,11 +65,11 @@ class ProgressInterceptorTest {
         val resp2 = client.newCall(request).execute()
 
         // First entry is 0
-        TestCase.assertTrue(res.first().bytesPerSec == 0L)
+        TestCase.assertTrue(res.first().bytesPerSec == null)
 
         // Rest should be around ~500 B/s
         res.subList(1, res.size).forEach {
-            TestCase.assertTrue(it.bytesPerSec in 450..560)
+            TestCase.assertTrue(it.bytesPerSec!! in 450..560)
         }
 
         // Totals add up

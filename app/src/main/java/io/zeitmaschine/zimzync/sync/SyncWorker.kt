@@ -1,10 +1,12 @@
 package io.zeitmaschine.zimzync.sync
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import androidx.work.hasKeyWithValueOfType
 import io.zeitmaschine.zimzync.data.media.ResolverBasedRepository
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
@@ -56,15 +58,15 @@ class SyncWorker(
 
         return syncService.sync(diff)
             .onEach {
+                val progressBuilder = Data.Builder()
+                    .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
+                    .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
+                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                it.bytesPerSecond?.let { bps -> progressBuilder.putLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, bps) }
                 setProgressAsync(
-                    Data.Builder()
-                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
-                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
-                        .putLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
-                        .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
-                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                        .build()
+                    progressBuilder.build()
                 )
             }
             .map {
@@ -72,7 +74,7 @@ class SyncWorker(
                     Data.Builder()
                         .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
                         .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
-                        .putLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
+                        .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
                         .putInt(SyncOutputs.DIFF_COUNT, diffCount)
                         .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
@@ -132,4 +134,21 @@ object SyncOutputs {
     const val DIFF_COUNT = "diff_count"
     const val DIFF_BYTES = "diff_bytes"
     const val ERROR = "error"
+}
+
+/**
+ * Returns the [Data] value corresponding to the given [key] of type [T] or null if it doesn't exist.
+ */
+inline fun <reified T : Any> Data.getNullable(key: String): T? {
+    return if (this.hasKeyWithValueOfType<T>(key)) this.keyValueMap[key] as T else null
+}
+
+/**
+ * Adds the non-null [value] with [key] to the [Data.Builder]. In case of a null value it just ignores
+ * the key/value pair.
+ */
+@SuppressLint("RestrictedApi")
+fun Data.Builder.putIfNotNull(key: String, value: Any?): Data.Builder {
+    if (value != null) this.put(key, value)
+    return this
 }

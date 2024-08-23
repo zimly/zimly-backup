@@ -68,10 +68,10 @@ data class SyncProgress(
     val readBytes: Long,
     val uploadedFiles: Int,
     val percentage: Float,
-    val bytesPerSecond: Long
+    val bytesPerSecond: Long?
 ) {
     companion object {
-        val EMPTY = SyncProgress(0, 0, 0F, 0)
+        val EMPTY = SyncProgress(0, 0, 0F, null)
     }
 }
 
