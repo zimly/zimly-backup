@@ -13,7 +13,8 @@ import okio.buffer
 
 /**
  * Interceptor for okhttp client that wraps the RequestBody of PUT requests to emit the read/uploaded data to
- * the [ProgressTracker].
+ * the [ProgressTracker]. Only emits the [ProgressRequestBody.read] value upon successful response to
+ * take the network transfer into account.
  *
  * Refs:
  * https://medium.com/@PaulinaSadowska/display-progress-of-multipart-request-with-retrofit-and-rxjava-23a4a779e6ba
@@ -22,34 +23,34 @@ import okio.buffer
  */
 internal class ProgressInterceptor(
     private val progressTracker: ProgressTracker,
-    private val buffer: MutableList<Long> = mutableListOf()
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        var req = chain.request()
-        if (req.method == "PUT")
-            req = wrapRequest(req)
+        val req = wrapRequest(chain.request())
         val res = chain.proceed(req)
         if (req.body is ProgressRequestBody && res.isSuccessful) {
-            progressTracker.stepBy(buffer.sum())
-            buffer.removeAll { true }
+            progressTracker.stepBy((req.body as ProgressRequestBody).read)
         }
 
         return res
     }
 
     private fun wrapRequest(request: Request): Request {
-        return request.newBuilder()
-            // Assume non-null as we're only wrapping PUT requests
-            .put(ProgressRequestBody(request.body!!, buffer))
-            .build()
+        return if (request.body != null && request.method == "PUT")
+            request.newBuilder()
+                .put(ProgressRequestBody(request.body!!))
+                .build()
+        else request
     }
 }
 
 internal class ProgressRequestBody(
     private val delegate: RequestBody,
-    private val buffer: MutableList<Long>
 ) : RequestBody() {
+
+    var read: Long = 0
+        private set
+
     override fun contentType(): MediaType? = delegate.contentType()
     override fun contentLength(): Long = delegate.contentLength()
 
@@ -63,7 +64,7 @@ internal class ProgressRequestBody(
 
         override fun write(source: Buffer, byteCount: Long) {
             super.write(source, byteCount)
-            buffer.add(byteCount)
+            read += byteCount
         }
     }
 
