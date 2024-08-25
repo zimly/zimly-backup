@@ -2,7 +2,6 @@ package io.zeitmaschine.zimzync.ui.screens.sync
 
 import android.app.Application
 import android.text.format.Formatter
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +40,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -335,7 +333,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(22.dp),
+            .defaultMinSize(minHeight = 24.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.Bottom
     ) {
