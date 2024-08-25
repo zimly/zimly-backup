@@ -2,6 +2,7 @@ package io.zeitmaschine.zimzync.ui.screens.sync
 
 import android.app.Application
 import android.text.format.Formatter
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
@@ -39,6 +41,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -326,38 +329,33 @@ private fun Progress(progress: SyncViewModel.Progress) {
 private fun ProgressBar(progress: SyncViewModel.Progress) {
 
     val bytesPerSec = remember {
-        mutableLongStateOf(0)
+        mutableLongStateOf(-1)
     }
     progress.progressBytesPerSec?.let { bytesPerSec.longValue = it }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 32.dp),
+            .defaultMinSize(22.dp),
         horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.Bottom
     ) {
 
-        if (progress.status == SyncViewModel.Status.IN_PROGRESS) {
+        if (progress.status == SyncViewModel.Status.IN_PROGRESS && bytesPerSec.longValue > -1) {
             val speed = Formatter.formatShortFileSize(
                 LocalContext.current,
                 bytesPerSec.longValue
             )
-            val sp = speed.split(" ")
             Text(
-                text = sp[0],
-                fontWeight = FontWeight.Light,
-                letterSpacing = TextUnit(-1.5F, TextUnitType.Sp),
-                fontSize = TextUnit(24F, TextUnitType.Sp),
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
-            Text(
-                text = " ${sp[1]}/s",
+                text = "$speed/s",
                 fontSize = TextUnit(12F, TextUnitType.Sp),
-                modifier = Modifier.align(Alignment.Bottom)
+                fontWeight = FontWeight.Light,
+                modifier = Modifier.wrapContentHeight(Alignment.Bottom)
             )
         } else if (progress.status == SyncViewModel.Status.CALCULATING) {
             Text(
                 text = "Calculating...",
                 fontSize = TextUnit(12F, TextUnitType.Sp),
+                fontWeight = FontWeight.Light,
                 modifier = Modifier.align(Alignment.Bottom)
             )
         }

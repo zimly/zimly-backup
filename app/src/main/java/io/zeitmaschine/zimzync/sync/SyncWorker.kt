@@ -29,7 +29,8 @@ class SyncWorker(
             )
         }
 
-        val contentBuckets = inputData.getStringArray(SyncInputs.DEVICE_FOLDER)?.toSet() ?: emptySet()
+        val contentBuckets =
+            inputData.getStringArray(SyncInputs.DEVICE_FOLDER)?.toSet() ?: emptySet()
 
         Log.i(TAG, "Launching sync...")
 
@@ -56,15 +57,15 @@ class SyncWorker(
 
         return syncService.sync(diff)
             .onEach {
-                val progressBuilder = Data.Builder()
-                    .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
-                    .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
-                    .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
-                    .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                    .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                it.bytesPerSecond?.let { bps -> progressBuilder.putLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, bps) }
                 setProgressAsync(
-                    progressBuilder.build()
+                    Data.Builder()
+                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
+                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
+                        .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
+                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
+                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                        .build()
                 )
             }
             .map {

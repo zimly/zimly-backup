@@ -231,6 +231,11 @@ class SyncViewModel(
     }
 
     suspend fun sync(): UUID {
+        _progress.update {
+            Progress(
+                status = Status.CALCULATING
+            )
+        }
         val remote = dao.loadById(remoteId)
         val data = workDataOf(
             SyncInputs.S3_URL to remote.url,
