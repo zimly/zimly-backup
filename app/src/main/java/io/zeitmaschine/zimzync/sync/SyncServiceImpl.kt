@@ -1,6 +1,7 @@
 package io.zeitmaschine.zimzync.sync
 
 import android.util.Log
+import io.minio.errors.ErrorResponseException
 import io.zeitmaschine.zimzync.data.media.MediaObject
 import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.s3.S3Object
@@ -28,15 +29,22 @@ class SyncServiceImpl(
     override fun diff(buckets: Set<String>): Diff {
         try {
             val remotes = s3Repository.listObjects()
-            val photos = mediaRepository.getMedia(buckets)
+            val objects = mediaRepository.getMedia(buckets)
             val diff =
-                photos.filter { local -> remotes.none { remote -> remote.name == local.name } }
+                objects.filter { local -> remotes.none { remote -> remote.name == local.name } }
             val size = diff.sumOf { it.size }
 
-            return Diff(remotes, photos, diff, size)
+            return Diff(remotes, objects, diff, size)
         } catch (e: Exception) {
-            Log.e(TAG, "${e.message}")
-            throw Exception("Failed to create diff: ${e.message}", e)
+            var message = e.message
+            if (e is ErrorResponseException) {
+                val status = e.response().code
+                val mes = e.response().message
+                val errorCode = e.errorResponse().code()
+                message = "status: $status, message: $mes, errorCode: $errorCode"
+            }
+            Log.e(TAG, "Failed to create diff: $message")
+            throw Exception("Failed to create diff: $message", e)
         }
     }
 
