@@ -28,6 +28,38 @@ android {
 
     }
 
+    testOptions {
+        unitTests {
+            all {
+                test {
+                    if (project.hasProperty("integrationTests")) {
+                        def testProfile = project.property("integrationTests")
+                        filter {
+                            switch (testProfile) {
+                                case "linode":
+                                    includeTestsMatching 'LinodeRepositoryTest'
+                                    break
+                                case "aws":
+                                    includeTestsMatching 'AwsRepositoryTest'
+                                    break
+                                case "minio":
+                                    includeTestsMatching 'MinioRepositoryTest'
+                                    break
+                                default:
+                                    includeTestsMatching '*RepositoryTest'
+                                    break
+                            }
+                        }
+                    } else {
+                        filter {
+                            excludeTestsMatching '*RepositoryTest'
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false

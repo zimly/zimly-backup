@@ -8,8 +8,6 @@ import io.mockk.mockkStatic
 import io.zeitmaschine.zimzync.data.media.MediaObject
 import io.zeitmaschine.zimzync.data.media.MediaRepository
 import io.zeitmaschine.zimzync.data.s3.MinioRepository
-import io.zeitmaschine.zimzync.data.s3.minioPwd
-import io.zeitmaschine.zimzync.data.s3.minioUser
 import io.zeitmaschine.zimzync.sync.Diff
 import io.zeitmaschine.zimzync.sync.SyncServiceImpl
 import kotlinx.coroutines.flow.last
@@ -24,6 +22,9 @@ import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
 
 class SyncServiceImplTest {
+    private val minioUser = "test"
+    private val minioPwd = "testtest"
+
     private lateinit var mediaRepository: MediaRepository
     private lateinit var minioRepository: MinioRepository
 

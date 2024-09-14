@@ -1,0 +1,28 @@
+name: Run Repository Tests
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Run Linode Repository tests
+        env:
+          S3_LINODE_TEST_KEY: ${{ secrets.S3_LINODE_TEST_KEY }}
+          S3_LINODE_TEST_SECRET: ${{ secrets.S3_LINODE_TEST_SECRET }}
+        run: ./gradlew -PintegrationTests=linode check
+      - name: Run AWS Repository tests
+        env:
+          S3_AWS_TEST_KEY: ${{ secrets.S3_AWS_TEST_KEY }}
+          S3_AWS_TEST_SECRET: ${{ secrets.S3_AWS_TEST_SECRET }}
+        run: ./gradlew -PintegrationTests=aws check
+      - name: Run Minio Repository tests
+        run: ./gradlew -PintegrationTests=minio check

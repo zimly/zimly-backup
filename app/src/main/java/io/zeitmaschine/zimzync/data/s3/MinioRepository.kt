@@ -1,5 +1,6 @@
 package io.zeitmaschine.zimzync.data.s3
 
+import android.util.Log
 import io.minio.BucketExistsArgs
 import io.minio.GetObjectArgs
 import io.minio.GetObjectResponse
@@ -8,6 +9,8 @@ import io.minio.MakeBucketArgs
 import io.minio.MinioAsyncClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
+import io.minio.RemoveObjectsArgs
+import io.minio.messages.DeleteObject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -47,6 +50,9 @@ class MinioRepository(
     }
 
     companion object {
+
+        private val TAG: String? = MinioRepository::class.simpleName
+
         /**
          * Creates a http client with optional [ProgressInterceptor].
          *
@@ -138,6 +144,21 @@ class MinioRepository(
                     continuation.resumeWithException(exception)
                 }
             }
+        }
+    }
+
+    fun removeAll() {
+
+        val delObjs = listObjects().map { DeleteObject(it.name) }
+
+        val params = RemoveObjectsArgs.builder()
+            .bucket(bucket)
+            .objects(delObjs)
+            .build()
+
+        mc().removeObjects(params).forEach {
+            val err = it.get()
+            err?.let { Log.e(TAG, "Error deleting ${err.objectName()}: ${err.message()}") }
         }
     }
 

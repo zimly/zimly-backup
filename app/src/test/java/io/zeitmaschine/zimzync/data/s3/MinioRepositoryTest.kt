@@ -14,11 +14,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
 
-
-const val minioUser = "test"
-const val minioPwd = "testtest"
-
 class MinioRepositoryTest {
+
+    private val minioUser = "test"
+    private val minioPwd = "testtest"
 
     private lateinit var minioRepository: MinioRepository
     private val containerName = "minio/minio:latest"

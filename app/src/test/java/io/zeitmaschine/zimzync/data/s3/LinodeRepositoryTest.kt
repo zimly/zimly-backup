@@ -16,17 +16,17 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.time.TimeSource
 
-class AwsRepositoryTest {
+class LinodeRepositoryTest {
 
     private lateinit var s3Repository: MinioRepository
 
     @Before
     fun setUp() {
 
-        val url = "https://s3.eu-central-2.amazonaws.com"
+        val url = "https://fr-par-1.linodeobjects.com"
         val bucket = "zimly-test"
-        val key = System.getenv("S3_AWS_TEST_KEY")
-        val secret = System.getenv("S3_AWS_TEST_SECRET")
+        val key = System.getenv("S3_LINODE_TEST_KEY")
+        val secret = System.getenv("S3_LINODE_TEST_SECRET")
 
         requireNotNull(key) { "Test case needs valid AWS key for zimly-test bucket" }
         requireNotNull(secret) { "Test case needs valid AWS secret for zimly-test bucket" }
@@ -35,7 +35,7 @@ class AwsRepositoryTest {
     }
 
     @Test
-    fun putAWS() = runTest {
+    fun putLinode() = runTest {
         val timeSource = TimeSource.Monotonic
 
         // GIVEN
