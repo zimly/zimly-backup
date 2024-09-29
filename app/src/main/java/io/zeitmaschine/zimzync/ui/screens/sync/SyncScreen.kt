@@ -425,7 +425,7 @@ fun InProgressPreview() {
     )
     val progressState = SyncViewModel.Progress(
         status = SyncViewModel.Status.IN_PROGRESS,
-        progressBytesPerSec = 36426334,
+        progressBytesPerSec = 18426334,
         percentage = 0.77F,
         diffCount = 51,
         diffBytes = 51*5*1_000_000,
