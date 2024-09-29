@@ -110,12 +110,10 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.9.2'
     implementation 'androidx.navigation:navigation-compose:2.8.1'
     implementation 'com.google.android.material:material:1.12.0'
-    testImplementation 'junit:junit:4.13.2'
 
     // https://developer.android.com/codelabs/android-workmanager#2
     def wm_version = '2.9.1'
     implementation "androidx.work:work-runtime-ktx:$wm_version"
-
 
     // room DB
     def room_version = '2.6.1'
@@ -136,8 +134,6 @@ dependencies {
     androidTestImplementation 'androidx.work:work-testing:2.9.1'
     androidTestImplementation 'io.mockk:mockk-android:1.13.12'
 
-
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
-
 }
