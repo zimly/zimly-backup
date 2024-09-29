@@ -2,6 +2,7 @@ package io.zeitmaschine.zimzync.ui.screens.sync
 
 import android.app.Application
 import android.text.format.Formatter
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,8 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -361,6 +364,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
     Row {
         if (progress.status == SyncViewModel.Status.CALCULATING) {
             LinearProgressIndicator(
+                trackColor = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
@@ -368,6 +372,9 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         } else {
             LinearProgressIndicator(
                 progress = { progress.percentage },
+                gapSize = 2.dp,
+                trackColor = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
+                strokeCap = StrokeCap.Round,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(1.dp)
@@ -393,9 +400,10 @@ private fun Actions(
                 enabled = enableActions,
                 onClick = createDiff,
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors().copy(
+                colors = ButtonDefaults.outlinedButtonColors().copy(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     contentColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ),
             ) {
                 Text(text = "Calculate")
@@ -403,7 +411,8 @@ private fun Actions(
             Button(
                 onClick = sync,
                 enabled = enableActions,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
                 Text(text = "Upload")
             }
@@ -440,7 +449,7 @@ fun InProgressPreview() {
     val snackbarState = remember { SnackbarHostState() }
 
 
-    ZimzyncTheme {
+    ZimzyncTheme(darkTheme = true) {
         SyncCompose(
             remote = remote,
             error = null,
