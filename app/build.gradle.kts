@@ -19,7 +19,7 @@ android {
         // Used for mockk in android tests:
         // https://github.com/mockk/mockk/issues/819#issuecomment-1731796944
         testOptions {
-            packagingOptions {
+            packaging {
                 jniLibs {
                     useLegacyPackaging = true
                 }
@@ -61,7 +61,7 @@ android {
         kotlinCompilerExtensionVersion = "1.5.11"
     }
 
-    packagingOptions {
+    packaging {
         resources {
             excludes.add("/META-INF/{AL2.0,LGPL2.1,LICENSE.md,LICENSE-notice.md}")
         }
