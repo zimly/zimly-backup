@@ -127,18 +127,17 @@ tasks.withType<Test> {
 
     testLogging.showStandardStreams = true
 
-    if (project.hasProperty("integrationTests")) {
-        val testProfile = project.property("integrationTests") as String
-        filter {
+    filter {
+        if (project.hasProperty("integrationTests")) {
+            val testProfile = project.property("integrationTests") as String
+
             when (testProfile) {
                 "linode" -> includeTestsMatching("LinodeRepositoryTest")
                 "aws" -> includeTestsMatching("AwsRepositoryTest")
                 "minio" -> includeTestsMatching("MinioRepositoryTest")
                 else -> includeTestsMatching("*RepositoryTest")
             }
-        }
-    } else {
-        filter {
+        } else {
             excludeTestsMatching("*RepositoryTest")
         }
     }
