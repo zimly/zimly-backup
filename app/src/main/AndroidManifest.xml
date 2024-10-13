@@ -4,7 +4,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Required only if your app needs to access images or photos
-     that other apps created. -->
+     that other apps created.
+     TODO: https://developer.android.com/about/versions/14/changes/partial-photo-video-access
+     -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <!-- Required only if your app needs to access videos
