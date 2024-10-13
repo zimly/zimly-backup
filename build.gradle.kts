@@ -1,11 +1,3 @@
-buildscript {
-    extra.apply {
-        // https://developer.android.com/jetpack/androidx/releases/compose
-        set("compose_version", "1.7.2")
-        // https://developer.android.com/jetpack/androidx/releases/compose-material3
-        set("material3_version", "1.3.0")
-    }
-}
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
