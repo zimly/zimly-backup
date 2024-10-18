@@ -364,20 +364,17 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
     Row {
         if (progress.status == SyncViewModel.Status.CALCULATING) {
             LinearProgressIndicator(
-                trackColor = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(1.dp)
+                    .height(3.dp)
             )
         } else {
             LinearProgressIndicator(
                 progress = { progress.percentage },
-                gapSize = 2.dp,
-                trackColor = if (isSystemInDarkTheme()) Color.LightGray else Color.DarkGray,
                 strokeCap = StrokeCap.Round,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(1.dp)
+                    .height(3.dp)
             )
         }
     }
