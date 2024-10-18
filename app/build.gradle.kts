@@ -71,7 +71,7 @@ android {
 }
 
 dependencies {
-    val composeVersion = "1.7.3"
+    val composeVersion = "1.7.4"
     val material3Version = "1.3.0"
     val workManagerVersion = "2.9.1"
     val roomVersion = "2.6.1"
@@ -81,7 +81,9 @@ dependencies {
 
     // needed for okhttp3/minio:
     // Match version from https://github.com/minio/minio-java/blob/master/build.gradle
+    //noinspection GradleDependency
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.1")
+    //noinspection GradleDependency
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
     implementation("javax.xml.stream:stax-api:1.0-2")
 
@@ -94,8 +96,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
-    implementation("androidx.activity:activity-compose:1.9.2")
-    implementation("androidx.navigation:navigation-compose:2.8.2")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("com.google.android.material:material:1.12.0")
 
     // https://developer.android.com/codelabs/android-workmanager#2
