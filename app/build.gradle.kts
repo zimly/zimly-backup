@@ -67,7 +67,7 @@ android {
         }
     }
 
-    namespace = "io.zeitmaschine.zimzync"
+    namespace = "app.zimly.backup"
 }
 
 dependencies {
