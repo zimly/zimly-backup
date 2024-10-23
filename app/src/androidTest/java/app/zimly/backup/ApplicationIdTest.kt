@@ -8,17 +8,18 @@ import org.junit.runner.RunWith
 
 import org.junit.Assert.*
 
-/**
- * Instrumented test, which will execute on an Android device.
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 @RunWith(AndroidJUnit4::class)
-class ExampleInstrumentedTest {
+class ApplicationIdTest {
+
+    /**
+     * After publishing the app to the Play Store the applicationID cannot be changed.
+     * This corresponds to the packageName even though they've been decoupled.
+     */
     @Test
-    fun useAppContext() {
+    fun deprecatedApplicationId() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("app.zimly.backup", appContext.packageName)
+
+        assertEquals("io.zeitmaschine.zimzync", appContext.packageName)
     }
 }
