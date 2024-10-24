@@ -1,0 +1,8 @@
+lane :tests do
+  gradle(task: "test")
+end
+
+desc "Build release app bundle"
+lane :build_bundle do
+ gradle(task: "clean bundleRelease")
+end
