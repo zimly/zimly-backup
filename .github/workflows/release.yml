@@ -21,13 +21,14 @@ jobs:
         env:
           KEY_STORE_BASE64: ${{secrets.KEY_STORE_BASE64}}
         shell: bash
-        run: echo "$KEY_STORE_BASE64" | base64 -d >> ${GITHUB_WORKSPACE}/keystore.jks
+        run: echo "$KEY_STORE_BASE64" | base64 -d >> ${{ github.workspace }}/keystore.jks
       - uses: maierj/fastlane-action@v3.1.0
         with:
           lane: 'release'
           verbose: true
         env:
-          KEY_STORE_FILE: ${GITHUB_WORKSPACE}/keystore.jks
+          KEY_STORE_FILE: "${{ github.workspace }}/keystore.jks"
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      # https://medium.com/swiftable/build-and-deploy-the-app-to-testflight-using-github-actions-with-fastlane-and-app-distribution-ff1786a8bf72
