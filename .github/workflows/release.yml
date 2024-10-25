@@ -16,6 +16,12 @@ jobs:
         with:
           ruby-version: '3.0'
           bundler-cache: true
+      - name: Extract keystore
+        # https://stackoverflow.com/a/25252900
+        env:
+          KEY_STORE_BASE64: ${{secrets.KEY_STORE_BASE64}}
+        shell: bash
+        run: echo "$KEY_STORE_BASE64" | base64 -d >> ${GITHUB_WORKSPACE}/keystore.jks
       - uses: maierj/fastlane-action@v3.1.0
         with:
           lane: 'release'
