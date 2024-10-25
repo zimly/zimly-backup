@@ -18,5 +18,10 @@ jobs:
           bundler-cache: true
       - uses: maierj/fastlane-action@v3.1.0
         with:
-          lane: 'tests'
+          lane: 'release'
           verbose: true
+        env:
+          KEY_STORE_FILE: ${GITHUB_WORKSPACE}/keystore.jks
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}

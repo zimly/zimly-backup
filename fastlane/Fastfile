@@ -1,8 +1,36 @@
+
+key_store_file = ENV['KEY_STORE_FILE']
+key_store_pwd = ENV['KEY_STORE_PASSWORD']
+key_alias = ENV['KEY_ALIAS']
+key_pwd = ENV['KEY_PASSWORD']
+
 lane :tests do
   gradle(task: "test")
 end
 
-desc "Build release app bundle"
-lane :build_bundle do
- gradle(task: "clean bundleRelease")
+desc "Build and publish to beta track"
+lane :beta do
+  increment_build_number
+  gradle(task: "clean bundleRelease")
+  supply_params = {
+    track: "alpha",
+  }
+  supply(supply_params)
+  commit_version_bump
+end
+
+desc "Build and create GH release"
+lane :release do
+ gradle(
+   task: "assemble",
+   build_type: "Release",
+   print_command: false,
+   properties: {
+     "android.injected.signing.store.file" => key_store_file,
+     "android.injected.signing.store.password" => key_store_pwd,
+     "android.injected.signing.key.alias" => key_alias,
+     "android.injected.signing.key.password" => key_pwd,
+   }
+ )
+
 end
