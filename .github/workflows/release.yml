@@ -1,0 +1,46 @@
+name: Release App
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Read version from gradle.properties
+        id: set_version
+        run: echo "versionName=`./gradlew -q getVersionName`" >> $GITHUB_OUTPUT
+      - name: Print version
+        run: echo ${{ steps.set_version.outputs.versionName }}
+      - name: Extract keystore
+        # https://stackoverflow.com/a/25252900
+        env:
+          KEY_STORE_BASE64: ${{secrets.KEY_STORE_BASE64}}
+        shell: bash
+        run: echo "$KEY_STORE_BASE64" | base64 -d >> ${GITHUB_WORKSPACE}/keystore.jks
+      - name: Build and Sign APK Release
+        # https://randombits.dev/articles/android/fdroid
+        run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+        with:
+          tag_name: v${{ steps.set_version.outputs.versionName }}
+          release_name: Release v${{ steps.set_version.outputs.versionName }}
+          body_path: ${{ github.workspace }}/release-notes/whatsnew-en-GB
+          draft: false
+      - name: Upload APK to Release Assets
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk
+          asset_name: zimly-app-release.apk
+          asset_content_type: application/vnd.android.package-archive
