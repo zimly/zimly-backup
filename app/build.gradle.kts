@@ -4,6 +4,7 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+
 android {
     compileSdk = 35
 
@@ -11,8 +12,9 @@ android {
         applicationId = "io.zeitmaschine.zimzync"
         minSdk = 29
         targetSdk = 35
-        versionCode = 32
-        versionName = "1.4.2"
+        // Read from gradle.properties file
+        versionCode = versionCode
+        versionName = versionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -143,4 +145,18 @@ tasks.withType<Test> {
             excludeTestsMatching("*RepositoryTest")
         }
     }
+}
+
+/**
+ * Prints value of property to stdout.
+ *
+ * Usage: ./gradlew -q getVersionCode|getVersionName
+ */
+tasks.register("getVersionCode") {
+    val versionCode: String by project
+    println(versionCode)
+}
+tasks.register("getVersionName") {
+    val versionName: String by project
+    println(versionName)
 }
