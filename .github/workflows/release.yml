@@ -22,15 +22,18 @@ jobs:
         shell: bash
         run: echo "$KEY_STORE_BASE64" | base64 -d >> ${GITHUB_WORKSPACE}/keystore.jks
       - name: Sign release
+        # https://randombits.dev/articles/android/fdroid
         run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
       - name: Create Release
+        permissions:
+          id-token: read
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.set_version.outputs.versionName }}
-          release_name: Release ${{ steps.set_version.outputs.versionName }}
+          tag_name: v${{ steps.set_version.outputs.versionName }}
+          release_name: Release v${{ steps.set_version.outputs.versionName }}
           body_path: ${{ github.workspace }}/release-notes/whatsnew-en-GB
           draft: true
       - name: Upload Release Asset
