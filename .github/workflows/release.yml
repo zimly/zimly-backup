@@ -10,7 +10,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - name: Read version from gradle
+      - name: Read version from gradle.properties
         id: set_version
         run: echo "versionName=`./gradlew -q getVersionName`" >> $GITHUB_OUTPUT
       - name: Print version
@@ -21,7 +21,7 @@ jobs:
           KEY_STORE_BASE64: ${{secrets.KEY_STORE_BASE64}}
         shell: bash
         run: echo "$KEY_STORE_BASE64" | base64 -d >> ${GITHUB_WORKSPACE}/keystore.jks
-      - name: Sign release
+      - name: Build and Sign APK Release
         # https://randombits.dev/articles/android/fdroid
         run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
       - name: Create Release
@@ -34,13 +34,13 @@ jobs:
           release_name: Release v${{ steps.set_version.outputs.versionName }}
           body_path: ${{ github.workspace }}/release-notes/whatsnew-en-GB
           draft: false
-      - name: Upload Release Asset
+      - name: Upload APK to Release Assets
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk
-          asset_name: my-artifact.zip
-          asset_content_type: application/zip
+          asset_name: zimly-app-release.apk
+          asset_content_type: application/vnd.android.package-archive
