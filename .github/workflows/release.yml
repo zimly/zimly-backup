@@ -12,7 +12,9 @@ jobs:
           java-version: 17
       - name: Read version from gradle
         id: set_version
-        run: echo "::set-output name=versionName::$(gradle getVersionName)"
+        run: echo "versionName=`./gradlew -q getVersionName`" >> $GITHUB_OUTPUT
+      - name: Print version
+        run: echo ${{ steps.set_version.outputs.versionName }}
       - name: Extract keystore
         # https://stackoverflow.com/a/25252900
         env:
