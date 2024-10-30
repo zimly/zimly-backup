@@ -9,7 +9,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.zeitmaschine.zimzync"
+        applicationId = "app.zimly.backup"
         minSdk = 29
         targetSdk = 35
         // Read from gradle.properties file
