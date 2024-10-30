@@ -16,6 +16,8 @@ jobs:
           KEY_STORE_BASE64: ${{secrets.KEY_STORE_BASE64}}
         shell: bash
         run: echo "$KEY_STORE_BASE64" | base64 -d >> ${GITHUB_WORKSPACE}/keystore.jks
+      - name: Patch applicationId for Play Store
+        run: sed -i 's/applicationId = "app.zimly.backup"/applicationId = "io.zeitmaschine.zimzync"/g' app/build.gradle.kts
       - name: Sign release
         run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
       - name: Deploy to Play Store

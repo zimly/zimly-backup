@@ -9,10 +9,10 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        // This gets hot-patched for Google Play releases.
         applicationId = "app.zimly.backup"
         minSdk = 29
         targetSdk = 35
-        // Read from gradle.properties file
         versionCode = 32
         versionName = "1.4.2"
 
