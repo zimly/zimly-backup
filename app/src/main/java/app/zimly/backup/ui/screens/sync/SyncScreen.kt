@@ -2,11 +2,13 @@ package app.zimly.backup.ui.screens.sync
 
 import android.app.Application
 import android.text.format.Formatter
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,6 +42,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -188,6 +191,7 @@ private fun SyncCompose(
             Bucket(remote)
             Folder(folder)
             Progress(progress)
+            ProgressBar(progress)
         }
     }
 }
@@ -317,13 +321,6 @@ private fun Progress(progress: SyncViewModel.Progress) {
                 }
 
             }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp)
-            ) {
-                ProgressBar(progress)
-            }
         }
     }
 }
@@ -335,49 +332,57 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         mutableLongStateOf(-1)
     }
     progress.progressBytesPerSec?.let { bytesPerSec.longValue = it }
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 24.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.Bottom
+            .fillMaxHeight()
+            .padding(top = 16.dp),
+        verticalArrangement = Arrangement.Center,
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 24.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom
+        ) {
 
-        if (progress.status == SyncViewModel.Status.IN_PROGRESS && bytesPerSec.longValue > -1) {
-            val speed = Formatter.formatShortFileSize(
-                LocalContext.current,
-                bytesPerSec.longValue
-            )
-            Text(
-                text = "$speed/s",
-                fontSize = TextUnit(12F, TextUnitType.Sp),
-                fontWeight = FontWeight.Light,
-                modifier = Modifier.wrapContentHeight(Alignment.Bottom)
-            )
-        } else if (progress.status == SyncViewModel.Status.CALCULATING) {
-            Text(
-                text = "Calculating...",
-                fontSize = TextUnit(12F, TextUnitType.Sp),
-                fontWeight = FontWeight.Light,
-                modifier = Modifier.align(Alignment.Bottom)
-            )
+            if (progress.status == SyncViewModel.Status.IN_PROGRESS && bytesPerSec.longValue > -1) {
+                val speed = Formatter.formatShortFileSize(
+                    LocalContext.current,
+                    bytesPerSec.longValue
+                )
+                Text(
+                    text = "$speed/s",
+                    fontSize = TextUnit(12F, TextUnitType.Sp),
+                    fontWeight = FontWeight.Light,
+                    modifier = Modifier.wrapContentHeight(Alignment.Bottom)
+                )
+            } else if (progress.status == SyncViewModel.Status.CALCULATING) {
+                Text(
+                    text = "Calculating...",
+                    fontSize = TextUnit(12F, TextUnitType.Sp),
+                    fontWeight = FontWeight.Light,
+                    modifier = Modifier.align(Alignment.Bottom)
+                )
+            }
         }
-    }
-    Row {
-        if (progress.status == SyncViewModel.Status.CALCULATING) {
-            LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-            )
-        } else {
-            LinearProgressIndicator(
-                progress = { progress.percentage },
-                strokeCap = StrokeCap.Round,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-            )
+        Row {
+            if (progress.status == SyncViewModel.Status.CALCULATING) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                )
+            } else {
+                LinearProgressIndicator(
+                    progress = { progress.percentage },
+                    strokeCap = StrokeCap.Round,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                )
+            }
         }
     }
 }
