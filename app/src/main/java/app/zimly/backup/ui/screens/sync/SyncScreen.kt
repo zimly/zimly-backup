@@ -166,6 +166,15 @@ private fun SyncCompose(
                 }
             )
         },
+        bottomBar = {
+            Column(modifier = Modifier.padding(all = 32.dp)) {
+                val enableActions = progress.status !in setOf(
+                    SyncViewModel.Status.CALCULATING,
+                    SyncViewModel.Status.IN_PROGRESS
+                )
+                Actions(enableActions, createDiff, sync)
+            }
+        },
         snackbarHost = {
             SnackbarHost(hostState = snackbarState)
         }) { innerPadding ->
@@ -179,11 +188,6 @@ private fun SyncCompose(
             Bucket(remote)
             Folder(folder)
             Progress(progress)
-            val enableActions = progress.status !in setOf(
-                SyncViewModel.Status.CALCULATING,
-                SyncViewModel.Status.IN_PROGRESS
-            )
-            Actions(enableActions, createDiff, sync)
         }
     }
 }
