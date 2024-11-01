@@ -2,7 +2,6 @@ package app.zimly.backup.ui.screens.sync
 
 import android.app.Application
 import android.text.format.Formatter
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +41,6 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -421,7 +419,6 @@ private fun Actions(
                 Text(text = "Upload")
             }
         }
-
     }
 }
 
@@ -441,9 +438,9 @@ fun InProgressPreview() {
         progressBytesPerSec = 18426334,
         percentage = 0.77F,
         diffCount = 51,
-        diffBytes = 51*5*1_000_000,
+        diffBytes = 51 * 5 * 1_000_000,
         progressCount = 40,
-        progressBytes = 233*1_000_000,
+        progressBytes = 233 * 1_000_000,
     )
     val folderState = SyncViewModel.FolderState(
         "Camera",
