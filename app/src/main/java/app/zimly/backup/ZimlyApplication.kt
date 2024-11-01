@@ -5,7 +5,7 @@ import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
 
 
-class ZimApplication : Application() {
+class ZimlyApplication : Application() {
 
     init {
         // https://stackoverflow.com/questions/56911580/w-system-a-resource-failed-to-call-release
