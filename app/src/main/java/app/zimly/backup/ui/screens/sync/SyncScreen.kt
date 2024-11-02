@@ -377,49 +377,47 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
             .padding(top = 16.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .defaultMinSize(minHeight = 24.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.Bottom
-        ) {
+        val inProgress =
+            progress.status == SyncViewModel.Status.IN_PROGRESS && bytesPerSec.longValue > -1
+        val calculating = progress.status == SyncViewModel.Status.CALCULATING
 
-            if (progress.status == SyncViewModel.Status.IN_PROGRESS && bytesPerSec.longValue > -1) {
+        if (inProgress || calculating) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 24.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.Bottom
+            ) {
                 val speed = Formatter.formatShortFileSize(
                     LocalContext.current,
                     bytesPerSec.longValue
                 )
+                val text = if (inProgress) "$speed/s" else "Calculating..."
                 Text(
-                    text = "$speed/s",
+                    text = text,
                     fontSize = TextUnit(12F, TextUnitType.Sp),
                     fontWeight = FontWeight.Light,
                     modifier = Modifier.wrapContentHeight(Alignment.Bottom)
                 )
-            } else if (progress.status == SyncViewModel.Status.CALCULATING) {
-                Text(
-                    text = "Calculating...",
-                    fontSize = TextUnit(12F, TextUnitType.Sp),
-                    fontWeight = FontWeight.Light,
-                    modifier = Modifier.align(Alignment.Bottom)
-                )
             }
-        }
-        Row {
-            if (progress.status == SyncViewModel.Status.CALCULATING) {
-                LinearProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(3.dp)
-                )
-            } else {
-                LinearProgressIndicator(
-                    progress = { progress.percentage },
-                    strokeCap = StrokeCap.Round,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(3.dp)
-                )
+
+            Row {
+                if (calculating) {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        progress = { progress.percentage },
+                        strokeCap = StrokeCap.Round,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                    )
+                }
             }
         }
     }
@@ -478,15 +476,7 @@ fun IdlePreview() {
         bucket = "zimly-backup",
         folder = "Camera"
     )
-    val progressState = SyncViewModel.Progress(
-        status = SyncViewModel.Status.IN_PROGRESS,
-        progressBytesPerSec = 18426334,
-        percentage = 0.77F,
-        diffCount = 51,
-        diffBytes = 51 * 5 * 1_000_000,
-        progressCount = 40,
-        progressBytes = 233 * 1_000_000,
-    )
+    val progressState = SyncViewModel.Progress()
     val folderState = SyncViewModel.FolderState(
         "Camera",
         photos = 3984,
