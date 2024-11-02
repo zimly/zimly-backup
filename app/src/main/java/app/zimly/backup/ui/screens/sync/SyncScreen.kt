@@ -174,11 +174,16 @@ private fun SyncCompose(
             )
         },
         bottomBar = {
-            Row(modifier = Modifier.padding(all = 32.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(all = 32.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
                 Button(
                     onClick = sync,
                     enabled = enableActions,
-                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
                     colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
                     Text(text = "Upload")
@@ -343,10 +348,9 @@ private fun DiffDetails(
             Button(
                 enabled = enableDiff,
                 onClick = createDiff,
-                contentPadding = PaddingValues(), // Reset padding
+                contentPadding = PaddingValues(horizontal = 24.dp), // Reset padding
                 modifier = Modifier
-                    .height(32.dp)
-                    .width(124.dp),
+                    .height(32.dp),
                 colors = ButtonDefaults.outlinedButtonColors().copy(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     contentColor = MaterialTheme.colorScheme.onSurface,
