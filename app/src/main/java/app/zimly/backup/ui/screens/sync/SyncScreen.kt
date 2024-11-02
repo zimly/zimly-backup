@@ -5,12 +5,14 @@ import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -122,6 +124,10 @@ private fun SyncCompose(
     back: () -> Unit,
     clearError: () -> Unit
 ) {
+    val enableActions = progress.status !in setOf(
+        SyncViewModel.Status.CALCULATING,
+        SyncViewModel.Status.IN_PROGRESS
+    )
     // If the UI state contains an error, show snackbar
     if (!error.isNullOrEmpty()) {
         LaunchedEffect(snackbarState) {
@@ -168,12 +174,15 @@ private fun SyncCompose(
             )
         },
         bottomBar = {
-            Column(modifier = Modifier.padding(all = 32.dp)) {
-                val enableActions = progress.status !in setOf(
-                    SyncViewModel.Status.CALCULATING,
-                    SyncViewModel.Status.IN_PROGRESS
-                )
-                Actions(enableActions, createDiff, sync)
+            Row(modifier = Modifier.padding(all = 32.dp)) {
+                Button(
+                    onClick = sync,
+                    enabled = enableActions,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Text(text = "Upload")
+                }
             }
         },
         snackbarHost = {
@@ -188,7 +197,7 @@ private fun SyncCompose(
         ) {
             Bucket(remote)
             Folder(folder)
-            Progress(progress)
+            DiffDetails(progress, enableActions, createDiff)
             ProgressBar(progress)
         }
     }
@@ -269,7 +278,11 @@ private fun Folder(folder: SyncViewModel.FolderState) {
 }
 
 @Composable
-private fun Progress(progress: SyncViewModel.Progress) {
+private fun DiffDetails(
+    progress: SyncViewModel.Progress,
+    enableDiff: Boolean,
+    createDiff: () -> Unit,
+) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -318,6 +331,29 @@ private fun Progress(progress: SyncViewModel.Progress) {
                     Text(text = "-")
                 }
 
+            }
+        }
+        Row(
+            modifier = Modifier
+                .padding(all = 16.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center // Arrangement.Absolute.Right
+        ) {
+
+            Button(
+                enabled = enableDiff,
+                onClick = createDiff,
+                contentPadding = PaddingValues(), // Reset padding
+                modifier = Modifier
+                    .height(32.dp)
+                    .width(124.dp),
+                colors = ButtonDefaults.outlinedButtonColors().copy(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
+            ) {
+                Text(text = "Calculate")
             }
         }
     }
@@ -384,44 +420,6 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         }
     }
 }
-
-@Composable
-private fun Actions(
-    enableActions: Boolean,
-    createDiff: () -> Unit,
-    sync: () -> Unit
-) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Button(
-                enabled = enableActions,
-                onClick = createDiff,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors().copy(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                ),
-            ) {
-                Text(text = "Calculate")
-            }
-            Button(
-                onClick = sync,
-                enabled = enableActions,
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-            ) {
-                Text(text = "Upload")
-            }
-        }
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable
