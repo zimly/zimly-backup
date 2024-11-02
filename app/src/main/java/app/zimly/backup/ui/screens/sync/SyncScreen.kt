@@ -2,6 +2,7 @@ package app.zimly.backup.ui.screens.sync
 
 import android.app.Application
 import android.text.format.Formatter
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -409,8 +411,14 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
                             .height(3.dp)
                     )
                 } else {
+                    val animatedProgress by
+                    animateFloatAsState(
+                        label = "Animated Progress",
+                        targetValue = progress.percentage,
+                        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+                    )
                     LinearProgressIndicator(
-                        progress = { progress.percentage },
+                        progress = { animatedProgress },
                         strokeCap = StrokeCap.Round,
                         modifier = Modifier
                             .fillMaxWidth()
