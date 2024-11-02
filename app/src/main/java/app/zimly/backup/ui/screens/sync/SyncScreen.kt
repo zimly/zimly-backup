@@ -406,9 +406,9 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
             Row {
                 if (calculating) {
                     LinearProgressIndicator(
+                        strokeCap = StrokeCap.Round,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(3.dp)
                     )
                 } else {
                     val animatedProgress by
@@ -422,7 +422,6 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
                         strokeCap = StrokeCap.Round,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(3.dp)
                     )
                 }
             }
