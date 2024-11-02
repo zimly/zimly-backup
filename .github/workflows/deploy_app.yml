@@ -24,7 +24,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          packageName: app.zimly.backup
+          packageName: io.zeitmaschine.zymzync
           releaseFiles: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
           track: alpha
           whatsNewDirectory: release-notes
