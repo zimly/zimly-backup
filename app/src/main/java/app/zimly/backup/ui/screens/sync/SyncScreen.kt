@@ -467,3 +467,47 @@ fun InProgressPreview() {
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun IdlePreview() {
+
+    val remote = SyncViewModel.RemoteState(
+        name = "Camera Backup",
+        url = "https://my-backup.dyndns.com",
+        bucket = "zimly-backup",
+        folder = "Camera"
+    )
+    val progressState = SyncViewModel.Progress(
+        status = SyncViewModel.Status.IN_PROGRESS,
+        progressBytesPerSec = 18426334,
+        percentage = 0.77F,
+        diffCount = 51,
+        diffBytes = 51 * 5 * 1_000_000,
+        progressCount = 40,
+        progressBytes = 233 * 1_000_000,
+    )
+    val folderState = SyncViewModel.FolderState(
+        "Camera",
+        photos = 3984,
+        videos = 273
+    )
+    val snackbarState = remember { SnackbarHostState() }
+
+
+    ZimzyncTheme(darkTheme = true) {
+        SyncCompose(
+            remote = remote,
+            error = null,
+            folderState,
+            progressState,
+            sync = {},
+            createDiff = {},
+            edit = {},
+            back = {},
+            snackbarState = snackbarState,
+            clearError = {}
+        )
+    }
+}
+
