@@ -205,7 +205,7 @@ private fun SyncCompose(
             Bucket(remote)
             Folder(folder)
             DiffDetails(progress, enableActions, createDiff)
-            ProgressBar(progress)
+            progress.status?.let { ProgressBar(progress) }
         }
     }
 }
@@ -374,52 +374,51 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
             .padding(top = 16.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        val inProgress =
-            progress.status == SyncViewModel.Status.IN_PROGRESS && bytesPerSec.longValue > -1
-        val calculating = progress.status == SyncViewModel.Status.CALCULATING
-
-        if (inProgress || calculating) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 24.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                val speed = Formatter.formatShortFileSize(
-                    LocalContext.current,
-                    bytesPerSec.longValue
-                )
-                val text = if (inProgress) "$speed/s" else "Calculating..."
-                Text(
-                    text = text,
-                    fontSize = TextUnit(12F, TextUnitType.Sp),
-                    fontWeight = FontWeight.Light,
-                    modifier = Modifier.wrapContentHeight(Alignment.Bottom)
-                )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 24.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            val speed = Formatter.formatShortFileSize(
+                LocalContext.current,
+                bytesPerSec.longValue
+            )
+            val text = when (progress.status) {
+                SyncViewModel.Status.CALCULATING -> "Calculating..."
+                SyncViewModel.Status.COMPLETED -> "Completed!"
+                SyncViewModel.Status.IN_PROGRESS -> "$speed/s"
+                null -> ""
             }
+            Text(
+                text = text,
+                fontSize = TextUnit(12F, TextUnitType.Sp),
+                fontWeight = FontWeight.Light,
+                modifier = Modifier.wrapContentHeight(Alignment.Bottom)
+            )
+        }
 
-            Row {
-                if (calculating) {
-                    LinearProgressIndicator(
-                        strokeCap = StrokeCap.Round,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                } else {
-                    val animatedProgress by
-                    animateFloatAsState(
-                        label = "Animated Progress",
-                        targetValue = progress.percentage,
-                        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-                    )
-                    LinearProgressIndicator(
-                        progress = { animatedProgress },
-                        strokeCap = StrokeCap.Round,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
+        Row {
+            if (progress.status == SyncViewModel.Status.CALCULATING) {
+                LinearProgressIndicator(
+                    strokeCap = StrokeCap.Round,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            } else {
+                val animatedProgress by
+                animateFloatAsState(
+                    label = "Animated Progress",
+                    targetValue = progress.percentage,
+                    animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+                )
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    strokeCap = StrokeCap.Round,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
             }
         }
     }
