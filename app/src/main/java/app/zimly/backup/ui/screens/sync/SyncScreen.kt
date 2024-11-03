@@ -36,6 +36,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -341,22 +342,17 @@ private fun DiffDetails(
         }
         Row(
             modifier = Modifier
-                .padding(all = 16.dp)
+                .padding(bottom = 16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center // Arrangement.Absolute.Right
         ) {
 
-            Button(
+            TextButton(
                 enabled = enableDiff,
                 onClick = createDiff,
                 contentPadding = PaddingValues(horizontal = 24.dp), // Reset padding
                 modifier = Modifier
                     .height(32.dp),
-                colors = ButtonDefaults.outlinedButtonColors().copy(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                ),
             ) {
                 Text(text = "Calculate")
             }
