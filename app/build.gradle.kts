@@ -84,10 +84,11 @@ android {
 }
 
 dependencies {
-    val composeVersion = "1.7.4"
-    val material3Version = "1.3.0"
-    val workManagerVersion = "2.9.1"
+    val composeVersion = "1.7.5"
+    val material3Version = "1.3.1"
+    val workManagerVersion = "2.10.0"
     val roomVersion = "2.6.1"
+    val lifecycleVersion = "2.8.7"
 
     // minio / S3
     implementation("io.minio:minio:8.5.12")
@@ -100,15 +101,15 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
     implementation("javax.xml.stream:stax-api:1.0-2")
 
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.compose.material3:material3:$material3Version")
     implementation("androidx.compose.material3:material3-window-size-class:$material3Version")
     implementation("androidx.compose.material:material-icons-extended:$composeVersion")
     implementation("androidx.compose.ui:ui:$composeVersion")
     implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.6")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
     implementation("androidx.activity:activity-compose:1.9.3")
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("com.google.android.material:material:1.12.0")
@@ -131,7 +132,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
-    androidTestImplementation("androidx.work:work-testing:2.9.1")
+    androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
     androidTestImplementation("io.mockk:mockk-android:1.13.13")
 
     debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
