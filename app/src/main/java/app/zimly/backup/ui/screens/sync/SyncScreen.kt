@@ -381,14 +381,18 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.Bottom
         ) {
-            val speed = Formatter.formatShortFileSize(
-                LocalContext.current,
-                bytesPerSec.longValue
-            )
+
             val text = when (progress.status) {
-                SyncViewModel.Status.CALCULATING -> "Calculating..."
-                SyncViewModel.Status.COMPLETED -> "Completed!"
-                SyncViewModel.Status.IN_PROGRESS -> "$speed/s"
+                SyncViewModel.Status.CALCULATING -> "Calculating"
+                SyncViewModel.Status.COMPLETED -> "Completed"
+                SyncViewModel.Status.IN_PROGRESS -> if (bytesPerSec.longValue > 0)
+                    "${
+                        Formatter.formatShortFileSize(
+                            LocalContext.current,
+                            bytesPerSec.longValue
+                        )
+                    }/s" else ""
+
                 null -> ""
             }
             Text(
