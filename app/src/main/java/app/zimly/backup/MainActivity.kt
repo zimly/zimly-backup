@@ -14,6 +14,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +27,9 @@ import app.zimly.backup.ui.screens.list.ListScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
+private const val REMOTES_LIST = "remotes-list"
+private const val GRANT_PERMISSION = "grant-permission"
+
 class MainActivity : ComponentActivity() {
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "FlowOperatorInvokedInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,12 +40,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ZimzyncTheme {
-                val startDest by remember { mutableStateOf(if (isPermissionGranted()) "remotes-list" else "grant-permission") }
+                var startDest by remember {  mutableStateOf(if (isPermissionGranted()) REMOTES_LIST else GRANT_PERMISSION) }
                 val navController = rememberNavController()
+
                 NavHost(navController, startDestination = startDest) {
                     // Grant permission for app
                     // https://stackoverflow.com/questions/60608101/how-request-permissions-with-jetpack-compose
-                    composable("grant-permission") {
+                    composable(GRANT_PERMISSION) {
                         val permissionLauncher = rememberLauncherForActivityResult(
                             ActivityResultContracts.RequestMultiplePermissions()
                         ) { isGranted ->
@@ -53,7 +58,7 @@ class MainActivity : ComponentActivity() {
 
                             if (granted == true) {
                                 Log.i(localClassName, "Permissions granted")
-                                navController.navigate("remotes-list")
+                                startDest = REMOTES_LIST
                             } else {
                                 // TODO Implement some sort of informative screen, that the user
                                 // needs to grant permissions for the app to work.
@@ -67,7 +72,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    composable("remotes-list") {
+                    composable(REMOTES_LIST) {
                         ListScreen(
                             remoteDao,
                             syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
