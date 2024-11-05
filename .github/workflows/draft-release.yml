@@ -21,6 +21,8 @@ jobs:
         run: echo ${{ steps.set_version.outputs.version }}
       - name: Check for existing draft
         id: draft_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and tagName == $TAG)) | length > 0')" >> $GITHUB_OUTPUT
       - name: Create Draft Release
         if: steps.draft_release.output.exists != true
