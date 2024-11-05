@@ -19,7 +19,11 @@ jobs:
         run: echo "version=`./gradlew -q getVersion`" >> $GITHUB_OUTPUT
       - name: Print version
         run: echo ${{ steps.set_version.outputs.version }}
+      - name: Check for existing draft
+        id: draft_release
+        run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and tagName == $TAG)) | length > 0')" >> $GITHUB_OUTPUT
       - name: Create Draft Release
+        if: steps.draft_release.output.exists != true
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -62,7 +66,6 @@ jobs:
           releaseFiles: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
           track: alpha
           whatsNewDirectory: release-notes
-
 
   build-apk:
     name: Build APK
