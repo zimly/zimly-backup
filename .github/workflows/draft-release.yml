@@ -6,7 +6,7 @@ jobs:
   draft-release:
     name: Create draft release
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag: ${{ steps.set_version.outputs.version }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -25,8 +25,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         with:
-          tag_name: v${{ steps.set_version.outputs.version }}
-          release_name: Release v${{ steps.set_version.outputs.version }}
+          tag_name: ${{ steps.set_version.outputs.version }}
+          release_name: Release ${{ steps.set_version.outputs.version }}
           body_path: ${{ github.workspace }}/release-notes/whatsnew-en-GB
           draft: true
 
@@ -51,15 +51,9 @@ jobs:
       - name: Build and sign Bundle release
         run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
       - name: Upload APK to Release Assets
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-        with:
-          upload_url: ${{ needs.draft-release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
-          asset_name: zimly-app-release.aab
-          asset_content_type: application/vnd.android.package-archive
+        run: gh release upload --clobber ${{ needs.draft-release.outputs.tag }} ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab#zimly-app-release.aab
 #      - name: Deploy to Play Store
 #        uses: r0adkll/upload-google-play@v1
 #        with:
@@ -90,12 +84,6 @@ jobs:
         # https://randombits.dev/articles/android/fdroid
         run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
       - name: Upload APK to Release Assets
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-        with:
-          upload_url: ${{ needs.draft-release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk
-          asset_name: zimly-app-release.apk
-          asset_content_type: application/vnd.android.package-archive
+        run: gh release upload --clobber ${{ needs.draft-release.outputs.tag }} ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk#zimly-app-release.apk

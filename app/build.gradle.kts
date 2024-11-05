@@ -165,6 +165,6 @@ tasks.withType<Test> {
  * Usage: ./gradlew -q getVersion
  */
 tasks.register("getVersion") {
-    val version = "${android.defaultConfig.versionName}-${android.defaultConfig.versionCode}"
+    val version = "v${android.defaultConfig.versionName}"
     println(version)
 }

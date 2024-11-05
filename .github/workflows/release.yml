@@ -18,4 +18,4 @@ jobs:
       - name: Create Release
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
-        run: gh release edit v${{ steps.set_version.outputs.version }} --tag v${{ steps.set_version.outputs.version }} --draft=false
+        run: gh release edit ${{ steps.set_version.outputs.version }} --tag ${{ steps.set_version.outputs.version }} --draft=false
