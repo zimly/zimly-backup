@@ -2,7 +2,7 @@ name: Release App
 on: workflow_dispatch
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,4 +16,6 @@ jobs:
       - name: Print version
         run: echo ${{ steps.set_version.outputs.version }}
       - name: Create Release
-        run: gh release edit ${{ steps.set_version.outputs.version }} --tag ${{ steps.set_version.outputs.version }} --draft=false
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+        run: gh release edit v${{ steps.set_version.outputs.version }} --tag v${{ steps.set_version.outputs.version }} --draft=false
