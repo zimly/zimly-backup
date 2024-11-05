@@ -11,6 +11,7 @@ android {
     defaultConfig {
         // This gets hot-patched for Google Play releases.
         applicationId = "app.zimly.backup"
+        namespace = "app.zimly.backup"
         minSdk = 29
         targetSdk = 35
         versionCode = 32
@@ -69,7 +70,17 @@ android {
         }
     }
 
-    namespace = "app.zimly.backup"
+    dependenciesInfo {
+
+        // Enabling this will add a metadata block signed with the Play Store key, preventing
+        // re-producible builds in F-Droid:
+        // https://gitlab.com/fdroid/fdroiddata/-/merge_requests/16193#note_2194340001
+
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Keep it in for the Play Store bundle
+        includeInBundle = true
+    }
 }
 
 dependencies {
