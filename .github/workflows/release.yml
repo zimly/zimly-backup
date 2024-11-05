@@ -13,9 +13,13 @@ jobs:
       - name: Read version from gradle.properties
         id: set_version
         run: echo "version=`./gradlew -q getVersion`" >> $GITHUB_OUTPUT
-      - name: Print version
-        run: echo ${{ steps.set_version.outputs.version }}
-      - name: Create Release
+      - name: Publish GH Release ${{ steps.set_version.outputs.version }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: gh release edit ${{ steps.set_version.outputs.version }} --tag ${{ steps.set_version.outputs.version }} --draft=false
+      - name: Patch applicationId for Play Store
+        run: sed -i 's/applicationId = "app.zimly.backup"/applicationId = "io.zeitmaschine.zimzync"/g' app/build.gradle.kts
+      - name: Promote Play Store Release
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: ./gradlew promoteArtifact --from-track alpha --promote-track production
