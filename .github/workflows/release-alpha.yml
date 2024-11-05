@@ -1,4 +1,4 @@
-name: Draft Release
+name: Release to Alpha Channel
 on: workflow_dispatch
 
 jobs:

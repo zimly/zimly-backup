@@ -1,4 +1,4 @@
-name: Release App
+name: Release to Production
 on: workflow_dispatch
 
 jobs:
