@@ -162,11 +162,9 @@ tasks.withType<Test> {
 /**
  * Prints value of property to stdout.
  *
- * Usage: ./gradlew -q getVersionCode|getVersionName
+ * Usage: ./gradlew -q getVersion
  */
-tasks.register("getVersionCode") {
-    println(android.defaultConfig.versionCode)
-}
-tasks.register("getVersionName") {
-    println(android.defaultConfig.versionName)
+tasks.register("getVersion") {
+    val version = "${android.defaultConfig.versionName}-${android.defaultConfig.versionCode}"
+    println(version)
 }
