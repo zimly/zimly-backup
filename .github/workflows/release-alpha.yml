@@ -3,10 +3,11 @@ on: workflow_dispatch
 
 jobs:
 
-  draft-release:
-    name: Create draft release
+  verify-release:
+    name: Run Verification Steps
     outputs:
-      tag: ${{ steps.set_version.outputs.version }}
+      version: ${{ steps.set_version.outputs.version }}
+      draft-exists: ${{ steps.draft_release.outputs.exists }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,16 +18,29 @@ jobs:
       - name: Read version from gradle.properties
         id: set_version
         run: echo "version=`./gradlew -q getVersion`" >> $GITHUB_OUTPUT
-      - name: Print version
-        run: echo ${{ steps.set_version.outputs.version }}
-      - name: Check for existing draft
+      - name: Check for existing draft ${{ steps.set_version.outputs.version }}
         id: draft_release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and .tagName == $TAG)) | length > 0')" >> $GITHUB_OUTPUT
+      - name: Check for existing release ${{ steps.set_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+        run: |
+          exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == false and .tagName == $TAG)) | length > 0')
+          if $exists ; then
+            echo "Release ${{ steps.set_version.outputs.version }} already exists, exiting"
+            exit 1
+          fi
+
+  draft-release:
+    name: Create draft release
+    needs: [verify-release, build-bundle, build-apk]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
       - name: Create Draft Release
-        if: steps.draft_release.output.exists != true
-        id: create_release
+        if: needs.verify-release.output.draft-exists != true
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
@@ -36,10 +50,24 @@ jobs:
           body_path: ${{ github.workspace }}/release-notes/whatsnew-en-GB
           draft: true
 
+      - name: Download bundle and apk
+        uses: actions/download-artifact@v4
+        with:
+          path: app-releases
+          pattern: zimly-app-release.*
+          merge-multiple: true
+
+      - name: Upload .AAB and .APK to Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          TAG: ${{ needs.verify-release.outputs.version }}
+        run: gh release upload --clobber $TAG app-releases/zimly-app-release.aab app-releases/zimly-app-release.apk
+
+
   build-bundle:
     name: Build Play Store Bundle
     runs-on: ubuntu-latest
-    needs: draft-release
+    needs: [ verify-release ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v3
@@ -56,23 +84,23 @@ jobs:
         run: sed -i 's/applicationId = "app.zimly.backup"/applicationId = "io.zeitmaschine.zimzync"/g' app/build.gradle.kts
       - name: Build and sign Bundle release
         run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
-      - name: Upload Bundle to Release Assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-        run: gh release upload --clobber ${{ needs.draft-release.outputs.tag }} ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab#zimly-app-release.aab
-      - name: Deploy to Play Store
-        uses: r0adkll/upload-google-play@v1
+      - uses: actions/upload-artifact@v4
         with:
-          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-          packageName: io.zeitmaschine.zimzync
-          releaseFiles: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
-          track: alpha
-          whatsNewDirectory: release-notes
+          name: zimly-app-release.aab
+          path: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
+#      - name: Deploy to Play Store
+#        uses: r0adkll/upload-google-play@v1
+#        with:
+#          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+#          packageName: io.zeitmaschine.zimzync
+#          releaseFiles: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
+#          track: alpha
+#          whatsNewDirectory: release-notes
 
   build-apk:
     name: Build APK
     runs-on: ubuntu-latest
-    needs: draft-release
+    needs: [ verify-release ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v3
@@ -88,7 +116,7 @@ jobs:
       - name: Build and Sign APK Release
         # https://randombits.dev/articles/android/fdroid
         run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
-      - name: Upload APK to Release Assets
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-        run: gh release upload --clobber ${{ needs.draft-release.outputs.tag }} ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk#zimly-app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zimly-app-release.apk
+          path: ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk
