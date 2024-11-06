@@ -40,13 +40,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Create Draft Release
-        if: needs.verify-release.output.draft-exists != true
+        if: needs.verify-release.outputs.draft-exists != true
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
         with:
-          tag_name: ${{ steps.set_version.outputs.version }}
-          release_name: Release ${{ steps.set_version.outputs.version }}
+          tag_name: ${{ needs.verify-release.outputs.version }}
+          release_name: Release ${{ needs.verify-release.outputs.version }}
           body_path: ${{ github.workspace }}/release-notes/whatsnew-en-GB
           draft: true
 
@@ -57,11 +57,13 @@ jobs:
           pattern: zimly-app-release.*
           merge-multiple: true
 
+      - run: ls -R app-releases
+      - run: ls -R ${GITHUB_WORKSPACE}/app-releases
       - name: Upload .AAB and .APK to Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           TAG: ${{ needs.verify-release.outputs.version }}
-        run: gh release upload --clobber $TAG app-releases/zimly-app-release.aab app-releases/zimly-app-release.apk
+        run: gh release upload --clobber $TAG ${GITHUB_WORKSPACE}/app-releases/zimly-app-release.aab ${GITHUB_WORKSPACE}/app-releases/zimly-app-release.apk
 
 
   build-bundle:
@@ -84,18 +86,20 @@ jobs:
         run: sed -i 's/applicationId = "app.zimly.backup"/applicationId = "io.zeitmaschine.zimzync"/g' app/build.gradle.kts
       - name: Build and sign Bundle release
         run: ./gradlew bundleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
+      - name: Deploy to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: io.zeitmaschine.zimzync
+          releaseFiles: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
+          track: alpha
+          whatsNewDirectory: release-notes
+      - run: mv app/build/outputs/bundle/release/app-release.aab zimly-app-release.aab
       - uses: actions/upload-artifact@v4
         with:
           name: zimly-app-release.aab
-          path: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
-#      - name: Deploy to Play Store
-#        uses: r0adkll/upload-google-play@v1
-#        with:
-#          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
-#          packageName: io.zeitmaschine.zimzync
-#          releaseFiles: ${{ github.workspace }}/app/build/outputs/bundle/release/app-release.aab
-#          track: alpha
-#          whatsNewDirectory: release-notes
+          path: zimly-app-release.aab
+
 
   build-apk:
     name: Build APK
@@ -116,7 +120,8 @@ jobs:
       - name: Build and Sign APK Release
         # https://randombits.dev/articles/android/fdroid
         run: ./gradlew assembleRelease -Pandroid.injected.signing.store.file=${GITHUB_WORKSPACE}/keystore.jks -Pandroid.injected.signing.store.password='${{secrets.KEY_STORE_PASSWORD}}' -Pandroid.injected.signing.key.alias=${{secrets.KEY_ALIAS}} -Pandroid.injected.signing.key.password='${{secrets.KEY_PASSWORD}}'
+      - run: mv app/build/outputs/apk/release/app-release.apk zimly-app-release.apk
       - uses: actions/upload-artifact@v4
         with:
           name: zimly-app-release.apk
-          path: ${{ github.workspace }}/app/build/outputs/apk/release/app-release.apk
+          path: zimly-app-release.apk
