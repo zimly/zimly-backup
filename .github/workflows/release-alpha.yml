@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Create Draft Release
-        if: needs.verify-release.outputs.draft-exists != true
+        if: ${{ ! needs.verify-release.outputs.draft-exists }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
@@ -56,9 +56,6 @@ jobs:
           path: app-releases
           pattern: zimly-app-release.*
           merge-multiple: true
-
-      - run: ls -R app-releases
-      - run: ls -R ${GITHUB_WORKSPACE}/app-releases
       - name: Upload .AAB and .APK to Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
