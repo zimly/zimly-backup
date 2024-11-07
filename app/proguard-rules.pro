@@ -20,8 +20,13 @@
 -keep class io.minio.** { *; }
 
 # SAX stuff
+# https://stackify.com/java-xml-jackson/
+# https://github.com/FasterXML/jackson-docs/wiki/JacksonOnAndroid
+-keep class com.fasterxml.** { *; }
+-keep class org.codehaus.** { *; }
+-keep class com.ctc.wstx.sax.** { *; }
 -dontwarn aQute.bnd.annotation.spi.ServiceProvider
--keep class com.ctc.wstx.sax.WstxSAXParserFactory
+-dontwarn java.beans.Transient
 
 # Simple XML
 -dontwarn org.simpleframework.xml.stream.**
@@ -34,3 +39,4 @@
   @org.simpleframework.xml.* <init>(...);
   @org.simpleframework.xml.* <fields>;
 }
+
