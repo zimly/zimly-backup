@@ -43,8 +43,9 @@ class SyncServiceImpl(
                 val errorCode = e.errorResponse().code()
                 message = "status: $status, message: $mes, errorCode: $errorCode"
             }
-            Log.e(TAG, "Failed to create diff: $message")
+            Log.e(TAG, "Failed to create diff: $message", e)
             throw Exception("Failed to create diff: $message", e)
+
         }
     }
 
