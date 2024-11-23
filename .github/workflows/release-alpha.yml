@@ -17,12 +17,12 @@ jobs:
           java-version: 17
       - name: Read version from gradle.properties
         id: set_version
-        run: echo "version=`./gradlew -q getVersion`" >> $GITHUB_OUTPUT
+        run: echo "version=`./gradlew -q getVersion`" > $GITHUB_OUTPUT
       - name: Check for existing draft ${{ steps.set_version.outputs.version }}
         id: draft_release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-        run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and .tagName == $TAG)) | length > 0')" >> $GITHUB_OUTPUT
+        run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and .tagName == $TAG)) | length > 0')" > $GITHUB_OUTPUT
       - name: Check for existing release ${{ steps.set_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
@@ -39,6 +39,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Draft exists
+        run: echo ${{ needs.verify-release.outputs.draft-exists }}
+      - name: Create draft?
+        run: echo ${{ ! needs.verify-release.outputs.draft-exists }}
       - name: Create Draft Release
         if: ${{ ! needs.verify-release.outputs.draft-exists }}
         uses: actions/create-release@v1
