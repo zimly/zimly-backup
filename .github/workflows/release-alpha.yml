@@ -47,8 +47,13 @@ jobs:
         with:
           tag_name: ${{ needs.verify-release.outputs.version }}
           release_name: Release ${{ needs.verify-release.outputs.version }}
-          body_path: ${{ github.workspace }}/release-notes/whatsnew-en-GB
           draft: true
+
+      - name: Update release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          TAG: ${{ needs.verify-release.outputs.version }}
+        run: gh release edit $TAG -F ${{ github.workspace }}/release-notes/whatsnew-en-GB
 
       - name: Download bundle and apk
         uses: actions/download-artifact@v4
