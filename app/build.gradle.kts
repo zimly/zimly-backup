@@ -39,6 +39,7 @@ android {
     }
 
     buildTypes {
+        // To debug minified version, copy this block under a debug {} block
         release {
             ndk {
                 debugSymbolLevel = "FULL"
