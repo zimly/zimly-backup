@@ -45,7 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           TAG: ${{ needs.verify-release.outputs.version }}
-        run: gh release create $TAG --draft -t Release ${{ needs.verify-release.outputs.version }}
+        run: gh release create $TAG --draft -t "Release ${{ needs.verify-release.outputs.version }}"
 
       - name: Update release notes
         env:
