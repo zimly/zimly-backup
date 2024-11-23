@@ -12,7 +12,7 @@ jobs:
           java-version: 17
       - name: Read version from gradle.properties
         id: set_version
-        run: echo "version=`./gradlew -q getVersion`" >> $GITHUB_OUTPUT
+        run: echo "version=`./gradlew -q getVersion`" > $GITHUB_OUTPUT
       - name: Publish GH Release ${{ steps.set_version.outputs.version }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}

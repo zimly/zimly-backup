@@ -17,12 +17,12 @@ jobs:
           java-version: 17
       - name: Read version from gradle.properties
         id: set_version
-        run: echo "version=`./gradlew -q getVersion`" >> $GITHUB_OUTPUT
+        run: echo "version=`./gradlew -q getVersion`" > $GITHUB_OUTPUT
       - name: Check for existing draft ${{ steps.set_version.outputs.version }}
         id: draft_release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
-        run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and .tagName == $TAG)) | length > 0')" >> $GITHUB_OUTPUT
+        run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and .tagName == $TAG)) | length > 0')" > $GITHUB_OUTPUT
       - name: Check for existing release ${{ steps.set_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
@@ -35,12 +35,12 @@ jobs:
 
   draft-release:
     name: Create draft release
-    needs: [verify-release, build-bundle, build-apk]
+    needs: [ verify-release, build-bundle, build-apk ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Create Draft Release
-        if: ${{ ! needs.verify-release.outputs.draft-exists }}
+        if: ${{ needs.verify-release.outputs.draft-exists == 'false' }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
@@ -48,13 +48,11 @@ jobs:
           tag_name: ${{ needs.verify-release.outputs.version }}
           release_name: Release ${{ needs.verify-release.outputs.version }}
           draft: true
-
       - name: Update release notes
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           TAG: ${{ needs.verify-release.outputs.version }}
         run: gh release edit $TAG -F ${{ github.workspace }}/release-notes/whatsnew-en-GB
-
       - name: Download bundle and apk
         uses: actions/download-artifact@v4
         with:
@@ -66,7 +64,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
           TAG: ${{ needs.verify-release.outputs.version }}
         run: gh release upload --clobber $TAG ${GITHUB_WORKSPACE}/app-releases/zimly-app-release.aab ${GITHUB_WORKSPACE}/app-releases/zimly-app-release.apk
-
 
   build-bundle:
     name: Build Play Store Bundle
@@ -101,7 +98,6 @@ jobs:
         with:
           name: zimly-app-release.aab
           path: zimly-app-release.aab
-
 
   build-apk:
     name: Build APK
