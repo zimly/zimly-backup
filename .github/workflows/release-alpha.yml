@@ -42,9 +42,9 @@ jobs:
       - name: Draft exists
         run: echo ${{ needs.verify-release.outputs.draft-exists }}
       - name: Create draft?
-        run: echo ${{ ! needs.verify-release.outputs.draft-exists }}
+        run: echo ${{ needs.verify-release.outputs.draft-exists == 'false' }}
       - name: Create Draft Release
-        if: ${{ ! needs.verify-release.outputs.draft-exists }}
+        if: ${{ needs.verify-release.outputs.draft-exists == 'false' }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
