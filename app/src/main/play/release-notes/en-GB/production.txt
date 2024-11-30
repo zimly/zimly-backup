@@ -1,0 +1,4 @@
+* New Icon and Theme #17
+* Minified app bundle size #15
+* Upgrade libraries
+

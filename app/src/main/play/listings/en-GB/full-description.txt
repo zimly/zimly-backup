@@ -1,0 +1,9 @@
+A straightforward, open-source Android application designed for synchronizing your local media, such as photos and videos, with any S3-compatible storage solution, whether it's self-hosted using platforms like Minio, or Cloud Storage options like AWS S3.
+
+Key Features:
+
+* Open-Source and Free: Explore the codebase and influence the roadmap: https://www.zimly.app
+* Safety First: Zimly prioritizes data integrity by avoiding any destructive actions during synchronization.
+* Metadata Preservation: Your media's essential metadata, including Exif and location data, remains intact and securely transferred.
+* Intuitive User Experience: Enjoy a user-friendly experience with Zimly's emphasis on simplicity and a clean, straightforward interface.
+* Ad-Free & Privacy-Focused
