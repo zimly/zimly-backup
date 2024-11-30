@@ -434,8 +434,8 @@ fun InProgressPreview() {
 
     val remote = SyncViewModel.RemoteState(
         name = "Camera Backup",
-        url = "https://my-backup.dyndns.com",
-        bucket = "zimly-backup",
+        url = "https://minio.zimly.cloud",
+        bucket = "2024-Camera",
         folder = "Camera"
     )
     val progressState = SyncViewModel.Progress(
@@ -556,8 +556,8 @@ fun CalculatingPreview() {
 
     val remote = SyncViewModel.RemoteState(
         name = "Camera Backup",
-        url = "https://my-backup.dyndns.com",
-        bucket = "zimly-backup",
+        url = "https://minio.zimly.cloud",
+        bucket = "2024-Camera",
         folder = "Camera"
     )
     val progressState = SyncViewModel.Progress(status = SyncViewModel.Status.CALCULATING)
