@@ -1,4 +1,7 @@
+1.6 Release
 * New Icon and Theme #17
 * Minified app bundle size #15
-* Upgrade libraries
 
+1.6.1
+* Automated Store Listing Updates #19
+* Android Library Updates
