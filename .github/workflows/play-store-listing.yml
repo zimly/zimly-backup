@@ -1,0 +1,19 @@
+name: Update Play Store Listing
+on: workflow_dispatch
+
+jobs:
+  update-listing:
+    name: Update Play Store Listing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Patch applicationId for Play Store
+        run: sed -i 's/applicationId = "app.zimly.backup"/applicationId = "io.zeitmaschine.zimzync"/g' app/build.gradle.kts
+      - name: Publish listing
+        env:
+          ANDROID_PUBLISHER_CREDENTIALS: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: ./gradlew publishListing
