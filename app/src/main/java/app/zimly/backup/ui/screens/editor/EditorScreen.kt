@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
@@ -144,7 +146,8 @@ private fun EditorCompose(
             modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
                 top = innerPadding.calculateTopPadding(),
                 bottom = innerPadding.calculateBottomPadding()
-            ) then Modifier.fillMaxWidth(),
+            ) then Modifier.fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
         ) {
 
             BucketConfiguration(name, url, key, secret, bucket)
