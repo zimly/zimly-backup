@@ -45,7 +45,7 @@ android {
                 debugSymbolLevel = "FULL"
             }
             isMinifyEnabled = true
-            isShrinkResources = false // Causes Splash Screen warnings in Pre Launch report?
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
