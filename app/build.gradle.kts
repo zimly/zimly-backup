@@ -90,7 +90,9 @@ android {
 }
 
 play {
+    // https://github.com/Triple-T/gradle-play-publisher
     track.set("alpha")
+    defaultToAppBundles.set(true)
 }
 
 dependencies {
