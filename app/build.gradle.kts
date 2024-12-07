@@ -89,6 +89,10 @@ android {
     }
 }
 
+play {
+    track.set("alpha")
+}
+
 dependencies {
     val composeVersion = "1.7.5"
     val material3Version = "1.3.1"
