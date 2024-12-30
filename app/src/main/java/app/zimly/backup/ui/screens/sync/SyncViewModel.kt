@@ -62,7 +62,7 @@ class SyncViewModel(
                 name = it.name,
                 url = it.url,
                 bucket = it.bucket,
-                folder = it.folder
+                folder = it.sourceUri
             )
         }
 
@@ -125,7 +125,7 @@ class SyncViewModel(
             val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
             val syncService = SyncServiceImpl(s3Repo, mediaRepo)
 
-            val diff = syncService.diff(setOf(remote.folder))
+            val diff = syncService.diff(setOf(remote.sourceUri))
             // Display result of the minio request to the user
             _progress.update {
                 Progress(
@@ -242,7 +242,7 @@ class SyncViewModel(
             SyncInputs.S3_KEY to remote.key,
             SyncInputs.S3_SECRET to remote.secret,
             SyncInputs.S3_BUCKET to remote.bucket,
-            SyncInputs.DEVICE_FOLDER to arrayOf(remote.folder)
+            SyncInputs.DEVICE_FOLDER to arrayOf(remote.sourceUri)
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
