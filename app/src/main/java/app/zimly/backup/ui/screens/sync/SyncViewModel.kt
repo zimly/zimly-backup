@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import app.zimly.backup.data.media.MediaRepository
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.sync.SyncInputs
@@ -55,21 +56,22 @@ class SyncViewModel(
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
 
-    var remoteState: Flow<RemoteState> = snapshotFlow { remoteId }
+    var syncConfigurationState: Flow<SyncConfigurationState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
         .map {
-            RemoteState(
+            SyncConfigurationState(
                 name = it.name,
                 url = it.url,
                 bucket = it.bucket,
-                folder = it.sourceUri
+                sourceType = it.sourceType,
+                sourceUri = it.sourceUri
             )
         }
 
-    var folderState = remoteState.map {
-        val photoCount = mediaRepo.getPhotos(setOf(it.folder)).size
-        val videoCount = mediaRepo.getVideos(setOf(it.folder)).size
-        return@map FolderState(it.folder, photoCount, videoCount)
+    var folderState = syncConfigurationState.map {
+        val photoCount = mediaRepo.getPhotos(setOf(it.sourceUri)).size
+        val videoCount = mediaRepo.getVideos(setOf(it.sourceUri)).size
+        return@map FolderState(it.sourceUri, photoCount, videoCount)
     }
 
     // Flow created when starting the sync
@@ -265,11 +267,12 @@ class SyncViewModel(
         _error.emit(null)
     }
 
-    data class RemoteState(
+    data class SyncConfigurationState(
         var name: String = "",
         var url: String = "",
         var bucket: String = "",
-        var folder: String = "",
+        var sourceType: SourceType? = null,
+        var sourceUri: String = "",
     )
 
     data class FolderState(

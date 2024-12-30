@@ -64,6 +64,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
 import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.media.ResolverBasedRepository
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -86,7 +87,7 @@ fun SyncScreen(
     }),
 ) {
 
-    val remote by viewModel.remoteState.collectAsStateWithLifecycle(SyncViewModel.RemoteState())
+    val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
     val error by viewModel.error.collectAsStateWithLifecycle()
     val folder by viewModel.folderState.collectAsStateWithLifecycle(SyncViewModel.FolderState())
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
@@ -117,7 +118,7 @@ fun SyncScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SyncCompose(
-    remote: SyncViewModel.RemoteState,
+    remote: SyncViewModel.SyncConfigurationState,
     error: String?,
     folder: SyncViewModel.FolderState,
     progress: SyncViewModel.Progress,
@@ -215,7 +216,7 @@ private fun SyncCompose(
 }
 
 @Composable
-private fun Bucket(remote: SyncViewModel.RemoteState) {
+private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
     Card(
         colors = CardDefaults.cardColors(containerColor = containerBackground()),
         modifier = Modifier.fillMaxWidth()
@@ -436,11 +437,12 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
 @Composable
 fun InProgressPreview() {
 
-    val remote = SyncViewModel.RemoteState(
+    val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
-        folder = "Camera"
+        sourceType = SourceType.MEDIA,
+        sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress(
         status = SyncViewModel.Status.IN_PROGRESS,
@@ -479,11 +481,12 @@ fun InProgressPreview() {
 @Composable
 fun CompletedPreview() {
 
-    val remote = SyncViewModel.RemoteState(
+    val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         bucket = "zimly-backup",
-        folder = "Camera"
+        sourceType = SourceType.MEDIA,
+        sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress(
         status = SyncViewModel.Status.COMPLETED,
@@ -523,11 +526,11 @@ fun CompletedPreview() {
 @Composable
 fun IdlePreview() {
 
-    val remote = SyncViewModel.RemoteState(
+    val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
-        bucket = "zimly-backup",
-        folder = "Camera"
+        sourceType = SourceType.MEDIA,
+        sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress()
     val folderState = SyncViewModel.FolderState(
@@ -558,11 +561,12 @@ fun IdlePreview() {
 @Composable
 fun CalculatingPreview() {
 
-    val remote = SyncViewModel.RemoteState(
+    val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
-        folder = "Camera"
+        sourceType = SourceType.MEDIA,
+        sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress(status = SyncViewModel.Status.CALCULATING)
     val folderState = SyncViewModel.FolderState(
