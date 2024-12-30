@@ -41,53 +41,6 @@ import androidx.compose.ui.unit.dp
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun FolderConfiguration(
-    state: State<EditorViewModel.UiState>,
-    folder: Field
-) {
-
-    Column(modifier = Modifier.padding(16.dp)) {
-
-        var expanded by remember { mutableStateOf(false) }
-        val folderState = folder.state.collectAsState()
-
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-        ) {
-            OutlinedTextField(
-                // The `menuAnchor` modifier must be passed to the text field for correctness.
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-                    .onFocusChanged { folder.focus(it) },
-                readOnly = true,
-                value = folderState.value.value,
-                onValueChange = {},
-                label = { Text("Folder") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                state.value.galleries.forEach { gallery ->
-                    DropdownMenuItem(
-                        text = { Text(gallery) },
-                        onClick = {
-                            folder.update(gallery)
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, folder: Field) {
 
     Card(
@@ -135,15 +88,62 @@ fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, folder: Fie
             }
         }
         if (checked.value == "Media") {
-            FolderConfiguration(state, folder)
+            MediaBucketSelector(state, folder)
         } else {
-            FolderPicker({ uri -> Log.i("SKR", uri.path.toString()) }, { Log.i("SKR", "cancel") })
+            FolderSelector({ uri -> Log.i("SKR", uri.path.toString()) }, { Log.i("SKR", "cancel") })
         }
     }
 }
 
 @Composable
-fun FolderPicker(
+@OptIn(ExperimentalMaterial3Api::class)
+fun MediaBucketSelector(
+    state: State<EditorViewModel.UiState>,
+    folder: Field
+) {
+
+    Column(modifier = Modifier.padding(16.dp)) {
+
+        var expanded by remember { mutableStateOf(false) }
+        val folderState = folder.state.collectAsState()
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+        ) {
+            OutlinedTextField(
+                // The `menuAnchor` modifier must be passed to the text field for correctness.
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .onFocusChanged { folder.focus(it) },
+                readOnly = true,
+                value = folderState.value.value,
+                onValueChange = {},
+                label = { Text("Folder") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                state.value.galleries.forEach { gallery ->
+                    DropdownMenuItem(
+                        text = { Text(gallery) },
+                        onClick = {
+                            folder.update(gallery)
+                            expanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FolderSelector(
     onFolderSelected: (Uri) -> Unit,
     onCancelled: () -> Unit,
 ) {
@@ -164,6 +164,4 @@ fun FolderPicker(
             Text(text = "Select Directory")
         }
     }
-
-
 }
