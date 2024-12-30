@@ -65,7 +65,7 @@ fun EditorScreen(
         key = viewModel.key,
         secret = viewModel.secret,
         bucket = viewModel.bucket,
-        folder = viewModel.folder,
+        sourceUri = viewModel.sourceUri,
         clearError = viewModel::clearError,
         save = {
             viewModel.viewModelScope.launch {
@@ -86,7 +86,7 @@ private fun EditorCompose(
     key: Field,
     secret: Field,
     bucket: Field,
-    folder: Field,
+    sourceUri: SourceField,
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
@@ -150,7 +150,7 @@ private fun EditorCompose(
                 .verticalScroll(rememberScrollState()),
         ) {
             BucketConfiguration(name, url, key, secret, bucket)
-            BackupSourceConfiguration(state, folder)
+            BackupSourceConfiguration(state, sourceUri)
         }
     }
 }
@@ -180,9 +180,8 @@ fun EditPreview() {
         val bucket = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val folder = Field(
-            errorMessage = "Select a media gallery to synchronize.",
-            validate = { it.isNotEmpty() })
+        val source = SourceField(
+            errorMessage = "Select a media gallery to synchronize.")
 
         EditorCompose(
             internal.collectAsState(),
@@ -192,7 +191,7 @@ fun EditPreview() {
             key,
             secret,
             bucket,
-            folder,
+            source,
             clearError = {},
             save = {},
             back = {},

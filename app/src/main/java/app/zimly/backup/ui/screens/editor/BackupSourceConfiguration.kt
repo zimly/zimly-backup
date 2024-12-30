@@ -38,10 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, folder: Field) {
+fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, source: SourceField) {
 
     Card(
         colors = CardDefaults.cardColors(
@@ -88,7 +89,7 @@ fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, folder: Fie
             }
         }
         if (checked.value == "Media") {
-            MediaBucketSelector(state, folder)
+            MediaBucketSelector(state, source)
         } else {
             FolderSelector({ uri -> Log.i("SKR", uri.path.toString()) }, { Log.i("SKR", "cancel") })
         }
@@ -99,7 +100,7 @@ fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, folder: Fie
 @OptIn(ExperimentalMaterial3Api::class)
 fun MediaBucketSelector(
     state: State<EditorViewModel.UiState>,
-    folder: Field
+    folder: SourceField
 ) {
 
     Column(modifier = Modifier.padding(16.dp)) {
@@ -118,7 +119,7 @@ fun MediaBucketSelector(
                     .fillMaxWidth()
                     .onFocusChanged { folder.focus(it) },
                 readOnly = true,
-                value = folderState.value.value,
+                value = folderState.value.value.second,
                 onValueChange = {},
                 label = { Text("Folder") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -131,7 +132,7 @@ fun MediaBucketSelector(
                     DropdownMenuItem(
                         text = { Text(gallery) },
                         onClick = {
-                            folder.update(gallery)
+                            folder.update(Pair(SourceType.MEDIA, gallery))
                             expanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,

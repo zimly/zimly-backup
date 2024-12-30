@@ -5,10 +5,9 @@ import android.webkit.URLUtil
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.zimly.backup.data.media.MediaRepository
+import app.zimly.backup.data.media.ResolverBasedRepository
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
-import app.zimly.backup.data.media.ResolverBasedRepository
-import app.zimly.backup.data.media.SourceType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,7 +35,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     val key: Field = Field()
     val secret: Field = Field()
     val bucket: Field = Field()
-    val folder: Field = Field(errorMessage = "Select a media gallery to synchronize.")
+    val sourceUri = SourceField(errorMessage = "Select a media gallery to synchronize.")
 
 
     init {
@@ -63,7 +62,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.update(remote.key)
                 secret.update(remote.secret)
                 bucket.update(remote.bucket)
-                folder.update(remote.sourceUri)
+                sourceUri.update(Pair(remote.sourceType, remote.sourceUri))
 
             }
         }
@@ -71,7 +70,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
 
     suspend fun save(success: () -> Unit) {
         val valid =
-            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && folder.isValid()
+            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && sourceUri.isValid()
         if (valid) {
             val remote = Remote(
                 internal.value.uid,
@@ -80,8 +79,8 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.state.value.value,
                 secret.state.value.value,
                 bucket.state.value.value,
-                SourceType.MEDIA,
-                folder.state.value.value,
+                sourceUri.state.value.value.first,
+                sourceUri.state.value.value.second,
             )
             if (remote.uid == null) {
                 dao.insert(remote)
