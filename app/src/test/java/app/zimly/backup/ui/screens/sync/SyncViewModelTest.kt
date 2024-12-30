@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import app.zimly.backup.data.media.MediaRepository
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
 import kotlinx.coroutines.CoroutineScope
@@ -67,6 +68,7 @@ class SyncViewModelTest {
             "CTUFC",
             "GVGVZCZIVGKGC",
             "bucket",
+            SourceType.MEDIA,
             "Images"
         )
         val workManager = mockk<WorkManager>()

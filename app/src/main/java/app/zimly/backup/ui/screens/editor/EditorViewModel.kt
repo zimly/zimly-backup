@@ -8,6 +8,7 @@ import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.media.ResolverBasedRepository
+import app.zimly.backup.data.media.SourceType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,7 +63,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.update(remote.key)
                 secret.update(remote.secret)
                 bucket.update(remote.bucket)
-                folder.update(remote.folder)
+                folder.update(remote.sourceUri)
 
             }
         }
@@ -79,6 +80,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.state.value.value,
                 secret.state.value.value,
                 bucket.state.value.value,
+                SourceType.MEDIA,
                 folder.state.value.value,
             )
             if (remote.uid == null) {
