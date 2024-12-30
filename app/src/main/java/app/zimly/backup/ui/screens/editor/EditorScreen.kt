@@ -132,7 +132,6 @@ private fun EditorCompose(
                             contentDescription = "Save or Create Remote"
                         )
                     }
-
                 }
             )
         },
@@ -146,12 +145,12 @@ private fun EditorCompose(
             modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
                 top = innerPadding.calculateTopPadding(),
                 bottom = innerPadding.calculateBottomPadding()
-            ) then Modifier.fillMaxWidth()
+            ) then Modifier
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
         ) {
-
             BucketConfiguration(name, url, key, secret, bucket)
-            FolderConfiguration(state, folder)
+            BackupSourceConfiguration(state, folder)
         }
     }
 }
