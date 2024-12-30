@@ -1,11 +1,19 @@
 package app.zimly.backup.ui.screens.editor
 
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -13,7 +21,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -34,6 +46,50 @@ fun FolderConfiguration(
     state: State<EditorViewModel.UiState>,
     folder: Field
 ) {
+
+    Column(modifier = Modifier.padding(16.dp)) {
+
+        var expanded by remember { mutableStateOf(false) }
+        val folderState = folder.state.collectAsState()
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+        ) {
+            OutlinedTextField(
+                // The `menuAnchor` modifier must be passed to the text field for correctness.
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .onFocusChanged { folder.focus(it) },
+                readOnly = true,
+                value = folderState.value.value,
+                onValueChange = {},
+                label = { Text("Folder") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                state.value.galleries.forEach { gallery ->
+                    DropdownMenuItem(
+                        text = { Text(gallery) },
+                        onClick = {
+                            folder.update(gallery)
+                            expanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, folder: Field) {
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -47,43 +103,67 @@ fun FolderConfiguration(
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
         }
-        Column(modifier = Modifier.padding(16.dp)) {
 
-            var expanded by remember { mutableStateOf(false) }
-            val folderState = folder.state.collectAsState()
+        val checked = remember { mutableStateOf("Media") }
+        val options = mapOf("Media" to Icons.Outlined.Photo, "Files" to Icons.Outlined.Folder)
 
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-            ) {
-                OutlinedTextField(
-                    // The `menuAnchor` modifier must be passed to the text field for correctness.
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                        .onFocusChanged { folder.focus(it) },
-                    readOnly = true,
-                    value = folderState.value.value,
-                    onValueChange = {},
-                    label = { Text("Folder") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
+        MultiChoiceSegmentedButtonRow(
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+        ) {
+            options.keys.forEachIndexed { index, label ->
+                SegmentedButton(
+                    colors = SegmentedButtonDefaults.colors(
+                        inactiveContainerColor = containerBackground()
+                    ),
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    icon = {
+                        SegmentedButtonDefaults.Icon(active = label == checked.value) {
+                            Icon(
+                                imageVector = options[label]!!,
+                                contentDescription = null,
+                                modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
+                            )
+                        }
+                    },
+                    onCheckedChange = { if (it) checked.value = label },
+                    checked = label == checked.value
                 ) {
-                    state.value.galleries.forEach { gallery ->
-                        DropdownMenuItem(
-                            text = { Text(gallery) },
-                            onClick = {
-                                folder.update(gallery)
-                                expanded = false
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                        )
-                    }
+                    Text(label)
                 }
             }
         }
+        if (checked.value == "Media") {
+            FolderConfiguration(state, folder)
+        } else {
+            FolderPicker({ uri -> Log.i("SKR", uri.path.toString()) }, { Log.i("SKR", "cancel") })
+        }
     }
+}
+
+@Composable
+fun FolderPicker(
+    onFolderSelected: (Uri) -> Unit,
+    onCancelled: () -> Unit,
+) {
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri != null) {
+                onFolderSelected(uri)
+            } else {
+                onCancelled()
+            }
+        }
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("Choose your source directory.")
+        Button(
+            onClick = { launcher.launch(null) },
+            colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+        ) {
+            Text(text = "Select Directory")
+        }
+    }
+
+
 }
