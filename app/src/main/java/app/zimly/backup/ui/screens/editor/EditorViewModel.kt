@@ -5,7 +5,7 @@ import android.webkit.URLUtil
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.zimly.backup.data.media.MediaRepository
-import app.zimly.backup.data.media.ResolverBasedRepository
+import app.zimly.backup.data.media.LocalMediaRepository
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +18,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     AndroidViewModel(application) {
 
     private val contentResolver by lazy { application.contentResolver }
-    private val mediaRepo: MediaRepository = ResolverBasedRepository(contentResolver)
+    private val mediaRepo: MediaRepository = LocalMediaRepository(contentResolver)
 
     // https://stackoverflow.com/questions/69689843/jetpack-compose-state-hoisting-previews-and-viewmodels-best-practices
     // TODO ???? https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate

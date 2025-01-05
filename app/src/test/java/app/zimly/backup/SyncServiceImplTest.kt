@@ -2,11 +2,11 @@ package app.zimly.backup
 
 import android.net.Uri
 import android.util.Log
+import app.zimly.backup.data.media.LocalContentResolver
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import app.zimly.backup.data.media.MediaObject
-import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.sync.Diff
 import app.zimly.backup.sync.SyncServiceImpl
@@ -25,7 +25,7 @@ class SyncServiceImplTest {
     private val minioUser = "test"
     private val minioPwd = "testtest"
 
-    private lateinit var mediaRepository: MediaRepository
+    private lateinit var localContentResolver: LocalContentResolver
     private lateinit var minioRepository: MinioRepository
 
     private val containerName = "minio/minio:latest"
@@ -45,9 +45,9 @@ class SyncServiceImplTest {
         every { Log.e(any(), any()) } returns 0
 
         val uri = mockk<Uri>()
-        this.mediaRepository = mockk()
+        this.localContentResolver = mockk()
 
-        every { mediaRepository.getMedia(setOf("Camera")) } returns listOf(MediaObject("name", 1234, "jpeg", uri))
+        every { localContentResolver.listObjects() } returns listOf(MediaObject("name", 1234, "jpeg", uri))
 
         val bucket = "test-bucket"
         minioRepository = MinioRepository(minioContainer.s3URL, minioUser, minioPwd, bucket)
@@ -57,9 +57,9 @@ class SyncServiceImplTest {
 
     @Test
     fun diff() {
-        val ss = SyncServiceImpl(minioRepository, mediaRepository)
+        val ss = SyncServiceImpl(minioRepository, localContentResolver)
 
-        val diff = ss.diff(setOf("Camera"))
+        val diff = ss.diff()
         assertThat(diff.remotes.size, `is`(0))
         assertThat(diff.locals.size, `is`(1))
         assertThat(diff.diff.size, `is`(1))
@@ -82,9 +82,9 @@ class SyncServiceImplTest {
             val size2 = stream2.available().toLong()
             val totalSize = size1 + size2
 
-            every { mediaRepository.getStream(any()) } returns stream1 andThen stream2
+            every { localContentResolver.getStream(any()) } returns stream1 andThen stream2
 
-            val ss = SyncServiceImpl(minioRepository, mediaRepository)
+            val ss = SyncServiceImpl(minioRepository, localContentResolver)
 
             val localMediaUri = mockk<Uri>()
             val obj1 = MediaObject(name = image1, size1, "image/png", localMediaUri)

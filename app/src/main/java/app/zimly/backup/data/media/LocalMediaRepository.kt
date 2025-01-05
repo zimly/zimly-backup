@@ -15,10 +15,10 @@ data class MediaObject(
     val path: Uri,
 )
 
-class ResolverBasedRepository(private val contentResolver: ContentResolver): MediaRepository {
+class LocalMediaRepository(private val contentResolver: ContentResolver): MediaRepository {
 
     companion object {
-        private val TAG: String? = ResolverBasedRepository::class.simpleName
+        private val TAG: String? = LocalMediaRepository::class.simpleName
     }
 
     override fun getPhotos(buckets: Set<String>): List<MediaObject> {
@@ -128,14 +128,6 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
         return videos.toList()
     }
 
-    override fun getMedia(buckets: Set<String>): List<MediaObject> {
-        return listOf(getPhotos(buckets), getVideos(buckets)).flatten()
-    }
-
-    override fun getStream(uri: Uri): InputStream {
-        return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
-    }
-
     override fun getBuckets(): Map<String, Number> {
         val buckets = mutableMapOf<String, Int>()
         // DISTINCT? https://stackoverflow.com/questions/2315203/android-distinct-and-groupby-in-contentresolver
@@ -175,11 +167,27 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
 }
 
 
+class LocalMediaResolver(private val contentResolver: ContentResolver, private val bucket: String): LocalContentResolver {
+
+    private var mediaRepository: MediaRepository = LocalMediaRepository(contentResolver)
+
+    override fun listObjects(): List<MediaObject> {
+        return listOf(mediaRepository.getPhotos(setOf(bucket)), mediaRepository.getVideos(setOf(bucket))).flatten()
+    }
+
+    override fun getStream(uri: Uri): InputStream {
+        return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
+    }
+
+}
+
 interface MediaRepository {
     fun getVideos(buckets: Set<String>): List<MediaObject>
     fun getPhotos(buckets: Set<String>): List<MediaObject>
-    fun getMedia(buckets: Set<String>): List<MediaObject>
-    fun getStream(uri: Uri): InputStream
     fun getBuckets(): Map<String, Number>
+}
 
+interface LocalContentResolver {
+    fun getStream(uri: Uri): InputStream
+    fun listObjects(): List<MediaObject>
 }

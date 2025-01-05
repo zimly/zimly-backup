@@ -1,12 +1,12 @@
 package app.zimly.backup.ui.screens.sync
 
+import android.content.ContentResolver
 import android.util.Log
 import androidx.work.WorkManager
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
@@ -73,8 +73,8 @@ class SyncViewModelTest {
         )
         val workManager = mockk<WorkManager>()
         every { workManager.getWorkInfosFlow(any()) } returns emptyFlow()
-        val mediaRepo = mockk<MediaRepository>()
-        this.viewModel = SyncViewModel(dao, 12, workManager, mediaRepo)
+        val contentResolver = mockk<ContentResolver>()
+        this.viewModel = SyncViewModel(dao, 12, workManager, contentResolver)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

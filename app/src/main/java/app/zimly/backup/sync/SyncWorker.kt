@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
-import app.zimly.backup.data.media.ResolverBasedRepository
+import app.zimly.backup.data.media.LocalMediaResolver
 import app.zimly.backup.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.last
@@ -29,13 +29,10 @@ class SyncWorker(
             )
         }
 
-        val contentBuckets =
-            inputData.getStringArray(SyncInputs.DEVICE_FOLDER)?.toSet() ?: emptySet()
-
         Log.i(TAG, "Launching sync...")
 
         val diff = try {
-            syncService.diff(contentBuckets)
+            syncService.diff()
         } catch (e: Exception) {
             return Result.failure(
                 Data.Builder()
@@ -107,12 +104,16 @@ class SyncWorker(
             requireNotNull(secret) { "Bucket secret cannot be empty" }
 
             val bucket = inputData.getString(SyncInputs.S3_BUCKET)
-            requireNotNull(bucket) { "Bucket secret cannot be empty" }
+            requireNotNull(bucket) { "Bucket cannot be empty" }
 
+            // TODO differentiate files and media here? Or pass dao to SyncService?
             val s3Repository = MinioRepository(url, key, secret, bucket)
-            val mediaRepository = ResolverBasedRepository(context.contentResolver)
+            val mediaBucket = inputData.getString(SyncInputs.DEVICE_FOLDER)
+            requireNotNull(mediaBucket) { "Media Bucket cannot be empty" }
 
-            return SyncServiceImpl(s3Repository, mediaRepository)
+            val localMediaResolver = LocalMediaResolver(context.contentResolver, mediaBucket)
+
+            return SyncServiceImpl(s3Repository, localMediaResolver)
         }
     }
 }

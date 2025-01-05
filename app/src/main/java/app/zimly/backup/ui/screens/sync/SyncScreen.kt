@@ -62,8 +62,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
-import app.zimly.backup.data.media.MediaRepository
-import app.zimly.backup.data.media.ResolverBasedRepository
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.theme.ZimzyncTheme
@@ -81,8 +79,7 @@ fun SyncScreen(
     viewModel: SyncViewModel = viewModel(factory = viewModelFactory {
         initializer {
             val workManager = WorkManager.getInstance(application.applicationContext)
-            val mediaRepo: MediaRepository = ResolverBasedRepository(application.contentResolver)
-            SyncViewModel(dao, remoteId, workManager, mediaRepo)
+            SyncViewModel(dao, remoteId, workManager, application.contentResolver)
         }
     }),
 ) {
