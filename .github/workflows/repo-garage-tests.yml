@@ -1,0 +1,20 @@
+name: Garage Compatibility
+on:
+  workflow_dispatch:
+  schedule: ## Schedule the job to run at 8am on Mon, Thu.
+    - cron: '8 0 * * Mon,Thu'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Run AWS Repository tests
+        env:
+          S3_AWS_TEST_KEY: ${{ secrets.S3_AWS_TEST_KEY }}
+          S3_AWS_TEST_SECRET: ${{ secrets.S3_AWS_TEST_SECRET }}
+        run: ./gradlew -PintegrationTests=garage check --rerun-tasks

@@ -163,6 +163,7 @@ tasks.withType<Test> {
                 "linode" -> includeTestsMatching("LinodeRepositoryTest")
                 "aws" -> includeTestsMatching("AwsRepositoryTest")
                 "minio" -> includeTestsMatching("MinioRepositoryTest")
+                "garage" -> includeTestsMatching("GarageRepositoryTest")
                 else -> includeTestsMatching("*RepositoryTest")
             }
         } else {
