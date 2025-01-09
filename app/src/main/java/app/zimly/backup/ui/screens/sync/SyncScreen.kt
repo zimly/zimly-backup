@@ -86,7 +86,6 @@ fun SyncScreen(
 
     val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
     val error by viewModel.error.collectAsStateWithLifecycle()
-    val folder by viewModel.folderState.collectAsStateWithLifecycle(SyncViewModel.FolderState())
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
 
     // want to go nuts?
@@ -96,7 +95,7 @@ fun SyncScreen(
     SyncCompose(
         remote,
         error,
-        folder,
+        @Composable { MediaSourceCompose(viewModel.syncConfigurationState, application) },
         progress,
         snackbarState,
         sync = {
@@ -117,7 +116,7 @@ fun SyncScreen(
 private fun SyncCompose(
     remote: SyncViewModel.SyncConfigurationState,
     error: String?,
-    folder: SyncViewModel.FolderState,
+    source: @Composable () -> Unit,
     progress: SyncViewModel.Progress,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
@@ -205,7 +204,7 @@ private fun SyncCompose(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Bucket(remote)
-            Folder(folder)
+            source()
             DiffDetails(progress, enableActions, createDiff)
             progress.status?.let { ProgressBar(progress) }
         }
@@ -240,48 +239,6 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
                 Text(text = "Bucket", textAlign = TextAlign.Left)
                 Text(remote.bucket)
             }
-        }
-    }
-}
-
-@Composable
-private fun Folder(folder: SyncViewModel.FolderState) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = containerBackground(),
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
-            Icon(
-                Icons.Outlined.Photo,
-                "Media",
-                modifier = Modifier.padding(top = 8.dp, end = 8.dp)
-            )
-        }
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = "Folder")
-                Text(text = folder.folder)
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = "Photos")
-                Text(text = "${folder.photos}")
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = "Videos")
-                Text(text = "${folder.videos}")
-            }
-
         }
     }
 }
@@ -450,7 +407,7 @@ fun InProgressPreview() {
         progressCount = 40,
         progressBytes = 233 * 1_000_000,
     )
-    val folderState = SyncViewModel.FolderState(
+    val folderState = FolderState(
         "Camera",
         photos = 3984,
         videos = 273
@@ -462,7 +419,7 @@ fun InProgressPreview() {
         SyncCompose(
             remote = remote,
             error = null,
-            folderState,
+            {},
             progressState,
             sync = {},
             createDiff = {},
@@ -494,7 +451,7 @@ fun CompletedPreview() {
         progressCount = 51,
         progressBytes = 51 * 5 * 1_000_000,
     )
-    val folderState = SyncViewModel.FolderState(
+    val folderState = FolderState(
         "Camera",
         photos = 3984,
         videos = 273
@@ -506,7 +463,7 @@ fun CompletedPreview() {
         SyncCompose(
             remote = remote,
             error = null,
-            folderState,
+            { },
             progressState,
             sync = {},
             createDiff = {},
@@ -530,7 +487,7 @@ fun IdlePreview() {
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress()
-    val folderState = SyncViewModel.FolderState(
+    val folderState = FolderState(
         "Camera",
         photos = 3984,
         videos = 273
@@ -542,7 +499,7 @@ fun IdlePreview() {
         SyncCompose(
             remote = remote,
             error = null,
-            folderState,
+            {  },
             progressState,
             sync = {},
             createDiff = {},
@@ -566,7 +523,8 @@ fun CalculatingPreview() {
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress(status = SyncViewModel.Status.CALCULATING)
-    val folderState = SyncViewModel.FolderState(
+
+    val folderState = FolderState(
         "Camera",
         photos = 3984,
         videos = 273
@@ -578,7 +536,7 @@ fun CalculatingPreview() {
         SyncCompose(
             remote = remote,
             error = null,
-            folderState,
+            { },
             progressState,
             sync = {},
             createDiff = {},

@@ -15,7 +15,6 @@ import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.data.media.LocalMediaResolver
-import app.zimly.backup.data.media.LocalMediaRepository
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.s3.MinioRepository
@@ -50,8 +49,6 @@ class SyncViewModel(
     private val contentResolver: ContentResolver
 ) : ViewModel() {
 
-    private val mediaRepo = LocalMediaRepository(contentResolver)
-
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
     companion object {
         val TAG: String? = SyncViewModel::class.simpleName
@@ -72,12 +69,6 @@ class SyncViewModel(
                 sourceUri = it.sourceUri
             )
         }
-
-    var folderState = syncConfigurationState.map {
-        val photoCount = mediaRepo.getPhotos(setOf(it.sourceUri)).size
-        val videoCount = mediaRepo.getVideos(setOf(it.sourceUri)).size
-        return@map FolderState(it.sourceUri, photoCount, videoCount)
-    }
 
     // Flow created when starting the sync
     // TODO change to MutableSharedFlow as well!?
@@ -280,12 +271,6 @@ class SyncViewModel(
         var bucket: String = "",
         var sourceType: SourceType? = null,
         var sourceUri: String = "",
-    )
-
-    data class FolderState(
-        var folder: String = "",
-        var photos: Int = 0,
-        var videos: Int = 0,
     )
 
     data class Progress(
