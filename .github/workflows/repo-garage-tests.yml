@@ -14,7 +14,4 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Run Garage Repository tests
-        env:
-          S3_AWS_TEST_KEY: ${{ secrets.S3_AWS_TEST_KEY }}
-          S3_AWS_TEST_SECRET: ${{ secrets.S3_AWS_TEST_SECRET }}
         run: ./gradlew -PintegrationTests=garage check --rerun-tasks
