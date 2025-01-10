@@ -179,6 +179,13 @@ class LocalMediaResolver(private val contentResolver: ContentResolver, private v
         return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
     }
 
+    fun photoCount(): Int {
+        return mediaRepository.getPhotos(setOf(bucket)).count()
+    }
+
+    fun videoCount(): Int {
+        return mediaRepository.getVideos(setOf(bucket)).count()
+    }
 }
 
 interface MediaRepository {

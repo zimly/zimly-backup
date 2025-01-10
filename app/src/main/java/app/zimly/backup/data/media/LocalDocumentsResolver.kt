@@ -11,7 +11,7 @@ import java.io.InputStream
  * https://developer.android.com/training/data-storage/shared/documents-files#grant-access-directory
  * https://developer.android.com/training/data-storage/shared/documents-files#persist-permissions
  */
-class LocalDocumentsResolver(private val contentResolver: ContentResolver, private val folder: String): LocalContentResolver {
+class LocalDocumentsResolver(private val contentResolver: ContentResolver, folder: String): LocalContentResolver {
 
     private val parent = Uri.parse(folder)
 

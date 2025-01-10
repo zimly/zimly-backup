@@ -91,10 +91,13 @@ fun SyncScreen(
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
 
+    val source = @Composable {
+        if (remote.sourceType == SourceType.MEDIA) { MediaCollectionCompose(remote.sourceUri, viewModel.syncConfigurationState, application) } else { DocumentsFolderCompose(remote.sourceUri, viewModel.syncConfigurationState, application) }
+    }
     SyncCompose(
         remote,
         error,
-        @Composable { MediaCollectionCompose(viewModel.syncConfigurationState, application) },
+        source,
         progress,
         snackbarState,
         sync = {

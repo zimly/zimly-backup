@@ -23,32 +23,32 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.ui.screens.sync.SyncViewModel.SyncConfigurationState
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 @Composable
-fun MediaCollectionCompose(
-    collectionPath: String,
+fun DocumentsFolderCompose(
+    folderPath: String,
     syncConfigurationFlow: Flow<SyncConfigurationState>,
     application: Application,
-    viewModel: MediaCollectionViewModel = viewModel(factory = viewModelFactory {
+    viewModel: DocumentsFolderViewModel = viewModel(factory = viewModelFactory {
         initializer {
-            val mediaResolver = LocalMediaResolver(application.contentResolver, collectionPath)
-            MediaCollectionViewModel(mediaResolver, syncConfigurationFlow)
+            val localDocumentsResolver = LocalDocumentsResolver(application.contentResolver, folderPath)
+            DocumentsFolderViewModel(localDocumentsResolver, syncConfigurationFlow)
         }
     }),
 ) {
 
-    val folder by viewModel.folderState.collectAsStateWithLifecycle(MediaCollectionState())
+    val folder by viewModel.folderState.collectAsStateWithLifecycle(DocumentsFolderState())
 
-    MediaCollection(folder)
+    DocumentsFolder(folder)
 }
 
 @Composable
-private fun MediaCollection(collectionState: MediaCollectionState) {
+private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -67,42 +67,32 @@ private fun MediaCollection(collectionState: MediaCollectionState) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Collection")
-                Text(text = collectionState.collection)
+                Text(text = "Folder")
+                Text(text = documentsFolderState.folder)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Photos")
-                Text(text = "${collectionState.photos}")
+                Text(text = "Documents")
+                Text(text = "${documentsFolderState.documents}")
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(text = "Videos")
-                Text(text = "${collectionState.videos}")
-            }
-
         }
     }
 }
 
-data class MediaCollectionState(
-    var collection: String = "",
-    var photos: Int = 0,
-    var videos: Int = 0,
+data class DocumentsFolderState(
+    var folder: String = "",
+    var documents: Int = 0,
 )
 
-class MediaCollectionViewModel(
-    localMediaResolver: LocalMediaResolver,
+class DocumentsFolderViewModel(
+    localContentResolver: LocalDocumentsResolver,
     syncConfigurationFlow: Flow<SyncConfigurationState>
 ) : ViewModel() {
 
     val folderState = syncConfigurationFlow.map {
-        val photoCount = localMediaResolver.photoCount()
-        val videoCount = localMediaResolver.videoCount()
-        return@map MediaCollectionState(it.sourceUri, photoCount, videoCount)
+        val documentsCount = localContentResolver.listObjects().size
+        return@map DocumentsFolderState(it.sourceUri, documentsCount)
     }
 }
