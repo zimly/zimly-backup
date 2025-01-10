@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.CloudUpload
-import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -95,7 +94,7 @@ fun SyncScreen(
     SyncCompose(
         remote,
         error,
-        @Composable { MediaSourceCompose(viewModel.syncConfigurationState, application) },
+        @Composable { MediaCollectionCompose(viewModel.syncConfigurationState, application) },
         progress,
         snackbarState,
         sync = {
@@ -407,7 +406,7 @@ fun InProgressPreview() {
         progressCount = 40,
         progressBytes = 233 * 1_000_000,
     )
-    val folderState = FolderState(
+    val folderState = MediaCollectionState(
         "Camera",
         photos = 3984,
         videos = 273
@@ -451,7 +450,7 @@ fun CompletedPreview() {
         progressCount = 51,
         progressBytes = 51 * 5 * 1_000_000,
     )
-    val folderState = FolderState(
+    val folderState = MediaCollectionState(
         "Camera",
         photos = 3984,
         videos = 273
@@ -487,7 +486,7 @@ fun IdlePreview() {
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress()
-    val folderState = FolderState(
+    val folderState = MediaCollectionState(
         "Camera",
         photos = 3984,
         videos = 273
@@ -524,7 +523,7 @@ fun CalculatingPreview() {
     )
     val progressState = SyncViewModel.Progress(status = SyncViewModel.Status.CALCULATING)
 
-    val folderState = FolderState(
+    val folderState = MediaCollectionState(
         "Camera",
         photos = 3984,
         videos = 273

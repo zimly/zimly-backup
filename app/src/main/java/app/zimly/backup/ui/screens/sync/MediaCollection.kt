@@ -30,24 +30,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 @Composable
-fun MediaSourceCompose(
+fun MediaCollectionCompose(
     syncConfigurationFlow: Flow<SyncConfigurationState>,
     application: Application,
-    viewModel: FolderViewModel = viewModel(factory = viewModelFactory {
+    viewModel: MediaCollectionViewModel = viewModel(factory = viewModelFactory {
         initializer {
             val mediaRepository = LocalMediaRepository(application.contentResolver)
-            FolderViewModel(mediaRepository, syncConfigurationFlow)
+            MediaCollectionViewModel(mediaRepository, syncConfigurationFlow)
         }
     }),
 ) {
 
-    val folder by viewModel.folderState.collectAsStateWithLifecycle(FolderState())
+    val folder by viewModel.folderState.collectAsStateWithLifecycle(MediaCollectionState())
 
-    MediaSource(folder)
+    MediaCollection(folder)
 }
 
 @Composable
-private fun MediaSource(folder: FolderState) {
+private fun MediaCollection(collectionState: MediaCollectionState) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -66,35 +66,35 @@ private fun MediaSource(folder: FolderState) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Folder")
-                Text(text = folder.folder)
+                Text(text = "Collection")
+                Text(text = collectionState.collection)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Photos")
-                Text(text = "${folder.photos}")
+                Text(text = "${collectionState.photos}")
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Videos")
-                Text(text = "${folder.videos}")
+                Text(text = "${collectionState.videos}")
             }
 
         }
     }
 }
 
-data class FolderState(
-    var folder: String = "",
+data class MediaCollectionState(
+    var collection: String = "",
     var photos: Int = 0,
     var videos: Int = 0,
 )
 
-class FolderViewModel(
+class MediaCollectionViewModel(
     mediaRepository: LocalMediaRepository,
     syncConfigurationFlow: Flow<SyncConfigurationState>
 ) : ViewModel() {
@@ -102,6 +102,6 @@ class FolderViewModel(
     val folderState = syncConfigurationFlow.map {
         val photoCount = mediaRepository.getPhotos(setOf(it.sourceUri)).size
         val videoCount = mediaRepository.getVideos(setOf(it.sourceUri)).size
-        return@map FolderState(it.sourceUri, photoCount, videoCount)
+        return@map MediaCollectionState(it.sourceUri, photoCount, videoCount)
     }
 }
