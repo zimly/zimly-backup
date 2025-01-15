@@ -89,24 +89,24 @@ fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, source: Sou
             }
         }
         if (checked.value == "Media") {
-            MediaBucketSelector(state, source)
+            MediaCollectionSelector(state, source)
         } else {
-            FolderSelector({ uri -> Log.i("SKR", uri.path.toString()) }, { Log.i("SKR", "cancel") })
+            DocumentsFolderSelector({ uri -> Log.i("SKR", uri.path.toString()) }, { Log.i("SKR", "cancel") })
         }
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun MediaBucketSelector(
+fun MediaCollectionSelector(
     state: State<EditorViewModel.UiState>,
-    folder: SourceField
+    collectionField: SourceField
 ) {
 
     Column(modifier = Modifier.padding(16.dp)) {
 
         var expanded by remember { mutableStateOf(false) }
-        val folderState = folder.state.collectAsState()
+        val folderState = collectionField.state.collectAsState()
 
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -117,11 +117,11 @@ fun MediaBucketSelector(
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth()
-                    .onFocusChanged { folder.focus(it) },
+                    .onFocusChanged { collectionField.focus(it) },
                 readOnly = true,
                 value = folderState.value.value.second,
                 onValueChange = {},
-                label = { Text("Folder") },
+                label = { Text("Collection") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             )
             ExposedDropdownMenu(
@@ -132,7 +132,7 @@ fun MediaBucketSelector(
                     DropdownMenuItem(
                         text = { Text(gallery) },
                         onClick = {
-                            folder.update(Pair(SourceType.MEDIA, gallery))
+                            collectionField.update(Pair(SourceType.MEDIA, gallery))
                             expanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -144,7 +144,7 @@ fun MediaBucketSelector(
 }
 
 @Composable
-fun FolderSelector(
+fun DocumentsFolderSelector(
     onFolderSelected: (Uri) -> Unit,
     onCancelled: () -> Unit,
 ) {
