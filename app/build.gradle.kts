@@ -96,21 +96,21 @@ play {
 }
 
 dependencies {
-    val composeVersion = "1.7.5"
+    val composeVersion = "1.7.6"
     val material3Version = "1.3.1"
     val workManagerVersion = "2.10.0"
     val roomVersion = "2.6.1"
     val lifecycleVersion = "2.8.7"
 
     // minio / S3
-    implementation("io.minio:minio:8.5.12")
+    implementation("io.minio:minio:8.5.15")
 
     // needed for okhttp3/minio:
     // Match version from https://github.com/minio/minio-java/blob/master/build.gradle
     //noinspection GradleDependency
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.0")
     //noinspection GradleDependency
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0")
     implementation("javax.xml.stream:stax-api:1.0-2")
 
     implementation("androidx.core:core-ktx:1.15.0")
@@ -123,7 +123,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
     implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("androidx.navigation:navigation-compose:2.8.4")
+    implementation("androidx.navigation:navigation-compose:2.8.5")
     implementation("com.google.android.material:material:1.12.0")
 
     // https://developer.android.com/codelabs/android-workmanager#2
@@ -137,15 +137,15 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.testcontainers:minio:1.20.2")
+    testImplementation("org.testcontainers:minio:1.20.4")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("io.mockk:mockk:1.13.16")
     testImplementation("androidx.test:core-ktx:1.6.1")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
-    androidTestImplementation("io.mockk:mockk-android:1.13.13")
+    androidTestImplementation("io.mockk:mockk-android:1.13.16")
 
     debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
     debugImplementation("androidx.compose.ui:ui-test-manifest:$composeVersion")
