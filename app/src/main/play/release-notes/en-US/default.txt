@@ -1,6 +1,5 @@
-1.6.2
-* Add vertical scrolling to editor and sync screen #20
-* Use GPP plugin for release publishing #21
+2.0.0
+* Add support for backup of Documents and Folders #16
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
