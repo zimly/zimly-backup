@@ -4,8 +4,8 @@ import android.app.Application
 import android.webkit.URLUtil
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.media.LocalMediaRepository
+import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,14 +35,15 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     val key: Field = Field()
     val secret: Field = Field()
     val bucket: Field = Field()
-    val sourceUri = SourceField(errorMessage = "Select a media gallery to synchronize.")
+    val mediaCollection = MediaCollectionField(errorMessage = "Select a media gallery to synchronize.")
+    val documentFolder = DocumentsFolderField(errorMessage = "Select a documents folder to synchronize.")
 
 
     init {
-        val galleries = mediaRepo.getBuckets().keys
+        val collections = mediaRepo.getBuckets().keys
         internal.update {
             it.copy(
-                galleries = galleries,
+                mediaCollections = collections,
                 title = "New configuration"
             )
         }
@@ -62,7 +63,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.update(remote.key)
                 secret.update(remote.secret)
                 bucket.update(remote.bucket)
-                sourceUri.update(Pair(remote.sourceType, remote.sourceUri))
+                mediaCollection.update(Pair(remote.sourceType, remote.sourceUri))
 
             }
         }
@@ -70,7 +71,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
 
     suspend fun save(success: () -> Unit) {
         val valid =
-            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && sourceUri.isValid()
+            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && (mediaCollection.isValid() || documentFolder.isValid())
         if (valid) {
             val remote = Remote(
                 internal.value.uid,
@@ -79,8 +80,9 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.state.value.value,
                 secret.state.value.value,
                 bucket.state.value.value,
-                sourceUri.state.value.value.first,
-                sourceUri.state.value.value.second,
+                // TODO which type?
+                mediaCollection.state.value.value.first,
+                mediaCollection.state.value.value.second,
             )
             if (remote.uid == null) {
                 dao.insert(remote)
@@ -101,7 +103,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     data class UiState(
         var uid: Int? = null,
         var title: String = "",
-        var galleries: Set<String> = emptySet(),
+        var mediaCollections: Set<String> = emptySet(),
         var error: String = "",
     )
 

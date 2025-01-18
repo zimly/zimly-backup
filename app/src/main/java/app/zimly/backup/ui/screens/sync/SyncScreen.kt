@@ -92,7 +92,7 @@ fun SyncScreen(
     val snackbarState = remember { SnackbarHostState() }
 
     val source = @Composable {
-        if (remote.sourceType == SourceType.MEDIA) { MediaCollectionCompose(remote.sourceUri, viewModel.syncConfigurationState, application) } else { DocumentsFolderCompose(remote.sourceUri, viewModel.syncConfigurationState, application) }
+        if (remote.sourceType == SourceType.MEDIA) { MediaCollectionCompose(remote.sourceUri, viewModel.syncConfigurationState, application) } else if(remote.sourceType == SourceType.FOLDER) { DocumentsFolderCompose(remote.sourceUri, viewModel.syncConfigurationState, application) }
     }
     SyncCompose(
         remote,

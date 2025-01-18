@@ -21,14 +21,9 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
 
     override fun listObjects(): List<MediaObject> {
 
-        // https://developer.android.com/training/data-storage/shared/documents-files#persist-permissions
-        // TODO on initialization?
-        val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        val documentId = DocumentsContract.getTreeDocumentId(parent)
 
-        // Check for the freshest data.
-        contentResolver.takePersistableUriPermission(parent, takeFlags)
-
-        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, DocumentsContract.getDocumentId(parent))
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, documentId)
 
         val files = mutableListOf<MediaObject>()
 

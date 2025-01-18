@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.editor
 
 import android.app.Application
+import android.net.Uri
 import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,6 +36,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,7 +68,8 @@ fun EditorScreen(
         key = viewModel.key,
         secret = viewModel.secret,
         bucket = viewModel.bucket,
-        sourceUri = viewModel.sourceUri,
+        mediaCollection = viewModel.mediaCollection,
+        documentsFolder = viewModel.documentFolder,
         clearError = viewModel::clearError,
         save = {
             viewModel.viewModelScope.launch {
@@ -86,7 +90,8 @@ private fun EditorCompose(
     key: Field,
     secret: Field,
     bucket: Field,
-    sourceUri: SourceField,
+    mediaCollection: MediaCollectionField,
+    documentsFolder: DocumentsFolderField,
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
@@ -150,7 +155,40 @@ private fun EditorCompose(
                 .verticalScroll(rememberScrollState()),
         ) {
             BucketConfiguration(name, url, key, secret, bucket)
-            BackupSourceConfiguration(state, sourceUri)
+
+            val sourceSelector: @Composable (type: SourceType) -> Unit = { type ->
+                when (type) {
+                    SourceType.MEDIA -> {
+                        val selectCollection: (collection: String) -> Unit = {
+                            println(it)
+                            mediaCollection.update(Pair(SourceType.MEDIA, it))
+                        }
+                        val focusCollection: (state: FocusState) -> Unit = {
+                            println(it)
+                            mediaCollection.focus(it)
+                        }
+                        val collection = mediaCollection.state.collectAsState()
+                        MediaCollectionSelector(
+                            state.value.mediaCollections, collection.value.value.second,
+                            selectCollection, focusCollection
+                        )
+                    }
+
+                    SourceType.FOLDER -> {
+                        val selectFolder: (folder: Uri) -> Unit = {
+                            println(it)
+                            documentsFolder.update(Pair(SourceType.FOLDER, it))
+                        }
+                        val focusFolder: (state: FocusState) -> Unit = {
+                            println(it)
+                            documentsFolder.focus(it)
+                        }
+                        DocumentsFolderSelector(documentsFolder.state.value.value.second, selectFolder, focusFolder)
+                    }
+                }
+            }
+
+            BackupSourceConfiguration(sourceSelector)
         }
     }
 }
@@ -180,8 +218,12 @@ fun EditPreview() {
         val bucket = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val source = SourceField(
-            errorMessage = "Select a media gallery to synchronize.")
+        val mediaCollection = MediaCollectionField(
+            errorMessage = "Select a media gallery to synchronize."
+        )
+        val documentsFolder = DocumentsFolderField(
+            errorMessage = "Select a documents folder to synchronize."
+        )
 
         EditorCompose(
             internal.collectAsState(),
@@ -191,7 +233,8 @@ fun EditPreview() {
             key,
             secret,
             bucket,
-            source,
+            mediaCollection,
+            documentsFolder,
             clearError = {},
             save = {},
             back = {},

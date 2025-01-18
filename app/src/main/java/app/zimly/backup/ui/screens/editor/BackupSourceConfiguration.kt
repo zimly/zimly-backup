@@ -1,7 +1,6 @@
 package app.zimly.backup.ui.screens.editor
 
 import android.net.Uri
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
@@ -28,21 +27,20 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, source: SourceField) {
+fun BackupSourceConfiguration(sourceSelector: @Composable (source: SourceType) -> Unit) {
 
     Card(
         colors = CardDefaults.cardColors(
@@ -58,55 +56,52 @@ fun BackupSourceConfiguration(state: State<EditorViewModel.UiState>, source: Sou
             )
         }
 
-        val checked = remember { mutableStateOf("Media") }
-        val options = mapOf("Media" to Icons.Outlined.Photo, "Files" to Icons.Outlined.Folder)
+        val checked = remember { mutableStateOf(SourceType.MEDIA) }
+        val options = mapOf(SourceType.MEDIA to Icons.Outlined.Photo, SourceType.FOLDER to Icons.Outlined.Folder)
 
         MultiChoiceSegmentedButtonRow(
             modifier = Modifier
                 .padding(8.dp)
                 .fillMaxWidth()
         ) {
-            options.keys.forEachIndexed { index, label ->
+            options.keys.forEachIndexed { index, sourceType ->
                 SegmentedButton(
                     colors = SegmentedButtonDefaults.colors(
                         inactiveContainerColor = containerBackground()
                     ),
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                     icon = {
-                        SegmentedButtonDefaults.Icon(active = label == checked.value) {
+                        SegmentedButtonDefaults.Icon(active = sourceType == checked.value) {
                             Icon(
-                                imageVector = options[label]!!,
+                                imageVector = options[sourceType]!!,
                                 contentDescription = null,
                                 modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
                             )
                         }
                     },
-                    onCheckedChange = { if (it) checked.value = label },
-                    checked = label == checked.value
+                    onCheckedChange = { if (it) checked.value = sourceType },
+                    checked = sourceType == checked.value
                 ) {
-                    Text(label)
+                    Text(sourceType.name)
                 }
             }
         }
-        if (checked.value == "Media") {
-            MediaCollectionSelector(state, source)
-        } else {
-            DocumentsFolderSelector({ uri -> Log.i("SKR", uri.path.toString()) }, { Log.i("SKR", "cancel") })
-        }
+        sourceSelector(checked.value)
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun MediaCollectionSelector(
-    state: State<EditorViewModel.UiState>,
-    collectionField: SourceField
+    mediaCollections: Set<String>,
+    collection: String,
+    select: (collection: String) -> Unit,
+    focus: (state: FocusState) -> Unit,
 ) {
 
     Column(modifier = Modifier.padding(16.dp)) {
 
         var expanded by remember { mutableStateOf(false) }
-        val folderState = collectionField.state.collectAsState()
 
         ExposedDropdownMenuBox(
             expanded = expanded,
@@ -117,9 +112,9 @@ fun MediaCollectionSelector(
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth()
-                    .onFocusChanged { collectionField.focus(it) },
+                    .onFocusChanged { focus(it) },
                 readOnly = true,
-                value = folderState.value.value.second,
+                value = collection,
                 onValueChange = {},
                 label = { Text("Collection") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -128,11 +123,11 @@ fun MediaCollectionSelector(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
             ) {
-                state.value.galleries.forEach { gallery ->
+                mediaCollections.forEach { gallery ->
                     DropdownMenuItem(
                         text = { Text(gallery) },
                         onClick = {
-                            collectionField.update(Pair(SourceType.MEDIA, gallery))
+                            select(gallery)
                             expanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -145,24 +140,25 @@ fun MediaCollectionSelector(
 
 @Composable
 fun DocumentsFolderSelector(
-    onFolderSelected: (Uri) -> Unit,
-    onCancelled: () -> Unit,
+    folder: Uri,
+    select: (folder: Uri) -> Unit,
+    focus: (state: FocusState) -> Unit,
 ) {
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             if (uri != null) {
-                onFolderSelected(uri)
-            } else {
-                onCancelled()
+                select(uri)
             }
         }
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Choose your source directory.")
         Button(
+            modifier = Modifier.onFocusChanged { focus(it) },
             onClick = { launcher.launch(null) },
             colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
         ) {
             Text(text = "Select Directory")
         }
+        Text(text = "Selected directory: $folder")
     }
 }

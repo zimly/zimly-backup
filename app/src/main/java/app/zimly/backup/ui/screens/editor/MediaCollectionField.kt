@@ -7,9 +7,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class SourceField(
+class MediaCollectionField(
     private val errorMessage: String = "This field is required.",
-    private val validate: (value: Pair<SourceType, String>) -> Boolean = { it.first in SourceType.entries.toTypedArray() && it.second.isNotEmpty()},
+    private val validate: (value: Pair<SourceType, String>) -> Boolean = { it.first in SourceType.entries && it.second.isNotEmpty()},
 ) {
     private var touched: Boolean? = null
     private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState(value = Pair(SourceType.MEDIA, "")))
