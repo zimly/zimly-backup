@@ -1,16 +1,20 @@
 package app.zimly.backup.ui.screens.editor
 
 import android.app.Application
+import android.content.Intent
+import android.net.Uri
 import android.webkit.URLUtil
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.zimly.backup.data.media.LocalMediaRepository
 import app.zimly.backup.data.media.MediaRepository
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -35,8 +39,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     val key: Field = Field()
     val secret: Field = Field()
     val bucket: Field = Field()
-    val mediaCollection = MediaCollectionField(errorMessage = "Select a media gallery to synchronize.")
-    val documentFolder = DocumentsFolderField(errorMessage = "Select a documents folder to synchronize.")
+    val backupSource = BackupSourceField()
 
 
     init {
@@ -63,26 +66,40 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.update(remote.key)
                 secret.update(remote.secret)
                 bucket.update(remote.bucket)
-                mediaCollection.update(Pair(remote.sourceType, remote.sourceUri))
 
+                backupSource.update(remote.sourceType)
+                when(remote.sourceType) {
+                    SourceType.MEDIA -> backupSource.mediaField.update(remote.sourceUri)
+                    SourceType.FOLDER -> backupSource.folderField.update(Uri.parse(remote.sourceUri))
+                }
             }
         }
     }
 
     suspend fun save(success: () -> Unit) {
         val valid =
-            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && (mediaCollection.isValid() || documentFolder.isValid())
+            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && backupSource.isValid()
+
         if (valid) {
+            val backupFieldState = backupSource.state.stateIn(viewModelScope)
+
+            val sourceType = backupFieldState.value.type
+            val sourceUri = when(sourceType) {
+                SourceType.MEDIA -> backupFieldState.value.collection
+                SourceType.FOLDER -> backupFieldState.value.folder.toString()
+            }
+            if (sourceType == SourceType.FOLDER) {
+                persistPermissions(backupFieldState.value.folder)
+            }
             val remote = Remote(
                 internal.value.uid,
-                name.state.value.value, // TODO from state vs internal state?
+                name.state.value.value,
                 url.state.value.value,
                 key.state.value.value,
                 secret.state.value.value,
                 bucket.state.value.value,
-                // TODO which type?
-                mediaCollection.state.value.value.first,
-                mediaCollection.state.value.value.second,
+                sourceType,
+                sourceUri,
             )
             if (remote.uid == null) {
                 dao.insert(remote)
@@ -93,6 +110,11 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
         } else {
             internal.update { it.copy(error = "Form has errors, won't save.") }
         }
+    }
+
+    private fun persistPermissions(folder: Uri) {
+        val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        contentResolver.takePersistableUriPermission(folder, flags)
     }
 
     fun clearError() {

@@ -1,21 +1,21 @@
 package app.zimly.backup.ui.screens.editor
 
+import android.net.Uri
 import androidx.compose.ui.focus.FocusState
-import app.zimly.backup.data.media.SourceType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class MediaCollectionField(
+class UriField(
     private val errorMessage: String = "This field is required.",
-    private val validate: (value: Pair<SourceType, String>) -> Boolean = { it.first in SourceType.entries && it.second.isNotEmpty()},
+    private val validate: (value: Uri) -> Boolean = { it.path?.isNotEmpty() ?: false },
 ) {
     private var touched: Boolean? = null
-    private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState(value = Pair(SourceType.MEDIA, "")))
+    private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState())
     val state: StateFlow<FieldState> = internal.asStateFlow()
 
-    fun update(value: Pair<SourceType, String>) {
+    fun update(value: Uri) {
         internal.update {
             it.copy(
                 value = value,
@@ -48,5 +48,5 @@ class MediaCollectionField(
     }
 
 
-    data class FieldState(val value: Pair<SourceType, String>, val error: String? = null)
+    data class FieldState(val value: Uri = Uri.EMPTY, val error: String? = null)
 }

@@ -68,8 +68,7 @@ fun EditorScreen(
         key = viewModel.key,
         secret = viewModel.secret,
         bucket = viewModel.bucket,
-        mediaCollection = viewModel.mediaCollection,
-        documentsFolder = viewModel.documentFolder,
+        backupSource = viewModel.backupSource,
         clearError = viewModel::clearError,
         save = {
             viewModel.viewModelScope.launch {
@@ -90,8 +89,7 @@ private fun EditorCompose(
     key: Field,
     secret: Field,
     bucket: Field,
-    mediaCollection: MediaCollectionField,
-    documentsFolder: DocumentsFolderField,
+    backupSource: BackupSourceField,
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
@@ -161,15 +159,16 @@ private fun EditorCompose(
                     SourceType.MEDIA -> {
                         val selectCollection: (collection: String) -> Unit = {
                             println(it)
-                            mediaCollection.update(Pair(SourceType.MEDIA, it))
+                            backupSource.update(SourceType.MEDIA)
+                            backupSource.mediaField.update(it)
                         }
                         val focusCollection: (state: FocusState) -> Unit = {
                             println(it)
-                            mediaCollection.focus(it)
+                            backupSource.mediaField.focus(it)
                         }
-                        val collection = mediaCollection.state.collectAsState()
+                        val collection = backupSource.mediaField.state.collectAsState()
                         MediaCollectionSelector(
-                            state.value.mediaCollections, collection.value.value.second,
+                            state.value.mediaCollections, collection.value.value,
                             selectCollection, focusCollection
                         )
                     }
@@ -177,13 +176,15 @@ private fun EditorCompose(
                     SourceType.FOLDER -> {
                         val selectFolder: (folder: Uri) -> Unit = {
                             println(it)
-                            documentsFolder.update(Pair(SourceType.FOLDER, it))
+                            backupSource.update(SourceType.FOLDER)
+                            backupSource.folderField.update(it)
                         }
                         val focusFolder: (state: FocusState) -> Unit = {
                             println(it)
-                            documentsFolder.focus(it)
+                            backupSource.folderField.focus(it)
                         }
-                        DocumentsFolderSelector(documentsFolder.state.value.value.second, selectFolder, focusFolder)
+                        val folder = backupSource.folderField.state.collectAsState()
+                        DocumentsFolderSelector(folder.value.value, selectFolder, focusFolder)
                     }
                 }
             }
@@ -218,11 +219,8 @@ fun EditPreview() {
         val bucket = Field(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val mediaCollection = MediaCollectionField(
-            errorMessage = "Select a media gallery to synchronize."
-        )
-        val documentsFolder = DocumentsFolderField(
-            errorMessage = "Select a documents folder to synchronize."
+        val backupSource = BackupSourceField(
+            errorMessage = "Select a media collection or folder to synchronize."
         )
 
         EditorCompose(
@@ -233,8 +231,7 @@ fun EditPreview() {
             key,
             secret,
             bucket,
-            mediaCollection,
-            documentsFolder,
+            backupSource,
             clearError = {},
             save = {},
             back = {},
