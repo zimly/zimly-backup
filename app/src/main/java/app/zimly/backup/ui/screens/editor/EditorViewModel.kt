@@ -16,7 +16,6 @@ import app.zimly.backup.ui.screens.editor.field.Field
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -83,15 +82,14 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
             name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && backupSource.isValid()
 
         if (valid) {
-            val backupFieldState = backupSource.state.stateIn(viewModelScope)
 
-            val sourceType = backupFieldState.value.type
+            val sourceType = backupSource.state.value.type
             val sourceUri = when(sourceType) {
-                SourceType.MEDIA -> backupFieldState.value.collection
-                SourceType.FOLDER -> backupFieldState.value.folder.toString()
+                SourceType.MEDIA -> backupSource.mediaField.state.value.value
+                SourceType.FOLDER -> backupSource.folderField.state.value.value.toString()
             }
             if (sourceType == SourceType.FOLDER) {
-                persistPermissions(backupFieldState.value.folder)
+                persistPermissions(backupSource.folderField.state.value.value)
             }
             val remote = Remote(
                 internal.value.uid,

@@ -1,10 +1,9 @@
 package app.zimly.backup.ui.screens.editor.field
 
-import android.net.Uri
 import app.zimly.backup.data.media.SourceType
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class BackupSourceField(
@@ -13,24 +12,22 @@ class BackupSourceField(
     val mediaField = Field()
     val folderField = UriField()
 
-    private val internal: MutableStateFlow<SourceType> = MutableStateFlow(SourceType.MEDIA)
+    private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState(SourceType.MEDIA))
 
-    val state: Flow<FieldState> = internal.map {
-            return@map FieldState(type = internal.value, collection = mediaField.state.value.value, folder = folderField.state.value.value, errorMessage)
-    }
+    val state: StateFlow<FieldState> = internal.asStateFlow()
 
     fun update(value: SourceType) {
-        internal.update { value }
+        internal.update { it.copy(type = value) }
     }
 
     fun isValid(): Boolean {
-        return when (internal.value) {
+        return when (internal.value.type) {
             SourceType.MEDIA -> mediaField.isValid()
             SourceType.FOLDER -> folderField.isValid()
         }
     }
 
-    data class FieldState(val type: SourceType, val collection: String, val folder: Uri, val error: String? = null)
+    data class FieldState(val type: SourceType, val error: String? = null)
 
 
 }
