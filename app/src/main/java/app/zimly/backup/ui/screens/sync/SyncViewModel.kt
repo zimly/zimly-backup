@@ -242,7 +242,8 @@ class SyncViewModel(
             SyncInputs.S3_KEY to remote.key,
             SyncInputs.S3_SECRET to remote.secret,
             SyncInputs.S3_BUCKET to remote.bucket,
-            SyncInputs.DEVICE_FOLDER to remote.sourceUri
+            SyncInputs.SOURCE_TYPE to remote.sourceType.name,
+            SyncInputs.SOURCE_PATH to remote.sourceUri
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)

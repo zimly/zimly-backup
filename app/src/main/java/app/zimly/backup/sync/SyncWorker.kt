@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.last
@@ -94,24 +96,23 @@ class SyncWorker(
         val TAG: String? = SyncWorker::class.simpleName
 
         fun initSyncService(context: Context, inputData: Data): SyncService {
-            val url = inputData.getString(SyncInputs.S3_URL)
-            requireNotNull(url) { "URL cannot be empty" }
+            val url = requireNotNull(inputData.getString(SyncInputs.S3_URL)) { "URL cannot be empty" }
+            val key = requireNotNull(inputData.getString(SyncInputs.S3_KEY)) { "Bucket key cannot be empty" }
+            val secret = requireNotNull(inputData.getString(SyncInputs.S3_SECRET)) { "Bucket secret cannot be empty" }
+            val bucket = requireNotNull(inputData.getString(SyncInputs.S3_BUCKET)) { "Bucket cannot be empty" }
 
-            val key = inputData.getString(SyncInputs.S3_KEY)
-            requireNotNull(key) { "Bucket key cannot be empty" }
+            val sourceType = inputData.getString(SyncInputs.SOURCE_TYPE).let {
+                requireNotNull(it) { "Source Type cannot be empty" }
+                SourceType.valueOf(it)
+            }
+            val sourcePath = requireNotNull(inputData.getString(SyncInputs.SOURCE_PATH)) { "Source Type cannot be empty" }
 
-            val secret = inputData.getString(SyncInputs.S3_SECRET)
-            requireNotNull(secret) { "Bucket secret cannot be empty" }
-
-            val bucket = inputData.getString(SyncInputs.S3_BUCKET)
-            requireNotNull(bucket) { "Bucket cannot be empty" }
-
-            // TODO differentiate files and media here? Or pass dao to SyncService?
             val s3Repository = MinioRepository(url, key, secret, bucket)
-            val mediaBucket = inputData.getString(SyncInputs.DEVICE_FOLDER)
-            requireNotNull(mediaBucket) { "Media Bucket cannot be empty" }
 
-            val localMediaResolver = LocalMediaResolver(context.contentResolver, mediaBucket)
+            val localMediaResolver = when (sourceType) {
+                SourceType.MEDIA -> LocalMediaResolver(context.contentResolver, sourcePath)
+                SourceType.FOLDER -> LocalDocumentsResolver(context.contentResolver, sourcePath)
+            }
 
             return SyncServiceImpl(s3Repository, localMediaResolver)
         }
@@ -123,7 +124,8 @@ object SyncInputs {
     const val S3_KEY = "key"
     const val S3_SECRET = "secret"
     const val S3_BUCKET = "bucket"
-    const val DEVICE_FOLDER = "folder"
+    const val SOURCE_TYPE = "source_type"
+    const val SOURCE_PATH = "source_path"
 }
 
 object SyncOutputs {
