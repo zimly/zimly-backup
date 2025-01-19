@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.editor
+package app.zimly.backup.ui.screens.editor.field
 
 import android.net.Uri
 import app.zimly.backup.data.media.SourceType
