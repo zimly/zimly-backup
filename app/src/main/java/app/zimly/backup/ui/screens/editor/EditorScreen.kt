@@ -1,7 +1,6 @@
 package app.zimly.backup.ui.screens.editor
 
 import android.app.Application
-import android.net.Uri
 import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -62,6 +60,8 @@ fun EditorScreen(
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
 
+    val onSourceChange: (type: SourceType) -> Unit = { viewModel.backupSource.update(it) }
+
     EditorCompose(
         state,
         snackbarState,
@@ -71,6 +71,7 @@ fun EditorScreen(
         secret = viewModel.secret,
         bucket = viewModel.bucket,
         backupSource = viewModel.backupSource,
+        onSourceChanged = onSourceChange,
         clearError = viewModel::clearError,
         save = {
             viewModel.viewModelScope.launch {
@@ -92,6 +93,7 @@ private fun EditorCompose(
     secret: Field,
     bucket: Field,
     backupSource: BackupSourceField,
+    onSourceChanged: (type: SourceType) -> Unit,
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
@@ -155,43 +157,10 @@ private fun EditorCompose(
                 .verticalScroll(rememberScrollState()),
         ) {
             BucketConfiguration(name, url, key, secret, bucket)
-
-            val sourceSelector: @Composable (type: SourceType) -> Unit = { type ->
-                when (type) {
-                    SourceType.MEDIA -> {
-                        val selectCollection: (collection: String) -> Unit = {
-                            backupSource.update(SourceType.MEDIA)
-                            backupSource.mediaField.update(it)
-                        }
-                        val focusCollection: (state: FocusState) -> Unit = {
-                            backupSource.mediaField.focus(it)
-                        }
-                        val collection = backupSource.mediaField.state.collectAsState()
-                        MediaCollectionSelector(
-                            state.value.mediaCollections, collection.value.value,
-                            selectCollection, focusCollection
-                        )
-                    }
-
-                    SourceType.FOLDER -> {
-                        val selectFolder: (folder: Uri) -> Unit = {
-                            backupSource.update(SourceType.FOLDER)
-                            backupSource.folderField.update(it)
-                        }
-                        val focusFolder: (state: FocusState) -> Unit = {
-                            backupSource.folderField.focus(it)
-                        }
-                        val folder = backupSource.folderField.state.collectAsState()
-                        DocumentsFolderSelector(folder.value.value, selectFolder, focusFolder)
-                    }
-                }
-            }
-
-            BackupSourceConfiguration(sourceSelector)
+            BackupSourceConfiguration(backupSource, onSourceChanged, state.value.mediaCollections)
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -221,6 +190,7 @@ fun EditPreview() {
             errorMessage = "Select a media collection or folder to synchronize."
         )
 
+        val onSourceChanged: (type: SourceType) -> Unit = { backupSource.update(it) }
         EditorCompose(
             internal.collectAsState(),
             snackbarState,
@@ -230,6 +200,7 @@ fun EditPreview() {
             secret,
             bucket,
             backupSource,
+            onSourceChanged,
             clearError = {},
             save = {},
             back = {},

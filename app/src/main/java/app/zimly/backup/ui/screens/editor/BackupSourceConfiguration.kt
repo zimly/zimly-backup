@@ -27,6 +27,8 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,11 +39,12 @@ import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-fun BackupSourceConfiguration(sourceSelector: @Composable (source: SourceType) -> Unit) {
-
+fun BackupSourceConfiguration(backupSource: BackupSourceField, sourceSelector: (source: SourceType) -> Unit, mediaCollections: Set<String>) {
+    val state = backupSource.state.collectAsState()
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -56,7 +59,6 @@ fun BackupSourceConfiguration(sourceSelector: @Composable (source: SourceType) -
             )
         }
 
-        val checked = remember { mutableStateOf(SourceType.MEDIA) }
         val options = mapOf(SourceType.MEDIA to Icons.Outlined.Photo, SourceType.FOLDER to Icons.Outlined.Folder)
 
         MultiChoiceSegmentedButtonRow(
@@ -71,7 +73,7 @@ fun BackupSourceConfiguration(sourceSelector: @Composable (source: SourceType) -
                     ),
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                     icon = {
-                        SegmentedButtonDefaults.Icon(active = sourceType == checked.value) {
+                        SegmentedButtonDefaults.Icon(active = sourceType == state.value.type) {
                             Icon(
                                 imageVector = options[sourceType]!!,
                                 contentDescription = null,
@@ -79,20 +81,54 @@ fun BackupSourceConfiguration(sourceSelector: @Composable (source: SourceType) -
                             )
                         }
                     },
-                    onCheckedChange = { if (it) checked.value = sourceType },
-                    checked = sourceType == checked.value
+                    onCheckedChange = { if (it) sourceSelector(sourceType) },
+                    checked = sourceType == state.value.type
                 ) {
                     Text(sourceType.name)
                 }
             }
         }
-        sourceSelector(checked.value)
+        BackupSourceToggle(backupSource, mediaCollections)
+    }
+}
+
+@Composable
+private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections: Set<String>) {
+    val state = backupSource.state.collectAsState()
+
+    when (state.value.type) {
+        SourceType.MEDIA -> {
+            val selectCollection: (collection: String) -> Unit = {
+                backupSource.update(SourceType.MEDIA)
+                backupSource.mediaField.update(it)
+            }
+            val focusCollection: (state: FocusState) -> Unit = {
+                backupSource.mediaField.focus(it)
+            }
+            val collection = backupSource.mediaField.state.collectAsState()
+            MediaCollectionSelector(
+                mediaCollections, collection.value.value,
+                selectCollection, focusCollection
+            )
+        }
+
+        SourceType.FOLDER -> {
+            val selectFolder: (folder: Uri) -> Unit = {
+                backupSource.update(SourceType.FOLDER)
+                backupSource.folderField.update(it)
+            }
+            val focusFolder: (state: FocusState) -> Unit = {
+                backupSource.folderField.focus(it)
+            }
+            val folder = backupSource.folderField.state.collectAsState()
+            DocumentsFolderSelector(folder.value.value, selectFolder, focusFolder)
+        }
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun MediaCollectionSelector(
+private fun MediaCollectionSelector(
     mediaCollections: Set<String>,
     collection: String,
     select: (collection: String) -> Unit,
@@ -139,7 +175,7 @@ fun MediaCollectionSelector(
 }
 
 @Composable
-fun DocumentsFolderSelector(
+private fun DocumentsFolderSelector(
     folder: Uri,
     select: (folder: Uri) -> Unit,
     focus: (state: FocusState) -> Unit,
