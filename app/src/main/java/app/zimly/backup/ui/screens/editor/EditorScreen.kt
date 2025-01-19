@@ -158,12 +158,10 @@ private fun EditorCompose(
                 when (type) {
                     SourceType.MEDIA -> {
                         val selectCollection: (collection: String) -> Unit = {
-                            println(it)
                             backupSource.update(SourceType.MEDIA)
                             backupSource.mediaField.update(it)
                         }
                         val focusCollection: (state: FocusState) -> Unit = {
-                            println(it)
                             backupSource.mediaField.focus(it)
                         }
                         val collection = backupSource.mediaField.state.collectAsState()
@@ -175,12 +173,10 @@ private fun EditorCompose(
 
                     SourceType.FOLDER -> {
                         val selectFolder: (folder: Uri) -> Unit = {
-                            println(it)
                             backupSource.update(SourceType.FOLDER)
                             backupSource.folderField.update(it)
                         }
                         val focusFolder: (state: FocusState) -> Unit = {
-                            println(it)
                             backupSource.folderField.focus(it)
                         }
                         val folder = backupSource.folderField.state.collectAsState()
