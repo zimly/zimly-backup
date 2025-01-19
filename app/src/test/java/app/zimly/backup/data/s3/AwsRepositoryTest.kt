@@ -1,7 +1,7 @@
 package app.zimly.backup.data.s3
 
 import app.zimly.backup.data.media.LocalContentResolver
-import app.zimly.backup.data.media.MediaObject
+import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.sync.SyncServiceImpl
 import io.mockk.every
 import io.mockk.mockk
@@ -72,7 +72,7 @@ class AwsRepositoryTest {
     fun createDiff() {
         val localContentResolver = mockk<LocalContentResolver>()
 
-        every { localContentResolver.listObjects() } returns listOf(MediaObject("test_image.png", 123L, "image/png", mockk()))
+        every { localContentResolver.listObjects() } returns listOf(ContentObject("test_image.png", 123L, "image/png", mockk()))
 
         val ss = SyncServiceImpl(s3Repository, localContentResolver)
 

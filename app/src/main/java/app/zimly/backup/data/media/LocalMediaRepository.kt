@@ -8,7 +8,7 @@ import android.provider.MediaStore
 import android.util.Log
 import java.io.InputStream
 
-data class MediaObject(
+data class ContentObject(
     var name: String,
     var size: Long,
     var contentType: String,
@@ -21,7 +21,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
         private val TAG: String? = LocalMediaRepository::class.simpleName
     }
 
-    override fun getPhotos(buckets: Set<String>): List<MediaObject> {
+    override fun getPhotos(buckets: Set<String>): List<ContentObject> {
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val projection = arrayOf(
             MediaStore.MediaColumns._ID,
@@ -40,7 +40,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
         val contentUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         Log.d(TAG, "Content URI path: ${contentUri.path ?: "null"}")
 
-        val photos = mutableListOf<MediaObject>()
+        val photos = mutableListOf<ContentObject>()
         val contentBuckets = buckets.joinToString(separator = ",", transform = {bucket -> "'${bucket}'"})
         val selection = MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " IN ($contentBuckets)"
         contentResolver.query(
@@ -70,15 +70,15 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 photoUri= MediaStore.setRequireOriginal(photoUri)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                photos.add(MediaObject(objectName, size, mimeType, photoUri))
+                photos.add(ContentObject(objectName, size, mimeType, photoUri))
             }
         }
         return photos.toList()
     }
 
-    override fun getVideos(buckets: Set<String>): List<MediaObject> {
+    override fun getVideos(buckets: Set<String>): List<ContentObject> {
 
-        val videos = mutableListOf<MediaObject>()
+        val videos = mutableListOf<ContentObject>()
 
         val projection = arrayOf(
             MediaStore.MediaColumns._ID,
@@ -122,7 +122,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 val videoUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                videos.add(MediaObject(objectName, size, mimeType, videoUri))
+                videos.add(ContentObject(objectName, size, mimeType, videoUri))
             }
         }
         return videos.toList()
@@ -171,7 +171,7 @@ class LocalMediaResolver(private val contentResolver: ContentResolver, private v
 
     private var mediaRepository: MediaRepository = LocalMediaRepository(contentResolver)
 
-    override fun listObjects(): List<MediaObject> {
+    override fun listObjects(): List<ContentObject> {
         return listOf(mediaRepository.getPhotos(setOf(bucket)), mediaRepository.getVideos(setOf(bucket))).flatten()
     }
 
@@ -189,12 +189,12 @@ class LocalMediaResolver(private val contentResolver: ContentResolver, private v
 }
 
 interface MediaRepository {
-    fun getVideos(buckets: Set<String>): List<MediaObject>
-    fun getPhotos(buckets: Set<String>): List<MediaObject>
+    fun getVideos(buckets: Set<String>): List<ContentObject>
+    fun getPhotos(buckets: Set<String>): List<ContentObject>
     fun getBuckets(): Map<String, Number>
 }
 
 interface LocalContentResolver {
     fun getStream(uri: Uri): InputStream
-    fun listObjects(): List<MediaObject>
+    fun listObjects(): List<ContentObject>
 }

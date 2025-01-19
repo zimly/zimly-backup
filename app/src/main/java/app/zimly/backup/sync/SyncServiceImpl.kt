@@ -2,7 +2,7 @@ package app.zimly.backup.sync
 
 import android.util.Log
 import io.minio.errors.ErrorResponseException
-import app.zimly.backup.data.media.MediaObject
+import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.s3.S3Object
 import app.zimly.backup.data.s3.S3Repository
@@ -86,8 +86,8 @@ data class SyncProgress(
 
 data class Diff(
     val remotes: List<S3Object>,
-    val locals: List<MediaObject>,
-    val diff: List<MediaObject>,
+    val locals: List<ContentObject>,
+    val diff: List<ContentObject>,
     val size: Long
 )
 

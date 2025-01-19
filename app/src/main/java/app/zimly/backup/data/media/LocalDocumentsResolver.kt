@@ -1,7 +1,6 @@
 package app.zimly.backup.data.media
 
 import android.content.ContentResolver
-import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
@@ -19,13 +18,13 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
         private val TAG: String? = LocalDocumentsResolver::class.simpleName
     }
 
-    override fun listObjects(): List<MediaObject> {
+    override fun listObjects(): List<ContentObject> {
 
         val documentId = DocumentsContract.getTreeDocumentId(parent)
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, documentId)
 
-        val files = mutableListOf<MediaObject>()
+        val files = mutableListOf<ContentObject>()
 
         val projection = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
@@ -47,7 +46,7 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
                 val size = cursor.getLong(sizeIndex)
 
                 val fileUri = DocumentsContract.buildDocumentUriUsingTree(parent, documentId)
-                files.add(MediaObject(displayName, size, mimeType, fileUri))
+                files.add(ContentObject(displayName, size, mimeType, fileUri))
 
                 // Log or handle the file
                 Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")

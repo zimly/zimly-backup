@@ -6,7 +6,7 @@ import app.zimly.backup.data.media.LocalContentResolver
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import app.zimly.backup.data.media.MediaObject
+import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.sync.Diff
 import app.zimly.backup.sync.SyncServiceImpl
@@ -47,7 +47,7 @@ class SyncServiceImplTest {
         val uri = mockk<Uri>()
         this.localContentResolver = mockk()
 
-        every { localContentResolver.listObjects() } returns listOf(MediaObject("name", 1234, "jpeg", uri))
+        every { localContentResolver.listObjects() } returns listOf(ContentObject("name", 1234, "jpeg", uri))
 
         val bucket = "test-bucket"
         minioRepository = MinioRepository(minioContainer.s3URL, minioUser, minioPwd, bucket)
@@ -87,8 +87,8 @@ class SyncServiceImplTest {
             val ss = SyncServiceImpl(minioRepository, localContentResolver)
 
             val localMediaUri = mockk<Uri>()
-            val obj1 = MediaObject(name = image1, size1, "image/png", localMediaUri)
-            val obj2 = MediaObject(name = image2, size2, "image/png", localMediaUri)
+            val obj1 = ContentObject(name = image1, size1, "image/png", localMediaUri)
+            val obj2 = ContentObject(name = image2, size2, "image/png", localMediaUri)
             val diff = Diff(remotes = emptyList(), locals = listOf(obj1, obj2), diff = listOf(obj1, obj2), size = totalSize)
 
             // WHEN
