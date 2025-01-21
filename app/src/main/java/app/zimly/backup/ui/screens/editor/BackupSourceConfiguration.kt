@@ -5,14 +5,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Photo
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -20,14 +21,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,7 +44,11 @@ import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-fun BackupSourceConfiguration(backupSource: BackupSourceField, sourceSelector: (source: SourceType) -> Unit, mediaCollections: Set<String>) {
+fun BackupSourceConfiguration(
+    backupSource: BackupSourceField,
+    sourceSelector: (source: SourceType) -> Unit,
+    mediaCollections: Set<String>
+) {
     val state = backupSource.state.collectAsState()
     Card(
         colors = CardDefaults.cardColors(
@@ -59,7 +64,10 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField, sourceSelector: (
             )
         }
 
-        val options = mapOf(SourceType.MEDIA to Icons.Outlined.Photo, SourceType.FOLDER to Icons.Outlined.Folder)
+        val options = mapOf(
+            SourceType.MEDIA to Icons.Outlined.Photo,
+            SourceType.FOLDER to Icons.Outlined.Folder
+        )
 
         MultiChoiceSegmentedButtonRow(
             modifier = Modifier
@@ -96,6 +104,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField, sourceSelector: (
 private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections: Set<String>) {
     val state = backupSource.state.collectAsState()
 
+    // TODO Simplify this by pushing the internals into backupSource?
     when (state.value.type) {
         SourceType.MEDIA -> {
             val selectCollection: (collection: String) -> Unit = {
@@ -186,15 +195,31 @@ private fun DocumentsFolderSelector(
                 select(uri)
             }
         }
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+    ) {
+        OutlinedCard {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    // TODO https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
+                    Text(folder.lastPathSegment!!)
+                }
+            }
+        }
+    }
+
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Choose your source directory.")
-        Button(
+        TextButton (
             modifier = Modifier.onFocusChanged { focus(it) },
             onClick = { launcher.launch(null) },
-            colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
         ) {
-            Text(text = "Select Directory")
+            Text(text = if (folder == Uri.EMPTY) "Select Directory" else "Change Directory")
         }
-        Text(text = "Selected directory: $folder")
     }
 }
