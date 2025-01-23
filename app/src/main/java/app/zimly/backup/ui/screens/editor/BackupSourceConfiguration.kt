@@ -46,9 +46,11 @@ import app.zimly.backup.ui.theme.containerBackground
 @Composable
 fun BackupSourceConfiguration(
     backupSource: BackupSourceField,
-    sourceSelector: (source: SourceType) -> Unit,
     mediaCollections: Set<String>
 ) {
+    // TODO Should this only operate on UI state? If not, should it reset the other option?
+    // Or should it go together with the lower onSelect into the parent viewmodel or field?
+    val sourceSelector: (type: SourceType) -> Unit = { backupSource.update(it) }
     val state = backupSource.state.collectAsState()
     Card(
         colors = CardDefaults.cardColors(
@@ -108,7 +110,7 @@ private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections
     when (state.value.type) {
         SourceType.MEDIA -> {
             val selectCollection: (collection: String) -> Unit = {
-                backupSource.update(SourceType.MEDIA)
+                backupSource.update(SourceType.MEDIA) // TODO this is not necessary, triggers a recomposition
                 backupSource.mediaField.update(it)
             }
             val focusCollection: (state: FocusState) -> Unit = {

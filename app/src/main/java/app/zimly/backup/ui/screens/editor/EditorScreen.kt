@@ -60,8 +60,6 @@ fun EditorScreen(
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
 
-    val onSourceChange: (type: SourceType) -> Unit = { viewModel.backupSource.update(it) }
-
     EditorCompose(
         state,
         snackbarState,
@@ -71,7 +69,6 @@ fun EditorScreen(
         secret = viewModel.secret,
         bucket = viewModel.bucket,
         backupSource = viewModel.backupSource,
-        onSourceChanged = onSourceChange,
         clearError = viewModel::clearError,
         save = {
             viewModel.viewModelScope.launch {
@@ -93,7 +90,6 @@ private fun EditorCompose(
     secret: Field,
     bucket: Field,
     backupSource: BackupSourceField,
-    onSourceChanged: (type: SourceType) -> Unit,
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
@@ -157,7 +153,7 @@ private fun EditorCompose(
                 .verticalScroll(rememberScrollState()),
         ) {
             BucketConfiguration(name, url, key, secret, bucket)
-            BackupSourceConfiguration(backupSource, onSourceChanged, state.value.mediaCollections)
+            BackupSourceConfiguration(backupSource, state.value.mediaCollections)
         }
     }
 }
@@ -190,7 +186,6 @@ fun EditPreview() {
             errorMessage = "Select a media collection or folder to synchronize."
         )
 
-        val onSourceChanged: (type: SourceType) -> Unit = { backupSource.update(it) }
         EditorCompose(
             internal.collectAsState(),
             snackbarState,
@@ -200,7 +195,6 @@ fun EditPreview() {
             secret,
             bucket,
             backupSource,
-            onSourceChanged,
             clearError = {},
             save = {},
             back = {},
