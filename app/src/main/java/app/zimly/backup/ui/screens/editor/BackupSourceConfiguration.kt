@@ -50,7 +50,15 @@ fun BackupSourceConfiguration(
 ) {
     // TODO Should this only operate on UI state? If not, should it reset the other option?
     // Or should it go together with the lower onSelect into the parent viewmodel or field?
-    val sourceSelector: (type: SourceType) -> Unit = { backupSource.update(it) }
+    val sourceSelector: (type: SourceType) -> Unit = {
+        backupSource.update(it)
+
+        // TODO Remove?
+        when(it) {
+            SourceType.MEDIA -> backupSource.folderField.update(Uri.EMPTY)
+            SourceType.FOLDER -> backupSource.mediaField.update("")
+        }
+    }
     val state = backupSource.state.collectAsState()
     Card(
         colors = CardDefaults.cardColors(
@@ -99,6 +107,7 @@ fun BackupSourceConfiguration(
             }
         }
         BackupSourceToggle(backupSource, mediaCollections)
+
     }
 }
 
@@ -110,7 +119,6 @@ private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections
     when (state.value.type) {
         SourceType.MEDIA -> {
             val selectCollection: (collection: String) -> Unit = {
-                backupSource.update(SourceType.MEDIA) // TODO this is not necessary, triggers a recomposition
                 backupSource.mediaField.update(it)
             }
             val focusCollection: (state: FocusState) -> Unit = {
@@ -125,7 +133,6 @@ private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections
 
         SourceType.FOLDER -> {
             val selectFolder: (folder: Uri) -> Unit = {
-                backupSource.update(SourceType.FOLDER)
                 backupSource.folderField.update(it)
             }
             val focusFolder: (state: FocusState) -> Unit = {
@@ -197,20 +204,22 @@ private fun DocumentsFolderSelector(
                 select(uri)
             }
         }
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-    ) {
-        OutlinedCard {
-            Row(
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
-                Spacer(modifier = Modifier.width(8.dp))
-                Column {
-                    // TODO https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
-                    Text(folder.lastPathSegment!!)
+    if (folder != Uri.EMPTY) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
+            OutlinedCard {
+                Row(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        // TODO https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
+                        Text(folder.lastPathSegment!!)
+                    }
                 }
             }
         }
