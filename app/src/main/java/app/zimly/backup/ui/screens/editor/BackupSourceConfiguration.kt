@@ -41,6 +41,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.field.TextField
+import app.zimly.backup.ui.screens.editor.field.UriField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
@@ -106,27 +108,26 @@ fun BackupSourceConfiguration(
                 }
             }
         }
-        BackupSourceToggle(backupSource, mediaCollections)
+        BackupSourceToggle(state.value.type, backupSource.mediaField, backupSource.folderField, mediaCollections)
+
+        val error = backupSource.error().collectAsState(null)
+        error.value?.let { Text(it) }
     }
 }
 
 @Composable
-private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections: Set<String>) {
-    val state = backupSource.state.collectAsState()
-    // TODO: Move this into parent and it breaks
-    val error = backupSource.error().collectAsState(null)
-    error.value?.let { Text(it) }
+private fun BackupSourceToggle(sourceType: SourceType, mediaField: TextField, folderField: UriField, mediaCollections: Set<String>) {
 
     // TODO Simplify this by pushing the internals into backupSource?
-    when (state.value.type) {
+    when (sourceType) {
         SourceType.MEDIA -> {
             val selectCollection: (collection: String) -> Unit = {
-                backupSource.mediaField.update(it)
+                mediaField.update(it)
             }
             val focusCollection: (state: FocusState) -> Unit = {
-                backupSource.mediaField.focus(it)
+                mediaField.focus(it)
             }
-            val collection = backupSource.mediaField.state.collectAsState()
+            val collection = mediaField.state.collectAsState()
             MediaCollectionSelector(
                 mediaCollections, collection.value.value,
                 selectCollection, focusCollection
@@ -135,12 +136,12 @@ private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections
 
         SourceType.FOLDER -> {
             val selectFolder: (folder: Uri) -> Unit = {
-                backupSource.folderField.update(it)
+                folderField.update(it)
             }
             val focusFolder: (state: FocusState) -> Unit = {
-                backupSource.folderField.focus(it)
+                folderField.focus(it)
             }
-            val folder = backupSource.folderField.state.collectAsState()
+            val folder = folderField.state.collectAsState()
             DocumentsFolderSelector(folder.value.value, selectFolder, focusFolder)
         }
     }

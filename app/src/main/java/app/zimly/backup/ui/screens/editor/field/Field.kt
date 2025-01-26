@@ -1,11 +1,12 @@
 package app.zimly.backup.ui.screens.editor.field
 
 import androidx.compose.ui.focus.FocusState
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlin.coroutines.coroutineContext
 
 /**
  * A field holds the business logic and state representation of an input field. Similar to a
@@ -31,6 +32,8 @@ abstract class Field<T>(
             )
         }
     }
+
+    fun error(): Flow<String?> = state.map { it.error }
 
     fun focus(focus: FocusState) {
         if (touched == null && focus.hasFocus) {
