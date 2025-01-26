@@ -21,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -56,7 +57,7 @@ fun BackupSourceConfiguration(
         backupSource.update(it)
 
         // TODO Remove?
-        when(it) {
+        when (it) {
             SourceType.MEDIA -> backupSource.folderField.update(Uri.EMPTY)
             SourceType.FOLDER -> backupSource.mediaField.update("")
         }
@@ -108,15 +109,38 @@ fun BackupSourceConfiguration(
                 }
             }
         }
-        BackupSourceToggle(state.value.type, backupSource.mediaField, backupSource.folderField, mediaCollections)
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
+            BackupSourceToggle(
+                state.value.type,
+                backupSource.mediaField,
+                backupSource.folderField,
+                mediaCollections
+            )
 
-        val error = backupSource.error().collectAsState(null)
-        error.value?.let { Text(it) }
+            val error = backupSource.error().collectAsState(null)
+            error.value?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.padding(top = 3.dp, start = 15.dp),
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize
+                )
+            }
+        }
+
     }
 }
 
 @Composable
-private fun BackupSourceToggle(sourceType: SourceType, mediaField: TextField, folderField: UriField, mediaCollections: Set<String>) {
+private fun BackupSourceToggle(
+    sourceType: SourceType,
+    mediaField: TextField,
+    folderField: UriField,
+    mediaCollections: Set<String>
+) {
 
     // TODO Simplify this by pushing the internals into backupSource?
     when (sourceType) {
@@ -156,40 +180,38 @@ private fun MediaCollectionSelector(
     focus: (state: FocusState) -> Unit,
 ) {
 
-    Column(modifier = Modifier.padding(16.dp)) {
 
-        var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
-        ExposedDropdownMenuBox(
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+    ) {
+        OutlinedTextField(
+            // The `menuAnchor` modifier must be passed to the text field for correctness.
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+                .onFocusChanged { focus(it) },
+            readOnly = true,
+            value = collection,
+            onValueChange = {},
+            label = { Text("Collection") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+        )
+        ExposedDropdownMenu(
             expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
+            onDismissRequest = { expanded = false },
         ) {
-            OutlinedTextField(
-                // The `menuAnchor` modifier must be passed to the text field for correctness.
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth()
-                    .onFocusChanged { focus(it) },
-                readOnly = true,
-                value = collection,
-                onValueChange = {},
-                label = { Text("Collection") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            )
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-            ) {
-                mediaCollections.forEach { gallery ->
-                    DropdownMenuItem(
-                        text = { Text(gallery) },
-                        onClick = {
-                            select(gallery)
-                            expanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    )
-                }
+            mediaCollections.forEach { gallery ->
+                DropdownMenuItem(
+                    text = { Text(gallery) },
+                    onClick = {
+                        select(gallery)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
             }
         }
     }
@@ -208,28 +230,29 @@ private fun DocumentsFolderSelector(
             }
         }
     if (folder != Uri.EMPTY) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
-            OutlinedCard {
-                Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        // TODO https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
-                        Text(folder.lastPathSegment!!)
-                    }
+        OutlinedCard {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    // TODO https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
+                    Text(folder.lastPathSegment!!)
                 }
             }
         }
     }
 
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        TextButton (
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        TextButton(
             // TODO Fix focus, never fires ACTIVE, hence no validation
             modifier = Modifier.onFocusChanged { focus(it) },
             onClick = { launcher.launch(null) },
