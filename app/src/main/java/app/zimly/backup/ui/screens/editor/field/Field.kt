@@ -6,6 +6,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+/**
+ * A field holds the business logic and state representation of an input field. Similar to a
+ * ViewModel for views.
+ *
+ * Validation and error state are triggered by [FocusState] changes and value updates.
+ */
 class Field(
     private val errorMessage: String = "This field is required.",
     private val validate: (value: String) -> Boolean = { it.isNotEmpty() },
