@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.coroutines.coroutineContext
 
 /**
  * A field holds the business logic and state representation of an input field. Similar to a
@@ -22,10 +23,11 @@ abstract class Field<T>(
     val state: StateFlow<FieldState<T>> = internal.asStateFlow()
 
     fun update(value: T) {
+        val error = touched != null && !validate(value)
         internal.update {
             it.copy(
                 value = value,
-                error = if (isError()) errorMessage else null
+                error = if (error) errorMessage else null
             )
         }
     }

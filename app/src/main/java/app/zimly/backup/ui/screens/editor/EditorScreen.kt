@@ -183,9 +183,7 @@ fun EditPreview() {
         val bucket = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val backupSource = BackupSourceField(
-            errorMessage = "Select a media collection or folder to synchronize."
-        )
+        val backupSource = BackupSourceField()
 
         EditorCompose(
             internal.collectAsState(),

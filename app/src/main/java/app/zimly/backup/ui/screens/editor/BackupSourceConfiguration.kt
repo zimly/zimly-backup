@@ -107,13 +107,15 @@ fun BackupSourceConfiguration(
             }
         }
         BackupSourceToggle(backupSource, mediaCollections)
-
     }
 }
 
 @Composable
 private fun BackupSourceToggle(backupSource: BackupSourceField, mediaCollections: Set<String>) {
     val state = backupSource.state.collectAsState()
+    // TODO: Move this into parent and it breaks
+    val error = backupSource.error().collectAsState(null)
+    error.value?.let { Text(it) }
 
     // TODO Simplify this by pushing the internals into backupSource?
     when (state.value.type) {
@@ -227,6 +229,7 @@ private fun DocumentsFolderSelector(
 
     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         TextButton (
+            // TODO Fix focus, never fires ACTIVE, hence no validation
             modifier = Modifier.onFocusChanged { focus(it) },
             onClick = { launcher.launch(null) },
         ) {

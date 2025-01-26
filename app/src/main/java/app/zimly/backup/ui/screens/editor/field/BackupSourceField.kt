@@ -1,18 +1,29 @@
 package app.zimly.backup.ui.screens.editor.field
 
 import app.zimly.backup.data.media.SourceType
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 class BackupSourceField {
-    val mediaField = TextField()
-    val folderField = UriField()
+    val mediaField = TextField("Select a collection for backup")
+    val folderField = UriField("Select a folder for backup")
 
     private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState(SourceType.MEDIA))
 
     val state: StateFlow<FieldState> = internal.asStateFlow()
+
+    // TODO: Use functions over fields generally?
+    fun error(): Flow<String?> {
+        return when(state.value.type) {
+            SourceType.MEDIA -> mediaField.state
+            SourceType.FOLDER -> folderField.state
+        }.map { it.error }
+    }
+
 
     fun update(value: SourceType) {
         internal.update { it.copy(type = value) }
