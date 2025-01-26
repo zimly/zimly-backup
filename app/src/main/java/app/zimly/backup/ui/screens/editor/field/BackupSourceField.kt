@@ -6,10 +6,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class BackupSourceField(
-    private val errorMessage: String = "This field is required."
-) {
-    val mediaField = Field()
+class BackupSourceField {
+    val mediaField = TextField()
     val folderField = UriField()
 
     private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState(SourceType.MEDIA))

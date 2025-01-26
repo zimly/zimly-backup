@@ -38,6 +38,7 @@ import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.field.Field
+import app.zimly.backup.ui.screens.editor.field.TextField
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -84,11 +85,11 @@ fun EditorScreen(
 private fun EditorCompose(
     state: State<EditorViewModel.UiState>,
     snackbarState: SnackbarHostState,
-    name: Field,
-    url: Field,
-    key: Field,
-    secret: Field,
-    bucket: Field,
+    name: TextField,
+    url: TextField,
+    key: TextField,
+    secret: TextField,
+    bucket: TextField,
     backupSource: BackupSourceField,
     clearError: () -> Unit,
     save: () -> Unit,
@@ -167,19 +168,19 @@ fun EditPreview() {
 
         val snackbarState = remember { SnackbarHostState() }
 
-        val name = Field(
+        val name = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val url = Field(
+        val url = TextField(
             errorMessage = "Not a valid URL.",
             validate = { URLUtil.isValidUrl(it) })
-        val key = Field(
+        val key = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val secret = Field(
+        val secret = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val bucket = Field(
+        val bucket = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
         val backupSource = BackupSourceField(

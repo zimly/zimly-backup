@@ -8,7 +8,7 @@ import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
 
-class FieldTest {
+class TextFieldTest {
 
     @Test
     fun errorAfterInvalidUpdate() {
@@ -18,7 +18,7 @@ class FieldTest {
 
         val errorMessage = "Fail!"
         val validator: (value: String) -> Boolean = { false }
-        val field = Field(errorMessage, validator)
+        val field = TextField(errorMessage, validator)
 
         // WHEN
         field.focus(focus)
@@ -37,7 +37,7 @@ class FieldTest {
         every { focus.hasFocus } returns true andThen false
 
         val errorMessage = "No touchy!"
-        val field = Field(errorMessage)
+        val field = TextField(errorMessage)
 
         // WHEN
         field.focus(focus)

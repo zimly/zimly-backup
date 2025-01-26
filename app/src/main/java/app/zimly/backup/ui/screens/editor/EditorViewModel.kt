@@ -13,6 +13,7 @@ import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.field.Field
+import app.zimly.backup.ui.screens.editor.field.TextField
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,13 +34,13 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     // Expose Ui State
     val state: StateFlow<UiState> = internal.asStateFlow()
 
-    val name: Field = Field()
-    val url: Field = Field(
+    val name = TextField()
+    val url = TextField(
         errorMessage = "Not a valid URL.",
         validate = { URLUtil.isValidUrl(it) })
-    val key: Field = Field()
-    val secret: Field = Field()
-    val bucket: Field = Field()
+    val key = TextField()
+    val secret = TextField()
+    val bucket = TextField()
     val backupSource = BackupSourceField()
 
 

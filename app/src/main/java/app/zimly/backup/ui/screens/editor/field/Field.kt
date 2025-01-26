@@ -12,15 +12,16 @@ import kotlinx.coroutines.flow.update
  *
  * Validation and error state are triggered by [FocusState] changes and value updates.
  */
-class Field(
+abstract class Field<T>(
     private val errorMessage: String = "This field is required.",
-    private val validate: (value: String) -> Boolean = { it.isNotEmpty() },
+    private val validate: (value: T) -> Boolean,
+    defaultValue: T
 ) {
     private var touched: Boolean? = null
-    private val internal: MutableStateFlow<FieldState> = MutableStateFlow(FieldState())
-    val state: StateFlow<FieldState> = internal.asStateFlow()
+    private var internal: MutableStateFlow<FieldState<T>> = MutableStateFlow(FieldState(defaultValue))
+    val state: StateFlow<FieldState<T>> = internal.asStateFlow()
 
-    fun update(value: String) {
+    fun update(value: T) {
         internal.update {
             it.copy(
                 value = value,
@@ -53,5 +54,5 @@ class Field(
     }
 
 
-    data class FieldState(val value: String = "", val error: String? = null)
+    data class FieldState<T>(val value: T, val error: String? = null)
 }
