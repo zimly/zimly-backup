@@ -107,16 +107,14 @@ fun BackupSourceConfiguration(
             modifier = Modifier
                 .padding(16.dp)
         ) {
-            BackupSourceToggle(
-                state.value.type,
-                backupSource.mediaField,
-                backupSource.folderField,
-                mediaCollections
-            )
-
+            when (state.value.type) {
+                SourceType.MEDIA ->
+                    MediaCollectionSelector(mediaCollections, backupSource.mediaField)
+                SourceType.FOLDER ->
+                    DocumentsFolderSelector(backupSource.folderField)
+            }
             BackupSourceError(backupSource)
         }
-
     }
 }
 
@@ -140,51 +138,18 @@ private fun BackupSourceError(backupSource: BackupSourceField) {
 }
 
 @Composable
-private fun BackupSourceToggle(
-    sourceType: SourceType,
-    mediaField: TextField,
-    folderField: UriField,
-    mediaCollections: Set<String>
-) {
-
-    // TODO Simplify this by pushing the internals into backupSource?
-    when (sourceType) {
-        SourceType.MEDIA -> {
-            val selectCollection: (collection: String) -> Unit = {
-                mediaField.update(it)
-            }
-            val focusCollection: (state: FocusState) -> Unit = {
-                mediaField.focus(it)
-            }
-            val collection = mediaField.state.collectAsState()
-            MediaCollectionSelector(
-                mediaCollections, collection.value.value,
-                selectCollection, focusCollection
-            )
-        }
-
-        SourceType.FOLDER -> {
-            val selectFolder: (folder: Uri) -> Unit = {
-                folderField.update(it)
-            }
-            val focusFolder: () -> Unit = {
-                folderField.touch()
-            }
-            val folder = folderField.state.collectAsState()
-            DocumentsFolderSelector(folder.value.value, selectFolder, focusFolder)
-        }
-    }
-}
-
-@Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun MediaCollectionSelector(
     mediaCollections: Set<String>,
-    collection: String,
-    select: (collection: String) -> Unit,
-    focus: (state: FocusState) -> Unit,
+    mediaField: TextField
 ) {
-
+    val select: (collection: String) -> Unit = {
+        mediaField.update(it)
+    }
+    val focus: (state: FocusState) -> Unit = {
+        mediaField.focus(it)
+    }
+    val collection = mediaField.state.collectAsState()
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -199,7 +164,7 @@ private fun MediaCollectionSelector(
                 .fillMaxWidth()
                 .onFocusChanged { focus(it) },
             readOnly = true,
-            value = collection,
+            value = collection.value.value,
             onValueChange = {},
             label = { Text("Collection") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -224,15 +189,17 @@ private fun MediaCollectionSelector(
 
 @Composable
 private fun DocumentsFolderSelector(
-    folder: Uri,
-    select: (folder: Uri) -> Unit,
-    focus: () -> Unit,
+    folderField: UriField
 ) {
+    val select: (folder: Uri) -> Unit = { folderField.update(it) }
+    val focus: () -> Unit = { folderField.touch() }
+    val folder = folderField.state.collectAsState()
+
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             if (uri != null) select(uri) else select(Uri.EMPTY)
         }
-    if (folder != Uri.EMPTY) {
+    if (folder.value.value != Uri.EMPTY) {
         OutlinedCard {
             Row(
                 modifier = Modifier
@@ -244,7 +211,7 @@ private fun DocumentsFolderSelector(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     // TODO https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
-                    Text(folder.lastPathSegment!!)
+                    Text(folder.value.value.lastPathSegment!!)
                 }
             }
         }
