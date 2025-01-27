@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalDocumentsResolver
+import app.zimly.backup.ui.screens.editor.field.UriField
 import app.zimly.backup.ui.screens.sync.SyncViewModel.SyncConfigurationState
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.Flow
@@ -49,6 +50,8 @@ fun DocumentsFolderCompose(
 
 @Composable
 private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
+
+    val displayName = UriField.displayName(documentsFolderState.folder)
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -57,7 +60,7 @@ private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
             Icon(
-                Icons.Outlined.Photo,
+                Icons.Outlined.Folder,
                 "Media",
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
@@ -68,7 +71,7 @@ private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Folder")
-                Text(text = documentsFolderState.folder)
+                displayName?.let { Text(it) }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),

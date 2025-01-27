@@ -191,15 +191,18 @@ private fun MediaCollectionSelector(
 private fun DocumentsFolderSelector(
     folderField: UriField
 ) {
-    val select: (folder: Uri) -> Unit = { folderField.update(it) }
+    val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(it) else folderField.update(Uri.EMPTY) }
     val focus: () -> Unit = { folderField.touch() }
     val folder = folderField.state.collectAsState()
+    val displaySelected = folder.value.value != Uri.EMPTY
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-            if (uri != null) select(uri) else select(Uri.EMPTY)
+            select(uri)
         }
-    if (folder.value.value != Uri.EMPTY) {
+
+    if (displaySelected) {
+        val displayName = UriField.displayName(folder.value.value)
         OutlinedCard {
             Row(
                 modifier = Modifier
@@ -210,8 +213,9 @@ private fun DocumentsFolderSelector(
                 Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
-                    // TODO https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
-                    Text(folder.value.value.lastPathSegment!!)
+                    displayName?.let {
+                        Text(it)
+                    }
                 }
             }
         }
