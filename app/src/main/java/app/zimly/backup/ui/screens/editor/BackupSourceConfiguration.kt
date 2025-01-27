@@ -55,12 +55,6 @@ fun BackupSourceConfiguration(
     // Or should it go together with the lower onSelect into the parent viewmodel or field?
     val sourceSelector: (type: SourceType) -> Unit = {
         backupSource.update(it)
-
-        // TODO Remove?
-        when (it) {
-            SourceType.MEDIA -> backupSource.folderField.update(Uri.EMPTY)
-            SourceType.FOLDER -> backupSource.mediaField.update("")
-        }
     }
     val state = backupSource.state.collectAsState()
     Card(
