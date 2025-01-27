@@ -120,17 +120,28 @@ fun BackupSourceConfiguration(
                 mediaCollections
             )
 
-            val error = backupSource.error().collectAsState(null)
-            error.value?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier.padding(top = 3.dp, start = 15.dp),
-                    color = MaterialTheme.colorScheme.error,
-                    fontSize = MaterialTheme.typography.bodySmall.fontSize
-                )
-            }
+            BackupSourceError(backupSource)
         }
 
+    }
+}
+
+@Composable
+private fun BackupSourceError(backupSource: BackupSourceField) {
+    val error = backupSource.error().collectAsState(null)
+    error.value?.let {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = MaterialTheme.typography.bodySmall.fontSize
+            )
+        }
     }
 }
 
