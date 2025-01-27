@@ -35,6 +35,10 @@ abstract class Field<T>(
 
     fun error(): Flow<String?> = state.map { it.error }
 
+    /**
+     * Handle [FocusState] changes on the field. The idea behind this is to not show errors
+     * on first touch of the field, but rather when moving on to the next field.
+     */
     fun focus(focus: FocusState) {
         if (touched == null && focus.hasFocus) {
             touched = false

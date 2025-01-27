@@ -7,6 +7,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+/**
+ * Composite field for the backup [SourceType] and value that delegates it's logic to the
+ * corresponding fields [mediaField] and [folderField].
+ */
 class BackupSourceField {
     val mediaField = TextField("Select a collection for backup")
     val folderField = UriField("Select a folder for backup")
