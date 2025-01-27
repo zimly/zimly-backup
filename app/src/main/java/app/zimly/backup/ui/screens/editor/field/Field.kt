@@ -50,6 +50,10 @@ abstract class Field<T>(
         }
     }
 
+    fun touch() {
+        this.touched = true
+    }
+
     private fun isError(): Boolean {
         return touched == true && !isValid()
     }

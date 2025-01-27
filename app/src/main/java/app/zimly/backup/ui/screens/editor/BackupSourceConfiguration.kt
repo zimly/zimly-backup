@@ -162,8 +162,8 @@ private fun BackupSourceToggle(
             val selectFolder: (folder: Uri) -> Unit = {
                 folderField.update(it)
             }
-            val focusFolder: (state: FocusState) -> Unit = {
-                folderField.focus(it)
+            val focusFolder: () -> Unit = {
+                folderField.touch()
             }
             val folder = folderField.state.collectAsState()
             DocumentsFolderSelector(folder.value.value, selectFolder, focusFolder)
@@ -221,13 +221,11 @@ private fun MediaCollectionSelector(
 private fun DocumentsFolderSelector(
     folder: Uri,
     select: (folder: Uri) -> Unit,
-    focus: (state: FocusState) -> Unit,
+    focus: () -> Unit,
 ) {
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-            if (uri != null) {
-                select(uri)
-            }
+            if (uri != null) select(uri) else select(Uri.EMPTY)
         }
     if (folder != Uri.EMPTY) {
         OutlinedCard {
@@ -247,15 +245,15 @@ private fun DocumentsFolderSelector(
         }
     }
 
-
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         TextButton(
-            // TODO Fix focus, never fires ACTIVE, hence no validation
-            modifier = Modifier.onFocusChanged { focus(it) },
-            onClick = { launcher.launch(null) },
+            onClick = {
+                focus()
+                launcher.launch(null)
+            },
         ) {
             Text(text = if (folder == Uri.EMPTY) "Select Directory" else "Change Directory")
         }
