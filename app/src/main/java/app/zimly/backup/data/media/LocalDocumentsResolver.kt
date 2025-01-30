@@ -19,12 +19,15 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
     }
 
     override fun listObjects(): List<ContentObject> {
-
-        val parentDocumentId = DocumentsContract.getTreeDocumentId(parent)
-
-        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, parentDocumentId)
-
         val files = mutableListOf<ContentObject>()
+        val treeDocumentId = DocumentsContract.getTreeDocumentId(parent)
+
+        listObjectsRecursive(treeDocumentId, files)
+        return files
+    }
+
+    private fun listObjectsRecursive(folderDocumentId: String, files: MutableList<ContentObject>) {
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, folderDocumentId)
 
         val projection = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
@@ -33,7 +36,6 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
             DocumentsContract.Document.COLUMN_SIZE
         )
 
-        // TODO Filter directories
         contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
             val idIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
             val nameIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
@@ -46,17 +48,20 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
                 val mimeType = cursor.getString(mimeTypeIndex)
                 val size = cursor.getLong(sizeIndex)
 
-                val fileUri = DocumentsContract.buildDocumentUriUsingTree(parent, documentId)
-                val path = objectPath(documentId)
-                files.add(ContentObject(path, size, mimeType, fileUri))
-
-                // Log or handle the file
-                Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")
+                // Resolve directories recursively
+                if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                    listObjectsRecursive(documentId, files)
+                } else {
+                    val fileUri = DocumentsContract.buildDocumentUriUsingTree(parent, documentId)
+                    val path = objectPath(documentId)
+                    files.add(ContentObject(path, size, mimeType, fileUri))
+                    // Log or handle the file
+                    Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")
+                }
             }
         }
-
-        return files
     }
+
 
     /*
      * Shady function to create a nice path for documents.
