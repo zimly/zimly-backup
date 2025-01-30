@@ -20,9 +20,9 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
 
     override fun listObjects(): List<ContentObject> {
 
-        val documentId = DocumentsContract.getTreeDocumentId(parent)
+        val parentDocumentId = DocumentsContract.getTreeDocumentId(parent)
 
-        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, documentId)
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, parentDocumentId)
 
         val files = mutableListOf<ContentObject>()
 
@@ -33,6 +33,7 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
             DocumentsContract.Document.COLUMN_SIZE
         )
 
+        // TODO Filter directories
         contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
             val idIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
             val nameIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
@@ -46,7 +47,8 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
                 val size = cursor.getLong(sizeIndex)
 
                 val fileUri = DocumentsContract.buildDocumentUriUsingTree(parent, documentId)
-                files.add(ContentObject(displayName, size, mimeType, fileUri))
+                val path = objectPath(documentId)
+                files.add(ContentObject(path, size, mimeType, fileUri))
 
                 // Log or handle the file
                 Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")
@@ -54,6 +56,15 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, folde
         }
 
         return files
+    }
+
+    /*
+     * Shady function to create a nice path for documents.
+     *
+     * See e.g. https://stackoverflow.com/questions/13209494/how-to-get-the-full-file-path-from-uri
+     */
+    private fun objectPath(documentId: String): String {
+        return documentId.substringAfter(":")
     }
 
     override fun getStream(uri: Uri): InputStream {
