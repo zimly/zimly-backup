@@ -23,6 +23,7 @@ import app.zimly.backup.sync.SyncOutputs
 import app.zimly.backup.sync.SyncServiceImpl
 import app.zimly.backup.sync.SyncWorker
 import app.zimly.backup.sync.getNullable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
@@ -68,7 +70,7 @@ class SyncViewModel(
                 sourceType = it.sourceType,
                 sourceUri = it.sourceUri
             )
-        }
+        }.flowOn(Dispatchers.IO)
 
     // Flow created when starting the sync
     // TODO change to MutableSharedFlow as well!?

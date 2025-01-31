@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -24,20 +25,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalMediaResolver
-import app.zimly.backup.ui.screens.sync.SyncViewModel.SyncConfigurationState
 import app.zimly.backup.ui.theme.containerBackground
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 @Composable
 fun MediaCollectionCompose(
     collectionPath: String,
-    syncConfigurationFlow: Flow<SyncConfigurationState>,
     application: Application,
     viewModel: MediaCollectionViewModel = viewModel(factory = viewModelFactory {
         initializer {
             val mediaResolver = LocalMediaResolver(application.contentResolver, collectionPath)
-            MediaCollectionViewModel(mediaResolver, syncConfigurationFlow)
+            MediaCollectionViewModel(mediaResolver, collectionPath)
         }
     }),
 ) {
@@ -97,12 +97,12 @@ data class MediaCollectionState(
 
 class MediaCollectionViewModel(
     localMediaResolver: LocalMediaResolver,
-    syncConfigurationFlow: Flow<SyncConfigurationState>
+    collection: String
 ) : ViewModel() {
 
-    val folderState = syncConfigurationFlow.map {
+    val folderState = snapshotFlow { collection }.map {
         val photoCount = localMediaResolver.photoCount()
         val videoCount = localMediaResolver.videoCount()
-        return@map MediaCollectionState(it.sourceUri, photoCount, videoCount)
-    }
+        return@map MediaCollectionState(it, photoCount, videoCount)
+    }.flowOn(Dispatchers.IO)
 }

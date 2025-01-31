@@ -93,8 +93,8 @@ fun SyncScreen(
 
     val source = @Composable {
         when(remote.sourceType) {
-            SourceType.MEDIA -> MediaCollectionCompose(remote.sourceUri, viewModel.syncConfigurationState, application)
-            SourceType.FOLDER -> DocumentsFolderCompose(remote.sourceUri, viewModel.syncConfigurationState, application)
+            SourceType.MEDIA -> MediaCollectionCompose(remote.sourceUri, application)
+            SourceType.FOLDER -> DocumentsFolderCompose(remote.sourceUri, application)
             null -> {}
         }
     }

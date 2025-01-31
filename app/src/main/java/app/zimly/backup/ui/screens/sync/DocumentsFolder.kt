@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,20 +26,19 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.ui.screens.editor.field.UriField
-import app.zimly.backup.ui.screens.sync.SyncViewModel.SyncConfigurationState
 import app.zimly.backup.ui.theme.containerBackground
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 @Composable
 fun DocumentsFolderCompose(
     folderPath: String,
-    syncConfigurationFlow: Flow<SyncConfigurationState>,
     application: Application,
     viewModel: DocumentsFolderViewModel = viewModel(factory = viewModelFactory {
         initializer {
             val localDocumentsResolver = LocalDocumentsResolver(application.contentResolver, folderPath)
-            DocumentsFolderViewModel(localDocumentsResolver, syncConfigurationFlow)
+            DocumentsFolderViewModel(localDocumentsResolver, folderPath)
         }
     }),
 ) {
@@ -91,11 +91,11 @@ data class DocumentsFolderState(
 
 class DocumentsFolderViewModel(
     localContentResolver: LocalDocumentsResolver,
-    syncConfigurationFlow: Flow<SyncConfigurationState>
+    folderPath: String
 ) : ViewModel() {
 
-    val folderState = syncConfigurationFlow.map {
+    val folderState = snapshotFlow { folderPath }.map {
         val documentsCount = localContentResolver.listObjects().size
-        return@map DocumentsFolderState(it.sourceUri, documentsCount)
-    }
+        return@map DocumentsFolderState(it, documentsCount)
+    }.flowOn(Dispatchers.IO)
 }
