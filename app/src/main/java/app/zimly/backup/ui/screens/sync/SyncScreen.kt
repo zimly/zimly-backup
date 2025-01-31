@@ -413,11 +413,6 @@ fun InProgressPreview() {
         progressCount = 40,
         progressBytes = 233 * 1_000_000,
     )
-    val folderState = MediaCollectionState(
-        "Camera",
-        photos = 3984,
-        videos = 273
-    )
     val snackbarState = remember { SnackbarHostState() }
 
 
@@ -457,11 +452,6 @@ fun CompletedPreview() {
         progressCount = 51,
         progressBytes = 51 * 5 * 1_000_000,
     )
-    val folderState = MediaCollectionState(
-        "Camera",
-        photos = 3984,
-        videos = 273
-    )
     val snackbarState = remember { SnackbarHostState() }
 
 
@@ -493,11 +483,6 @@ fun IdlePreview() {
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress()
-    val folderState = MediaCollectionState(
-        "Camera",
-        photos = 3984,
-        videos = 273
-    )
     val snackbarState = remember { SnackbarHostState() }
 
 
@@ -530,11 +515,6 @@ fun CalculatingPreview() {
     )
     val progressState = SyncViewModel.Progress(status = SyncViewModel.Status.CALCULATING)
 
-    val folderState = MediaCollectionState(
-        "Camera",
-        photos = 3984,
-        videos = 273
-    )
     val snackbarState = remember { SnackbarHostState() }
 
 
