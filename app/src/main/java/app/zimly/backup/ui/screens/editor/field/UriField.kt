@@ -1,7 +1,7 @@
 package app.zimly.backup.ui.screens.editor.field
 
 import android.net.Uri
-import android.provider.DocumentsContract
+import app.zimly.backup.data.media.LocalDocumentsResolver
 
 class UriField(
     errorMessage: String = "This field is required.",
@@ -12,13 +12,8 @@ class UriField(
     // https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
     // What a mess..
     companion object{
-        fun displayName(uri: Uri): String? {
-            return if (uri == Uri.EMPTY) "" else if (DocumentsContract.isTreeUri(uri)) DocumentsContract.getTreeDocumentId(uri) else uri.path
+        fun displayName(uri: Uri): String {
+            return LocalDocumentsResolver.objectPath(uri)
         }
-
-        fun displayName(uri: String): String? {
-            return displayName(Uri.parse(uri))
-        }
-
     }
 }

@@ -213,9 +213,7 @@ private fun DocumentsFolderSelector(
                 Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
-                    displayName?.let {
-                        Text(it)
-                    }
+                    Text(displayName)
                 }
             }
         }

@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.sync
 
 import android.content.ContentResolver
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
@@ -124,7 +125,7 @@ class SyncViewModel(
             val remote = dao.loadById(remoteId)
             val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
 
-            val resolver = if (remote.sourceType == SourceType.MEDIA) LocalMediaResolver(contentResolver, remote.sourceUri) else LocalDocumentsResolver(contentResolver, remote.sourceUri)
+            val resolver = if (remote.sourceType == SourceType.MEDIA) LocalMediaResolver(contentResolver, remote.sourceUri) else LocalDocumentsResolver(contentResolver, Uri.parse(remote.sourceUri))
             val syncService = SyncServiceImpl(s3Repo, resolver)
 
             val diff = syncService.diff()

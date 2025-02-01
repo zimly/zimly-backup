@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.sync
 
 import android.app.Application
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,8 +38,9 @@ fun DocumentsFolderCompose(
     application: Application,
     viewModel: DocumentsFolderViewModel = viewModel(factory = viewModelFactory {
         initializer {
-            val localDocumentsResolver = LocalDocumentsResolver(application.contentResolver, folderPath)
-            DocumentsFolderViewModel(localDocumentsResolver, folderPath)
+            val folderUri = Uri.parse(folderPath)
+            val localDocumentsResolver = LocalDocumentsResolver(application.contentResolver, folderUri)
+            DocumentsFolderViewModel(localDocumentsResolver, folderUri)
         }
     }),
 ) {
@@ -85,13 +87,13 @@ private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
 }
 
 data class DocumentsFolderState(
-    var folder: String = "",
+    var folder: Uri = Uri.EMPTY,
     var documents: Int = 0,
 )
 
 class DocumentsFolderViewModel(
     localContentResolver: LocalDocumentsResolver,
-    folderPath: String
+    folderPath: Uri
 ) : ViewModel() {
 
     val folderState = snapshotFlow { folderPath }.map {

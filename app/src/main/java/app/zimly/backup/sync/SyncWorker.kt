@@ -1,6 +1,7 @@
 package app.zimly.backup.sync
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.Data
@@ -111,7 +112,7 @@ class SyncWorker(
 
             val localMediaResolver = when (sourceType) {
                 SourceType.MEDIA -> LocalMediaResolver(context.contentResolver, sourcePath)
-                SourceType.FOLDER -> LocalDocumentsResolver(context.contentResolver, sourcePath)
+                SourceType.FOLDER -> LocalDocumentsResolver(context.contentResolver, Uri.parse(sourcePath))
             }
 
             return SyncServiceImpl(s3Repository, localMediaResolver)
