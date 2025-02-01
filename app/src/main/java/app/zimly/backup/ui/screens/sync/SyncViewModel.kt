@@ -1,5 +1,6 @@
 package app.zimly.backup.ui.screens.sync
 
+import android.content.ContentResolver
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
@@ -12,7 +13,9 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
-import app.zimly.backup.data.media.MediaRepository
+import app.zimly.backup.data.media.LocalDocumentsResolver
+import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.sync.SyncInputs
@@ -20,6 +23,7 @@ import app.zimly.backup.sync.SyncOutputs
 import app.zimly.backup.sync.SyncServiceImpl
 import app.zimly.backup.sync.SyncWorker
 import app.zimly.backup.sync.getNullable
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,6 +34,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
@@ -43,7 +48,7 @@ class SyncViewModel(
     private val dao: RemoteDao,
     private val remoteId: Int,
     private val workManager: WorkManager,
-    private val mediaRepo: MediaRepository
+    private val contentResolver: ContentResolver
 ) : ViewModel() {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
@@ -55,22 +60,17 @@ class SyncViewModel(
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
 
-    var remoteState: Flow<RemoteState> = snapshotFlow { remoteId }
+    var syncConfigurationState: Flow<SyncConfigurationState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
         .map {
-            RemoteState(
+            SyncConfigurationState(
                 name = it.name,
                 url = it.url,
                 bucket = it.bucket,
-                folder = it.folder
+                sourceType = it.sourceType,
+                sourceUri = it.sourceUri
             )
-        }
-
-    var folderState = remoteState.map {
-        val photoCount = mediaRepo.getPhotos(setOf(it.folder)).size
-        val videoCount = mediaRepo.getVideos(setOf(it.folder)).size
-        return@map FolderState(it.folder, photoCount, videoCount)
-    }
+        }.flowOn(Dispatchers.IO)
 
     // Flow created when starting the sync
     // TODO change to MutableSharedFlow as well!?
@@ -123,9 +123,11 @@ class SyncViewModel(
         try {
             val remote = dao.loadById(remoteId)
             val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
-            val syncService = SyncServiceImpl(s3Repo, mediaRepo)
 
-            val diff = syncService.diff(setOf(remote.folder))
+            val resolver = if (remote.sourceType == SourceType.MEDIA) LocalMediaResolver(contentResolver, remote.sourceUri) else LocalDocumentsResolver(contentResolver, remote.sourceUri)
+            val syncService = SyncServiceImpl(s3Repo, resolver)
+
+            val diff = syncService.diff()
             // Display result of the minio request to the user
             _progress.update {
                 Progress(
@@ -242,7 +244,8 @@ class SyncViewModel(
             SyncInputs.S3_KEY to remote.key,
             SyncInputs.S3_SECRET to remote.secret,
             SyncInputs.S3_BUCKET to remote.bucket,
-            SyncInputs.DEVICE_FOLDER to arrayOf(remote.folder)
+            SyncInputs.SOURCE_TYPE to remote.sourceType.name,
+            SyncInputs.SOURCE_PATH to remote.sourceUri
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -265,17 +268,12 @@ class SyncViewModel(
         _error.emit(null)
     }
 
-    data class RemoteState(
+    data class SyncConfigurationState(
         var name: String = "",
         var url: String = "",
         var bucket: String = "",
-        var folder: String = "",
-    )
-
-    data class FolderState(
-        var folder: String = "",
-        var photos: Int = 0,
-        var videos: Int = 0,
+        var sourceType: SourceType? = null,
+        var sourceUri: String = "",
     )
 
     data class Progress(

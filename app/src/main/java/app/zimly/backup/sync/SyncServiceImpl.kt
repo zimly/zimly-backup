@@ -2,8 +2,8 @@ package app.zimly.backup.sync
 
 import android.util.Log
 import io.minio.errors.ErrorResponseException
-import app.zimly.backup.data.media.MediaObject
-import app.zimly.backup.data.media.MediaRepository
+import app.zimly.backup.data.media.ContentObject
+import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.s3.S3Object
 import app.zimly.backup.data.s3.S3Repository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.runningFold
 
 class SyncServiceImpl(
     private val s3Repository: S3Repository,
-    private val mediaRepository: MediaRepository
+    private val localContentResolver: LocalContentResolver
 ) :
     SyncService {
 
@@ -26,10 +26,10 @@ class SyncServiceImpl(
         val TAG: String? = SyncServiceImpl::class.simpleName
     }
 
-    override fun diff(buckets: Set<String>): Diff {
+    override fun diff(): Diff {
         try {
             val remotes = s3Repository.listObjects()
-            val objects = mediaRepository.getMedia(buckets)
+            val objects = localContentResolver.listObjects()
             val diff =
                 objects.filter { local -> remotes.none { remote -> remote.name == local.name } }
             val size = diff.sumOf { it.size }
@@ -53,7 +53,7 @@ class SyncServiceImpl(
     override fun sync(diff: Diff, debounce: Long): Flow<SyncProgress> {
         var count = 0
         return diff.diff.asFlow()
-            .map { mediaObj -> Pair(mediaObj, mediaRepository.getStream(mediaObj.path)) }
+            .map { mediaObj -> Pair(mediaObj, localContentResolver.getStream(mediaObj.path)) }
             .onEach { count++ } // TODO too early, should happen after the upload
             .flatMapConcat { (mediaObj, file) ->
                 s3Repository.put(
@@ -86,18 +86,13 @@ data class SyncProgress(
 
 data class Diff(
     val remotes: List<S3Object>,
-    val locals: List<MediaObject>,
-    val diff: List<MediaObject>,
+    val locals: List<ContentObject>,
+    val diff: List<ContentObject>,
     val size: Long
-) {
-    companion object {
-        val EMPTY = Diff(emptyList(), emptyList(), emptyList(), 0)
-    }
-}
+)
 
 interface SyncService {
-
-    fun diff(buckets: Set<String>): Diff
+    fun diff(): Diff
     fun sync(diff: Diff, debounce: Long = 0L): Flow<SyncProgress>
 }
 

@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,7 +34,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.ui.screens.editor.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.field.Field
+import app.zimly.backup.ui.screens.editor.field.TextField
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -65,7 +69,7 @@ fun EditorScreen(
         key = viewModel.key,
         secret = viewModel.secret,
         bucket = viewModel.bucket,
-        folder = viewModel.folder,
+        backupSource = viewModel.backupSource,
         clearError = viewModel::clearError,
         save = {
             viewModel.viewModelScope.launch {
@@ -81,12 +85,12 @@ fun EditorScreen(
 private fun EditorCompose(
     state: State<EditorViewModel.UiState>,
     snackbarState: SnackbarHostState,
-    name: Field,
-    url: Field,
-    key: Field,
-    secret: Field,
-    bucket: Field,
-    folder: Field,
+    name: TextField,
+    url: TextField,
+    key: TextField,
+    secret: TextField,
+    bucket: TextField,
+    backupSource: BackupSourceField,
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
@@ -120,7 +124,7 @@ private fun EditorCompose(
                 navigationIcon = {
                     IconButton(onClick = { back() }) {
                         Icon(
-                            imageVector = Icons.Filled.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Go Back"
                         )
                     }
@@ -132,7 +136,6 @@ private fun EditorCompose(
                             contentDescription = "Save or Create Remote"
                         )
                     }
-
                 }
             )
         },
@@ -146,16 +149,15 @@ private fun EditorCompose(
             modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
                 top = innerPadding.calculateTopPadding(),
                 bottom = innerPadding.calculateBottomPadding()
-            ) then Modifier.fillMaxWidth()
+            ) then Modifier
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
         ) {
-
             BucketConfiguration(name, url, key, secret, bucket)
-            FolderConfiguration(state, folder)
+            BackupSourceConfiguration(backupSource, state.value.mediaCollections)
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -166,24 +168,22 @@ fun EditPreview() {
 
         val snackbarState = remember { SnackbarHostState() }
 
-        val name = Field(
+        val name = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val url = Field(
+        val url = TextField(
             errorMessage = "Not a valid URL.",
             validate = { URLUtil.isValidUrl(it) })
-        val key = Field(
+        val key = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val secret = Field(
+        val secret = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val bucket = Field(
+        val bucket = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
-        val folder = Field(
-            errorMessage = "Select a media gallery to synchronize.",
-            validate = { it.isNotEmpty() })
+        val backupSource = BackupSourceField()
 
         EditorCompose(
             internal.collectAsState(),
@@ -193,7 +193,7 @@ fun EditPreview() {
             key,
             secret,
             bucket,
-            folder,
+            backupSource,
             clearError = {},
             save = {},
             back = {},

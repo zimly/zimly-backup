@@ -28,15 +28,16 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import app.zimly.backup.ui.screens.editor.field.TextField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
 fun BucketConfiguration(
-    name: Field,
-    url: Field,
-    key: Field,
-    secret: Field,
-    bucket: Field
+    name: TextField,
+    url: TextField,
+    key: TextField,
+    secret: TextField,
+    bucket: TextField
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 

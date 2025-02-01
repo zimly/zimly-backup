@@ -1,10 +1,10 @@
 package app.zimly.backup.data.s3
 
+import app.zimly.backup.data.media.LocalContentResolver
+import app.zimly.backup.data.media.ContentObject
+import app.zimly.backup.sync.SyncServiceImpl
 import io.mockk.every
 import io.mockk.mockk
-import app.zimly.backup.data.media.MediaObject
-import app.zimly.backup.data.media.MediaRepository
-import app.zimly.backup.sync.SyncServiceImpl
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -70,13 +70,13 @@ class LinodeRepositoryTest {
 
     @Test
     fun createDiff() {
-        val mediaRepository = mockk<MediaRepository>()
+        val localContentResolver = mockk<LocalContentResolver>()
 
-        every { mediaRepository.getMedia(any()) } returns listOf(MediaObject("test_image.png", 123L, "image/png", mockk()))
+        every { localContentResolver.listObjects() } returns listOf(ContentObject("test_image.png", 123L, "image/png", mockk()))
 
-        val ss = SyncServiceImpl(s3Repository, mediaRepository)
+        val ss = SyncServiceImpl(s3Repository, localContentResolver)
 
-        val diff = ss.diff(setOf("zimly-test.bkp"))
+        val diff = ss.diff()
 
         assertThat(diff.diff.size, `is`(1))
     }

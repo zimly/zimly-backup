@@ -8,20 +8,20 @@ import android.provider.MediaStore
 import android.util.Log
 import java.io.InputStream
 
-data class MediaObject(
+data class ContentObject(
     var name: String,
     var size: Long,
     var contentType: String,
     val path: Uri,
 )
 
-class ResolverBasedRepository(private val contentResolver: ContentResolver): MediaRepository {
+class LocalMediaRepository(private val contentResolver: ContentResolver): MediaRepository {
 
     companion object {
-        private val TAG: String? = ResolverBasedRepository::class.simpleName
+        private val TAG: String? = LocalMediaRepository::class.simpleName
     }
 
-    override fun getPhotos(buckets: Set<String>): List<MediaObject> {
+    override fun getPhotos(buckets: Set<String>): List<ContentObject> {
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val projection = arrayOf(
             MediaStore.MediaColumns._ID,
@@ -40,7 +40,7 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
         val contentUri = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
         Log.d(TAG, "Content URI path: ${contentUri.path ?: "null"}")
 
-        val photos = mutableListOf<MediaObject>()
+        val photos = mutableListOf<ContentObject>()
         val contentBuckets = buckets.joinToString(separator = ",", transform = {bucket -> "'${bucket}'"})
         val selection = MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " IN ($contentBuckets)"
         contentResolver.query(
@@ -70,15 +70,15 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
                 photoUri= MediaStore.setRequireOriginal(photoUri)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                photos.add(MediaObject(objectName, size, mimeType, photoUri))
+                photos.add(ContentObject(objectName, size, mimeType, photoUri))
             }
         }
         return photos.toList()
     }
 
-    override fun getVideos(buckets: Set<String>): List<MediaObject> {
+    override fun getVideos(buckets: Set<String>): List<ContentObject> {
 
-        val videos = mutableListOf<MediaObject>()
+        val videos = mutableListOf<ContentObject>()
 
         val projection = arrayOf(
             MediaStore.MediaColumns._ID,
@@ -122,18 +122,10 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
                 val videoUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                videos.add(MediaObject(objectName, size, mimeType, videoUri))
+                videos.add(ContentObject(objectName, size, mimeType, videoUri))
             }
         }
         return videos.toList()
-    }
-
-    override fun getMedia(buckets: Set<String>): List<MediaObject> {
-        return listOf(getPhotos(buckets), getVideos(buckets)).flatten()
-    }
-
-    override fun getStream(uri: Uri): InputStream {
-        return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
     }
 
     override fun getBuckets(): Map<String, Number> {
@@ -175,11 +167,34 @@ class ResolverBasedRepository(private val contentResolver: ContentResolver): Med
 }
 
 
-interface MediaRepository {
-    fun getVideos(buckets: Set<String>): List<MediaObject>
-    fun getPhotos(buckets: Set<String>): List<MediaObject>
-    fun getMedia(buckets: Set<String>): List<MediaObject>
-    fun getStream(uri: Uri): InputStream
-    fun getBuckets(): Map<String, Number>
+class LocalMediaResolver(private val contentResolver: ContentResolver, private val bucket: String): LocalContentResolver {
 
+    private var mediaRepository: MediaRepository = LocalMediaRepository(contentResolver)
+
+    override fun listObjects(): List<ContentObject> {
+        return listOf(mediaRepository.getPhotos(setOf(bucket)), mediaRepository.getVideos(setOf(bucket))).flatten()
+    }
+
+    override fun getStream(uri: Uri): InputStream {
+        return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
+    }
+
+    fun photoCount(): Int {
+        return mediaRepository.getPhotos(setOf(bucket)).count()
+    }
+
+    fun videoCount(): Int {
+        return mediaRepository.getVideos(setOf(bucket)).count()
+    }
+}
+
+interface MediaRepository {
+    fun getVideos(buckets: Set<String>): List<ContentObject>
+    fun getPhotos(buckets: Set<String>): List<ContentObject>
+    fun getBuckets(): Map<String, Number>
+}
+
+interface LocalContentResolver {
+    fun getStream(uri: Uri): InputStream
+    fun listObjects(): List<ContentObject>
 }

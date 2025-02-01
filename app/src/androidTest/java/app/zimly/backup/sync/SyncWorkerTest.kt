@@ -9,7 +9,7 @@ import androidx.work.testing.TestListenableWorkerBuilder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import app.zimly.backup.data.media.MediaObject
+import app.zimly.backup.data.media.ContentObject
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -36,8 +36,8 @@ class SyncWorkerTest {
         mockkObject(SyncWorker)
         every { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
-        val locals = listOf(MediaObject("DCIM01213.png", 1234L, "image/png", mockk()))
-        every { syncService.diff(any()) } returns Diff(emptyList(), locals, locals, 1234L)
+        val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
+        every { syncService.diff() } returns Diff(emptyList(), locals, locals, 1234L)
         every { syncService.sync(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f, 1024L))
 
         val worker = TestListenableWorkerBuilder<SyncWorker>(context)
@@ -60,8 +60,8 @@ class SyncWorkerTest {
         mockkObject(SyncWorker)
         every { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
-        val locals = listOf(MediaObject("DCIM01213.png", 1234L, "image/png", mockk()))
-        every { syncService.diff(any()) } returns Diff(emptyList(), locals, locals, 1234L)
+        val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
+        every { syncService.diff() } returns Diff(emptyList(), locals, locals, 1234L)
         every { syncService.sync(any(), any()) } returns
                 flow {
                     emit(SyncProgress(12L, 0, 0.10f, 1024L))

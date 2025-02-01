@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.remote.ZimDatabase
@@ -43,6 +44,7 @@ class ListViewModelTest {
                     "key",
                     "secret",
                     "bucket",
+                    SourceType.MEDIA,
                     "Pictures"
                 )
             )
@@ -54,6 +56,7 @@ class ListViewModelTest {
                     "key",
                     "secret",
                     "bucket",
+                    SourceType.MEDIA,
                     "Pictures"
                 )
             )

@@ -7,8 +7,10 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +19,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -36,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +51,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -201,15 +207,28 @@ private fun ListCompose(
                             onLongClick = { select(remote.uid) })
                         .padding(16.dp)
                 ) {
-                    Column {
-                        Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
-                        Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
+                            Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(modifier = Modifier.wrapContentWidth()) {
+                            Box(contentAlignment = Alignment.TopEnd) {
+                                val icon = when (remote.sourceType) {
+                                    SourceType.MEDIA -> Icons.Outlined.Image
+                                    SourceType.FOLDER -> Icons.Outlined.Folder
+                                }
+                                Icon(icon, "Remote Configuration")
+                            }
+                        }
                     }
                 }
             }
         }
     }
-
 }
 
 @Preview(showBackground = true)
@@ -221,6 +240,7 @@ fun DefaultPreview() {
                 uid = it,
                 name = "test $it",
                 url = "https://blob.rawbot.zone/$it",
+                sourceType = if (it % 2 == 0) SourceType.MEDIA else SourceType.FOLDER
             )
         }.toList()
 
@@ -247,5 +267,6 @@ data class RemoteView(
     val uid: Int,
     val name: String,
     val url: String,
+    val sourceType: SourceType,
     val selected: Boolean = false
 )
