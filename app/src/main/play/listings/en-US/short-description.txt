@@ -1,1 +1,1 @@
-Synchronise your media to any S3 compatible storage
+Synchronise your media and documents to any S3 compatible storage
