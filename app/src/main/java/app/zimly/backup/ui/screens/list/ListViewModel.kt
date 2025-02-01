@@ -18,7 +18,7 @@ class ListViewModel(private val dataStore: RemoteDao) : ViewModel() {
     // Combines remotes from DB with the selected state into a specialized
     // list of RemoteView data objects
     val remotesState = combine(_remotes, _selectedState)
-    { remotes, sel -> remotes.map { RemoteView(it.uid!!, it.name, it.url, sel.contains(it.uid)) } }
+    { remotes, sel -> remotes.map { RemoteView(it.uid!!, it.name, it.url, it.sourceType, sel.contains(it.uid)) } }
 
     // Notification displayed in the SnackBar upon successful copy/delete operations.
     private val _notification = MutableStateFlow<String?>(null)
