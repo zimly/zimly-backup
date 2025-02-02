@@ -28,6 +28,7 @@ import app.zimly.backup.ui.screens.list.ListScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
+
 private const val REMOTES_LIST = "remotes-list"
 private const val GRANT_PERMISSION = "grant-permission"
 
@@ -38,6 +39,9 @@ class MainActivity : ComponentActivity() {
         val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db")
             .build()
         val remoteDao = db.remoteDao()
+
+        Thread.setDefaultUncaughtExceptionHandler(CrashActivity.ExceptionHandler(applicationContext))
+
 
         setContent {
             ZimzyncTheme {
