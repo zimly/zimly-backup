@@ -1,7 +1,6 @@
 package app.zimly.backup
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -10,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.room.Room
+import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.remote.ZimDatabase
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.list.ListScreen
@@ -31,7 +32,7 @@ private const val REMOTES_LIST = "remotes-list"
 private const val GRANT_PERMISSION = "grant-permission"
 
 class MainActivity : ComponentActivity() {
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "FlowOperatorInvokedInComposition")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db")
@@ -40,85 +41,92 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ZimzyncTheme {
-                var startDest by remember {  mutableStateOf(if (isPermissionGranted()) REMOTES_LIST else GRANT_PERMISSION) }
-                val navController = rememberNavController()
+                AppNavigation(remoteDao)
+            }
+        }
+    }
 
-                NavHost(navController, startDestination = startDest) {
-                    // Grant permission for app
-                    // https://stackoverflow.com/questions/60608101/how-request-permissions-with-jetpack-compose
-                    composable(GRANT_PERMISSION) {
-                        val permissionLauncher = rememberLauncherForActivityResult(
-                            ActivityResultContracts.RequestMultiplePermissions()
-                        ) { isGranted ->
+    @Composable
+    private fun AppNavigation(remoteDao: RemoteDao) {
 
-                            // Lookup and compare the granted permission
-                            val granted = getPermissions()
-                                .map { permission -> isGranted[permission] }
-                                .reduce { granted, permission -> granted == true && permission == true }
+        var startDest by remember { mutableStateOf(if (isPermissionGranted()) REMOTES_LIST else GRANT_PERMISSION) }
+        val navController = rememberNavController()
 
-                            if (granted == true) {
-                                Log.i(localClassName, "Permissions granted")
-                                startDest = REMOTES_LIST
-                            } else {
-                                // TODO Implement some sort of informative screen, that the user
-                                // needs to grant permissions for the app to work.
-                                Log.i(localClassName, "PERMISSION DENIED")
-                            }
-                        }
-                        SideEffect {
-                            permissionLauncher.launch(
-                                getPermissions()
-                            )
-                        }
+        NavHost(navController, startDestination = startDest) {
+
+            // Grant permission for app
+            // https://stackoverflow.com/questions/60608101/how-request-permissions-with-jetpack-compose
+            composable(GRANT_PERMISSION) {
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions()
+                ) { isGranted ->
+
+                    // Lookup and compare the granted permission
+                    val granted = getPermissions()
+                        .map { permission -> isGranted[permission] }
+                        .reduce { granted, permission -> granted == true && permission == true }
+
+                    if (granted == true) {
+                        Log.i(localClassName, "Permissions granted")
+                        startDest = REMOTES_LIST
+                    } else {
+                        // TODO Implement some sort of informative screen, that the user
+                        // needs to grant permissions for the app to work.
+                        Log.i(localClassName, "PERMISSION DENIED")
                     }
+                }
+                SideEffect {
+                    permissionLauncher.launch(
+                        getPermissions()
+                    )
+                }
+            }
 
-                    composable(REMOTES_LIST) {
-                        ListScreen(
-                            remoteDao,
-                            syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
-                            addRemote = { navController.navigate("remote-editor/create") })
-                    }
+            composable(REMOTES_LIST) {
+                ListScreen(
+                    remoteDao,
+                    syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
+                    addRemote = { navController.navigate("remote-editor/create") })
+            }
 
-                    composable(
-                        "remote-editor/edit/{remoteId}",
-                        arguments = listOf(navArgument("remoteId") { nullable = false })
-                    ) { backStackEntry ->
-                        val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
-                        EditorScreen(
-                            application = application,
-                            remoteDao = remoteDao,
-                            remoteId = remoteId,
-                            back = { navController.popBackStack() }
-                        )
-                    }
+            composable(
+                "remote-editor/edit/{remoteId}",
+                arguments = listOf(navArgument("remoteId") { nullable = false })
+            ) { backStackEntry ->
+                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                EditorScreen(
+                    application = application,
+                    remoteDao = remoteDao,
+                    remoteId = remoteId,
+                    back = { navController.popBackStack() }
+                )
+            }
 
-                    composable(
-                        "remote-editor/create",
-                        arguments = listOf(navArgument("remoteId") { nullable = true })
-                    ) {
-                        EditorScreen(
-                            application = application,
-                            remoteDao = remoteDao,
-                            remoteId = null,
-                            back = { navController.popBackStack() }
-                        )
-                    }
+            composable(
+                "remote-editor/create",
+                arguments = listOf(navArgument("remoteId") { nullable = true })
+            ) {
+                EditorScreen(
+                    application = application,
+                    remoteDao = remoteDao,
+                    remoteId = null,
+                    back = { navController.popBackStack() }
+                )
+            }
 
-                    composable(
-                        "remote-sync?remoteId={remoteId}",
-                        arguments = listOf(navArgument("remoteId") { nullable = false })
-                    ) { backStackEntry ->
-                        val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+            composable(
+                "remote-sync?remoteId={remoteId}",
+                arguments = listOf(navArgument("remoteId") { nullable = false })
+            ) { backStackEntry ->
+                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
-                        remoteId?.let {
-                            SyncScreen(
-                                remoteDao,
-                                remoteId,
-                                application = application,
-                                edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
-                                back = { navController.popBackStack() })
-                        }
-                    }
+                remoteId?.let {
+                    SyncScreen(
+                        remoteDao,
+                        remoteId,
+                        application = application,
+                        edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
+                        back = { navController.popBackStack() })
                 }
             }
         }
