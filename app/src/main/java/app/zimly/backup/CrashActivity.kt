@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -15,9 +14,7 @@ private const val UNCAUGHT_EXCEPTION = "Z_UNCAUGHT_EXCEPTION"
 
 class CrashActivity : ComponentActivity() {
 
-
     companion object {
-        private val TAG: String? = CrashActivity::class.simpleName
 
         fun start(context: Context, throwable: Throwable) {
             val intent = Intent(context, CrashActivity::class.java)
@@ -27,7 +24,6 @@ class CrashActivity : ComponentActivity() {
             intent.putExtras(extras)
             context.startActivity(intent)
         }
-
     }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -41,12 +37,4 @@ class CrashActivity : ComponentActivity() {
         }
     }
 
-    class ExceptionHandler(private val context: Context) : Thread.UncaughtExceptionHandler {
-
-        override fun uncaughtException(t: Thread, e: Throwable) {
-            Log.e(TAG, "Uncaught Exception: ${e.message}", e)
-            start(context, e)
-        }
-
-    }
 }

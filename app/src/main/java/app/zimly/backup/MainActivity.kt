@@ -34,13 +34,22 @@ private const val GRANT_PERMISSION = "grant-permission"
 
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        private val TAG: String? = MainActivity::class.simpleName
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val db = Room.databaseBuilder(applicationContext, ZimDatabase::class.java, "zim-db")
             .build()
         val remoteDao = db.remoteDao()
 
-        Thread.setDefaultUncaughtExceptionHandler(CrashActivity.ExceptionHandler(applicationContext))
+        Thread.setDefaultUncaughtExceptionHandler { _: Thread, throwable: Throwable ->
+            Log.wtf(TAG, "Unhandled Exception!", throwable)
+
+            CrashActivity.start(applicationContext, throwable)
+            finish()
+        }
 
 
         setContent {
