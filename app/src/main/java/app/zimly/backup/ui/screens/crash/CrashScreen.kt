@@ -22,23 +22,24 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class CrashViewModel(throwable: Throwable?) : ViewModel() {
+class CrashViewModel(message: String?, stack: String?) : ViewModel() {
 
-    private val _error = MutableStateFlow(ErrorState(throwable?.message ?: "Unknown Error!", throwable.toString()))
+    private val _error = MutableStateFlow(ErrorState(message ?: "Unknown Error", stack))
     val errorState: StateFlow<ErrorState> = _error.asStateFlow()
 
     data class ErrorState(
         val message: String,
-        val stack: String
+        val stack: String?
     )
 }
 
 @Composable
 fun CrashScreen(
-    throwable: Throwable?,
+    message: String?,
+    stack: String?,
     viewModel: CrashViewModel = viewModel(factory = viewModelFactory {
         initializer {
-            CrashViewModel(throwable)
+            CrashViewModel(message, stack)
         }
     })
 ) {
@@ -57,12 +58,15 @@ fun CrashScreen(
             fontSize = 16.sp,
             modifier = Modifier.padding(16.dp)
         )
-        Text(
-            text = state.stack,
-            color = Color.Black,
-            fontSize = 16.sp,
-            modifier = Modifier.padding(16.dp)
-        )
+        state.stack?.let {
+            Text(
+                maxLines = 7,
+                text = it,
+                color = Color.Black,
+                fontSize = 8.sp,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
 
 
         Button(onClick = { }) {

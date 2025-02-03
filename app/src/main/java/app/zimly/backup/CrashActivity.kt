@@ -10,7 +10,8 @@ import androidx.annotation.RequiresApi
 import app.zimly.backup.ui.screens.crash.CrashScreen
 
 
-private const val UNCAUGHT_EXCEPTION = "Z_UNCAUGHT_EXCEPTION"
+private const val UNCAUGHT_EXCEPTION_MESSAGE = "Z_UNCAUGHT_EXCEPTION_MESSAGE"
+private const val UNCAUGHT_EXCEPTION_STACK = "Z_UNCAUGHT_EXCEPTION_STACK"
 
 class CrashActivity : ComponentActivity() {
 
@@ -20,7 +21,8 @@ class CrashActivity : ComponentActivity() {
             val intent = Intent(context, CrashActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
             val extras = Bundle()
-            extras.putSerializable(UNCAUGHT_EXCEPTION, throwable)
+            extras.putString(UNCAUGHT_EXCEPTION_MESSAGE, throwable.message)
+            extras.putString(UNCAUGHT_EXCEPTION_STACK, throwable.stackTraceToString())
             intent.putExtras(extras)
             context.startActivity(intent)
         }
@@ -30,10 +32,11 @@ class CrashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val throwable = intent.extras?.getSerializable(UNCAUGHT_EXCEPTION, Throwable::class.java)
+        val message = intent.extras?.getString(UNCAUGHT_EXCEPTION_MESSAGE)
+        val stack = intent.extras?.getString(UNCAUGHT_EXCEPTION_STACK)
 
         setContent {
-            CrashScreen(throwable)
+            CrashScreen(message, stack)
         }
     }
 
