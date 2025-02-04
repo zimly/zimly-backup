@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import app.zimly.backup.ui.screens.crash.CrashScreen
+import app.zimly.backup.ui.theme.ZimzyncTheme
 
 
 private const val UNCAUGHT_EXCEPTION_MESSAGE = "Z_UNCAUGHT_EXCEPTION_MESSAGE"
@@ -36,7 +37,9 @@ class CrashActivity : ComponentActivity() {
         val stack = intent.extras?.getString(UNCAUGHT_EXCEPTION_STACK)
 
         setContent {
-            CrashScreen(message, stack)
+            ZimzyncTheme {
+                CrashScreen(message, stack)
+            }
         }
     }
 
