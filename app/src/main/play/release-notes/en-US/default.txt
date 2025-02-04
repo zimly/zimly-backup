@@ -1,5 +1,8 @@
-2.0.0
+2.0
 * Add support for backup of Documents and Folders #16
+
+2.1.0
+* Error Screen for uncaught exceptions #24
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
