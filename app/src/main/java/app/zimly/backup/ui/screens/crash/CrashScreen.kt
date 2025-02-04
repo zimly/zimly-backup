@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -87,7 +88,6 @@ private fun ErrorTitle() {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            //.padding(vertical = 64.dp)
     ) {
         Text(
             text = "Oops!",
@@ -96,9 +96,15 @@ private fun ErrorTitle() {
             modifier = Modifier.padding(7.dp)
         )
         Text(
-            text = "An Unexpected Error Occurred",
+            text = "Something went wrong",
             color = MaterialTheme.colorScheme.error,
-            fontSize = MaterialTheme.typography.titleMedium.fontSize
+            fontSize = MaterialTheme.typography.titleMedium.fontSize,
+            modifier = Modifier.padding(7.dp)
+        )
+        Text(
+            "Zimly encountered an unexpected error. Please help us improve by reporting this issue.",
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(7.dp)
         )
     }
 }
@@ -112,7 +118,9 @@ private fun ErrorDetails(state: CrashViewModel.ErrorState) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
 
-        Card(colors = CardDefaults.cardColors(containerColor = containerBackground())) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = containerBackground()),
+        ) {
             Text(
                 text = state.message,
                 lineHeight = MaterialTheme.typography.titleSmall.lineHeight,
@@ -144,7 +152,7 @@ private fun ErrorDetails(state: CrashViewModel.ErrorState) {
                     modifier = Modifier
                         .height(32.dp),
                 ) {
-                    Text(text = "Copy Error")
+                    Text(text = "Copy to Clipboard")
                 }
             }
         }
@@ -162,7 +170,6 @@ private fun Actions() {
             .fillMaxWidth()
             .padding(vertical = 48.dp)
     ) {
-        Text("Please help improve Zimly by creating a report.")
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -171,10 +178,10 @@ private fun Actions() {
                 .padding(16.dp)
         ) {
             TextButton({ uriHandler.openUri("https://github.com/zimly/zimly-backup/issues") }) {
-                Text("Create Issue on Github")
+                Text("Report on Github")
             }
             TextButton({ uriHandler.openUri("mailto:espen.jervidalo@gmail.com") }) {
-                Text("Send Support Mail")
+                Text("Email Support")
             }
         }
     }
