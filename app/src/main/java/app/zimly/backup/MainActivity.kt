@@ -21,7 +21,7 @@ import app.zimly.backup.data.remote.ZimDatabase
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.list.ListScreen
 import app.zimly.backup.ui.screens.permission.PermissionScreen
-import app.zimly.backup.ui.screens.permission.getPermissions
+import app.zimly.backup.ui.screens.permission.PermissionViewModel
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
@@ -122,7 +122,7 @@ class MainActivity : ComponentActivity() {
 
     // Check initially if the permission is granted
     private fun isPermissionGranted(): Boolean {
-        val granted = getPermissions()
+        val granted = PermissionViewModel.getPermissions()
             .map { permission ->
                 ContextCompat.checkSelfPermission(
                     this,
