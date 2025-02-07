@@ -1,16 +1,12 @@
 package app.zimly.backup
 
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -48,18 +44,19 @@ class MainActivity : ComponentActivity() {
             finish()
         }
 
-
+        val permissionViewModel: PermissionViewModel by viewModels()
         setContent {
             ZimzyncTheme {
-                AppNavigation(remoteDao)
+                AppNavigation(remoteDao, permissionViewModel)
             }
         }
     }
 
     @Composable
-    private fun AppNavigation(remoteDao: RemoteDao) {
+    private fun AppNavigation(remoteDao: RemoteDao, permissionViewModel: PermissionViewModel) {
 
-        var startDest by remember { mutableStateOf(if (isPermissionGranted()) REMOTES_LIST else GRANT_PERMISSION) }
+        val granted = permissionViewModel.state.collectAsState()
+        val startDest = if (granted.value.granted) REMOTES_LIST else GRANT_PERMISSION
         val navController = rememberNavController()
 
         NavHost(navController, startDestination = startDest) {
@@ -67,7 +64,7 @@ class MainActivity : ComponentActivity() {
             // Grant permission for app
             // https://stackoverflow.com/questions/60608101/how-request-permissions-with-jetpack-compose
             composable(GRANT_PERMISSION) {
-                PermissionScreen({startDest = REMOTES_LIST})
+                PermissionScreen(permissionViewModel)
             }
 
             composable(REMOTES_LIST) {
@@ -120,19 +117,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Check initially if the permission is granted
-    private fun isPermissionGranted(): Boolean {
-        val granted = PermissionViewModel.getPermissions()
-            .map { permission ->
-                ContextCompat.checkSelfPermission(
-                    this,
-                    permission
-                ) == PackageManager.PERMISSION_GRANTED
-            }
-            .reduce { granted, permission -> granted && permission }
 
-        return granted
-    }
 
 
 }
