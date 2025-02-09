@@ -2,11 +2,9 @@ package app.zimly.backup
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import app.zimly.backup.ui.screens.crash.CrashScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
@@ -29,7 +27,6 @@ class CrashActivity : ComponentActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
