@@ -4,9 +4,12 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -44,7 +47,17 @@ class MainActivity : ComponentActivity() {
             finish()
         }
 
-        val permissionViewModel: PermissionViewModel by viewModels()
+        // TODO: really?
+        val viewModelStoreOwner: ViewModelStoreOwner = this
+        val permissionViewModel: PermissionViewModel = ViewModelProvider.create(
+            viewModelStoreOwner,
+            factory = PermissionViewModel.Factory,
+            extras = MutableCreationExtras().apply {
+                set(APPLICATION_KEY, application)
+                set(PermissionViewModel.CALLBACK_KEY) { finish() }
+            },
+        )[PermissionViewModel::class]
+
         setContent {
             ZimzyncTheme {
                 AppNavigation(remoteDao, permissionViewModel)
@@ -116,8 +129,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-
 
 
 }
