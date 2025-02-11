@@ -47,7 +47,6 @@ class MainActivity : ComponentActivity() {
             finish()
         }
 
-        // TODO: really?
         val viewModelStoreOwner: ViewModelStoreOwner = this
         val permissionViewModel: PermissionViewModel = ViewModelProvider.create(
             viewModelStoreOwner,

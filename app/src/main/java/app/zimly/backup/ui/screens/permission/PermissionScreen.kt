@@ -46,6 +46,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+/**
+ * Handles the permission requests needed for the app to function properly. Instead of handling
+ * permissions globally in this screen and blocking the app in case of missing permissions, we might
+ * want to request the permissions where they are used, and provide a degraded user experience in case
+ * of missing permissions.
+ *
+ * @see [Android Permission Requests](https://developer.android.com/training/permissions/requesting)
+ */
 class PermissionViewModel(private val application: Application, private val closeActivity: () -> Unit) :
     AndroidViewModel(application) {
 
