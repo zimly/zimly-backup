@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         val remoteDao = db.remoteDao()
 
         Thread.setDefaultUncaughtExceptionHandler { _: Thread, throwable: Throwable ->
-            Log.wtf(TAG, "Unhandled Exception!", throwable)
+            Log.e(TAG, "Unhandled Exception!", throwable)
 
             CrashActivity.start(applicationContext, throwable)
             finish()
