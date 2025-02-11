@@ -1,6 +1,3 @@
-2.0
-* Add support for backup of Documents and Folders #16
-
 2.1.0
 * Error Screen for uncaught exceptions #24
 * Show warning in case of unsatisfied permission grants #24
