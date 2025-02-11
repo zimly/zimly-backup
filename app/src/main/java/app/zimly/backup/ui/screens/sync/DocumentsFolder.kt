@@ -73,7 +73,7 @@ private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Folder")
-                displayName?.let { Text(it) }
+                Text(displayName)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
