@@ -1,6 +1,10 @@
 name: Release to Alpha Channel
 on: workflow_dispatch
 
+# Add permissions for managing GH releases
+permissions:
+  contents: write
+
 jobs:
 
   verify-release:
@@ -21,11 +25,11 @@ jobs:
       - name: Check for existing draft ${{ steps.set_version.outputs.version }}
         id: draft_release
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == true and .tagName == $TAG)) | length > 0')" > $GITHUB_OUTPUT
       - name: Check for existing release ${{ steps.set_version.outputs.version }}
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           exists=$(gh release list --limit 100 --json name,tagName,isDraft | jq --arg TAG ${{ steps.set_version.outputs.version }} 'map(select(.isDraft == false and .tagName == $TAG)) | length > 0')
           if $exists ; then
@@ -42,13 +46,13 @@ jobs:
       - name: Create Draft Release
         if: ${{ needs.verify-release.outputs.draft-exists == 'false' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.verify-release.outputs.version }}
         run: gh release create $TAG --draft -t "Release ${{ needs.verify-release.outputs.version }}"
 
       - name: Update release notes
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.verify-release.outputs.version }}
         run: gh release edit $TAG -F ${{ github.workspace }}/app/src/main/play/release-notes/en-US/default.txt
       - name: Download bundle and apk
@@ -59,7 +63,7 @@ jobs:
           merge-multiple: true
       - name: Upload .AAB and .APK to Release Assets
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.verify-release.outputs.version }}
         run: gh release upload --clobber $TAG ${GITHUB_WORKSPACE}/app-releases/zimly-app-release.aab ${GITHUB_WORKSPACE}/app-releases/zimly-app-release.apk
 

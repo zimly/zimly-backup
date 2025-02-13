@@ -3,6 +3,9 @@ on: workflow_dispatch
 
 jobs:
   release:
+    # Add permissions for managing GH releases
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -15,7 +18,7 @@ jobs:
         run: echo "version=`./gradlew -q getVersion`" > $GITHUB_OUTPUT
       - name: Publish GH Release ${{ steps.set_version.outputs.version }}
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release edit ${{ steps.set_version.outputs.version }} --tag ${{ steps.set_version.outputs.version }} --draft=false
       - name: Patch applicationId for Play Store
         run: sed -i 's/applicationId = "app.zimly.backup"/applicationId = "io.zeitmaschine.zimzync"/g' app/build.gradle.kts
