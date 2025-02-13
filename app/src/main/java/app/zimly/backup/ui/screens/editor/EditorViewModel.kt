@@ -3,6 +3,7 @@ package app.zimly.backup.ui.screens.editor
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.webkit.URLUtil
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,6 +22,10 @@ import kotlinx.coroutines.launch
 
 class EditorViewModel(application: Application, private val dao: RemoteDao, remoteId: Int?) :
     AndroidViewModel(application) {
+
+    companion object {
+        val TAG: String? = EditorViewModel::class.simpleName
+    }
 
     private val contentResolver by lazy { application.contentResolver }
     private val mediaRepo: MediaRepository = LocalMediaRepository(contentResolver)
@@ -44,12 +49,25 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
 
 
     init {
-        val collections = mediaRepo.getBuckets().keys
-        internal.update {
-            it.copy(
-                mediaCollections = collections,
-                title = "New configuration"
-            )
+        try {
+            // TODO push this down into own VM in MediaCollectionSelector?
+            val collections = mediaRepo.getBuckets().keys
+            internal.update {
+                it.copy(
+                    mediaCollections = collections,
+                    title = "New configuration"
+                )
+            }
+        } catch (e: Exception) {
+            val errorMessage = "Failed to load Media Collections: ${e.message}"
+            Log.e(TAG, errorMessage, e)
+
+            internal.update {
+                it.copy(
+                    title = "New configuration",
+                    error = errorMessage
+                )
+            }
         }
 
         remoteId?.let {
