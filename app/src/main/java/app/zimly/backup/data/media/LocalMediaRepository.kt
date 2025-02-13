@@ -141,7 +141,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
             val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
             while (cursor.moveToNext()) {
                 val bucketName = cursor.getString(bucketNameColumn)
-                buckets.compute(bucketName) { _: String, v: Int? -> if (v == null) 1 else v + 1 }
+                bucketName?.let { buckets.compute(it) { _: String, v: Int? -> if (v == null) 1 else v + 1 } }
             }
         }
         contentResolver.query(
