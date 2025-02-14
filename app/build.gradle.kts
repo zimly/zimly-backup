@@ -96,7 +96,7 @@ play {
 }
 
 dependencies {
-    val composeVersion = "1.7.7"
+    val composeVersion = "1.7.8"
     val material3Version = "1.3.1"
     val workManagerVersion = "2.10.0"
     val roomVersion = "2.6.1"
@@ -123,7 +123,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
     implementation("androidx.activity:activity-compose:1.10.0")
-    implementation("androidx.navigation:navigation-compose:2.8.6")
+    implementation("androidx.navigation:navigation-compose:2.8.7")
     implementation("com.google.android.material:material:1.12.0")
 
     // https://developer.android.com/codelabs/android-workmanager#2
