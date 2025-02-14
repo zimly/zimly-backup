@@ -1,6 +1,5 @@
-2.1.0
-* Error Screen for uncaught exceptions #24
-* Show warning in case of unsatisfied permission grants #24
+2.1.1
+* Fix potential null-pointer when listing media collections #24
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
