@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 
-class ProgressInterceptorTest {
+class ProgressIntegrationTest {
 
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -16,7 +16,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.time.TimeSource
 
-class LinodeRepositoryTest {
+class LinodeIntegrationTest {
 
     private lateinit var s3Repository: MinioRepository
 

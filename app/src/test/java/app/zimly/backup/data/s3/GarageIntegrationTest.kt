@@ -21,7 +21,7 @@ import org.testcontainers.utility.MountableFile
  *
  * @see test-container/garage.toml
  */
-class GarageRepositoryTest {
+class GarageIntegrationTest {
 
     private val bucket = "test-bucket"
     private val apiKeyName = "test-api-key"

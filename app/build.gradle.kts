@@ -160,14 +160,14 @@ tasks.withType<Test> {
             val testProfile = project.property("integrationTests") as String
 
             when (testProfile) {
-                "linode" -> includeTestsMatching("LinodeRepositoryTest")
-                "aws" -> includeTestsMatching("AwsRepositoryTest")
-                "minio" -> includeTestsMatching("MinioRepositoryTest")
-                "garage" -> includeTestsMatching("GarageRepositoryTest")
-                else -> includeTestsMatching("*RepositoryTest")
+                "linode" -> includeTestsMatching("LinodeIntegrationTest")
+                "aws" -> includeTestsMatching("AwsIntegrationTest")
+                "minio" -> includeTestsMatching("MinioIntegrationTest")
+                "garage" -> includeTestsMatching("GarageIntegrationTest")
+                else -> includeTestsMatching("*IntegrationTest")
             }
         } else {
-            excludeTestsMatching("*RepositoryTest")
+            excludeTestsMatching("*IntegrationTest")
         }
     }
 }

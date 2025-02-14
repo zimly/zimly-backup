@@ -10,7 +10,7 @@ import io.mockk.mockkStatic
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class LocalMediaRepoTest {
+class LocalMediaRepositoryTest {
 
     @Test
     fun testQueryReturnsNullBucketName() {

@@ -14,7 +14,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
 
-class MinioRepositoryTest {
+class MinioIntegrationTest {
 
     private val minioUser = "test"
     private val minioPwd = "testtest"
