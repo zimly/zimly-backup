@@ -146,6 +146,7 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
     androidTestImplementation("io.mockk:mockk-android:1.13.16")
+    androidTestImplementation("androidx.test:rules:1.6.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
     debugImplementation("androidx.compose.ui:ui-test-manifest:$composeVersion")
