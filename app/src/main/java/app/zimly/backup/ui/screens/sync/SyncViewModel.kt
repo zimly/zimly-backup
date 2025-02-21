@@ -14,6 +14,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
+import app.zimly.backup.BatteryOptimizations
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.data.media.LocalMediaResolver
 import app.zimly.backup.data.media.SourceType
@@ -49,7 +50,11 @@ class SyncViewModel(
     private val dao: RemoteDao,
     private val remoteId: Int,
     private val workManager: WorkManager,
-    private val contentResolver: ContentResolver
+    // TODO keeping a ref to contentResolver might be a problem
+    // --> instead extend AndroidViewModel
+    private val contentResolver: ContentResolver,
+    // TODO keeping a ref to application IS a problem
+    private val batteryOptimizations: BatteryOptimizations
 ) : ViewModel() {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
@@ -60,6 +65,8 @@ class SyncViewModel(
     // This identifier is used to identify already running sync instances and prevent simultaneous
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
+
+    private val _batterySaver: MutableStateFlow<Boolean> = MutableStateFlow(batteryOptimizations.isIgnoringBatteryOptimizations())
 
     var syncConfigurationState: Flow<SyncConfigurationState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
@@ -267,6 +274,10 @@ class SyncViewModel(
 
     suspend fun clearError() {
         _error.emit(null)
+    }
+
+    fun disableBatterSaver() {
+        batteryOptimizations.openSettings()
     }
 
     data class SyncConfigurationState(

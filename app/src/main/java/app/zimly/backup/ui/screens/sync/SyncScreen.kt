@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.BatteryAlert
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
@@ -61,6 +62,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
+import app.zimly.backup.BatteryOptimizations
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.theme.ZimzyncTheme
@@ -78,7 +80,8 @@ fun SyncScreen(
     viewModel: SyncViewModel = viewModel(factory = viewModelFactory {
         initializer {
             val workManager = WorkManager.getInstance(application.applicationContext)
-            SyncViewModel(dao, remoteId, workManager, application.contentResolver)
+
+            SyncViewModel(dao, remoteId, workManager, application.contentResolver, BatteryOptimizations(application))
         }
     }),
 ) {
@@ -113,7 +116,8 @@ fun SyncScreen(
         createDiff = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } },
         edit = { edit(remoteId) },
         back,
-        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } }
+        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
+        disableBatterSaver = { viewModel.disableBatterSaver()}
     )
 }
 
@@ -129,7 +133,8 @@ private fun SyncCompose(
     createDiff: () -> Unit,
     edit: () -> Unit,
     back: () -> Unit,
-    clearError: () -> Unit
+    clearError: () -> Unit,
+    disableBatterSaver: () -> Unit
 ) {
     val enableActions = progress.status !in setOf(
         SyncViewModel.Status.CALCULATING,
@@ -206,13 +211,20 @@ private fun SyncCompose(
                 bottom = innerPadding.calculateBottomPadding()
             ) then Modifier
                 .fillMaxWidth()
+                .fillMaxHeight()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Bucket(remote)
-            source()
-            DiffDetails(progress, enableActions, createDiff)
-            progress.status?.let { ProgressBar(progress) }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp),) {
+
+                Bucket(remote)
+                source()
+                DiffDetails(progress, enableActions, createDiff)
+            }
+            Column {
+                Battery(disableBatterSaver)
+                progress.status?.let { ProgressBar(progress) }
+            }
         }
     }
 }
@@ -326,6 +338,37 @@ private fun DiffDetails(
 }
 
 @Composable
+private fun Battery(disable: () -> Unit) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = containerBackground(),
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+
+        Row (modifier = Modifier
+            .padding(1.dp)
+            .fillMaxWidth(),verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                Icons.Outlined.BatteryAlert,
+                "Progress",
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            Text("Battery Saver detected", modifier = Modifier.weight(1f))
+            TextButton(
+                onClick = { disable() },
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 1.dp), // Reset padding
+            ) {
+                Text(text = "Disable")
+            }
+
+        }
+    }
+}
+
+@Composable
 private fun ProgressBar(progress: SyncViewModel.Progress) {
 
     val bytesPerSec = remember {
@@ -427,7 +470,8 @@ fun InProgressPreview() {
             edit = {},
             back = {},
             snackbarState = snackbarState,
-            clearError = {}
+            clearError = {},
+            disableBatterSaver = {}
         )
     }
 }
@@ -466,7 +510,8 @@ fun CompletedPreview() {
             edit = {},
             back = {},
             snackbarState = snackbarState,
-            clearError = {}
+            clearError = {},
+            disableBatterSaver = {}
         )
     }
 }
@@ -497,7 +542,8 @@ fun IdlePreview() {
             edit = {},
             back = {},
             snackbarState = snackbarState,
-            clearError = {}
+            clearError = {},
+            disableBatterSaver = {}
         )
     }
 }
@@ -529,7 +575,8 @@ fun CalculatingPreview() {
             edit = {},
             back = {},
             snackbarState = snackbarState,
-            clearError = {}
+            clearError = {},
+            disableBatterSaver = {}
         )
     }
 }
