@@ -85,11 +85,11 @@ fun BatterySaverScreen(viewModel: BatterySaverViewModel = viewModel(factory = Ba
     }
 
     if (showWarning)
-        Battery { viewModel.openSettings(context) }
+        BatterySaverWarning { viewModel.openSettings(context) }
 }
 
 @Composable
-private fun Battery(openSettings: () -> Unit) {
+private fun BatterySaverWarning(openSettings: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
