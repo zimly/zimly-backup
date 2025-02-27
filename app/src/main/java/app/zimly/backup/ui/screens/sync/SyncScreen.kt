@@ -89,6 +89,7 @@ fun SyncScreen(
     val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
+    val batterySaver by viewModel.batterySaver.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
@@ -106,6 +107,7 @@ fun SyncScreen(
         error,
         source,
         progress,
+        batterySaver,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
@@ -128,6 +130,7 @@ private fun SyncCompose(
     error: String?,
     source: @Composable () -> Unit,
     progress: SyncViewModel.Progress,
+    batterySaver: Boolean,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
     createDiff: () -> Unit,
@@ -189,7 +192,7 @@ private fun SyncCompose(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(all = 32.dp),
+                    .padding(bottom = 32.dp, top = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
                 Button(
@@ -220,10 +223,12 @@ private fun SyncCompose(
                 Bucket(remote)
                 source()
                 DiffDetails(progress, enableActions, createDiff)
+
             }
             Column {
-                Battery(disableBatterSaver)
                 progress.status?.let { ProgressBar(progress) }
+
+                if (batterySaver) Battery(disableBatterSaver)
             }
         }
     }
@@ -379,7 +384,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight()
-            .padding(top = 16.dp),
+            .padding(top = 16.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.Center,
     ) {
         Row(
@@ -465,6 +470,7 @@ fun InProgressPreview() {
             error = null,
             {},
             progressState,
+            true,
             sync = {},
             createDiff = {},
             edit = {},
@@ -505,6 +511,7 @@ fun CompletedPreview() {
             error = null,
             { },
             progressState,
+            true,
             sync = {},
             createDiff = {},
             edit = {},
@@ -537,6 +544,7 @@ fun IdlePreview() {
             error = null,
             {  },
             progressState,
+            true,
             sync = {},
             createDiff = {},
             edit = {},
@@ -570,6 +578,7 @@ fun CalculatingPreview() {
             error = null,
             { },
             progressState,
+            false,
             sync = {},
             createDiff = {},
             edit = {},

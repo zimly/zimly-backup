@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -66,7 +67,8 @@ class SyncViewModel(
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
 
-    private val _batterySaver: MutableStateFlow<Boolean> = MutableStateFlow(batteryOptimizations.isIgnoringBatteryOptimizations())
+    private val _batterySaver: MutableStateFlow<Boolean> = MutableStateFlow(!batteryOptimizations.isIgnoringBatteryOptimizations())
+    val batterySaver: StateFlow<Boolean> = _batterySaver.asStateFlow()
 
     var syncConfigurationState: Flow<SyncConfigurationState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
