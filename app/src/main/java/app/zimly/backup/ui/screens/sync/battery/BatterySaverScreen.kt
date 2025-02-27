@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -40,16 +43,20 @@ class BatterySaverViewModel(application: Application): AndroidViewModel(applicat
     private val powerManager = application.getSystemService(android.os.PowerManager::class.java)
     private val packageName = application.applicationContext.packageName
 
-    private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(!isIgnoringBatteryOptimizations())
+    private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showWarning: StateFlow<Boolean> = _showWarning.asStateFlow()
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return powerManager.isIgnoringBatteryOptimizations(packageName)
     }
 
+    fun updateBatteryState() {
+        _showWarning.value = !isIgnoringBatteryOptimizations()
+    }
+
     fun openSettings(context: Context) {
         val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
         context.startActivity(intent)
     }
@@ -69,7 +76,13 @@ class BatterySaverViewModel(application: Application): AndroidViewModel(applicat
 fun BatterySaverScreen(viewModel: BatterySaverViewModel = viewModel(factory = BatterySaverViewModel.Factory)) {
 
     val context = LocalContext.current.applicationContext as Application
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val state by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
     val showWarning by viewModel.showWarning.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state) {
+        viewModel.updateBatteryState()
+    }
 
     if (showWarning)
         Battery { viewModel.openSettings(context) }
