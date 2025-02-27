@@ -3,7 +3,6 @@ package app.zimly.backup.ui.screens.sync
 import android.content.ContentResolver
 import android.util.Log
 import androidx.work.WorkManager
-import app.zimly.backup.BatteryOptimizations
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.Remote
 import app.zimly.backup.data.remote.RemoteDao
@@ -75,8 +74,7 @@ class SyncViewModelTest {
         val workManager = mockk<WorkManager>()
         every { workManager.getWorkInfosFlow(any()) } returns emptyFlow()
         val contentResolver = mockk<ContentResolver>()
-        val batteryOptimizations = mockk<BatteryOptimizations>()
-        this.viewModel = SyncViewModel(dao, 12, workManager, contentResolver, batteryOptimizations)
+        this.viewModel = SyncViewModel(dao, 12, workManager, contentResolver)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

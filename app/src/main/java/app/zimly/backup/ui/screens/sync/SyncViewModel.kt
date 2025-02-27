@@ -14,7 +14,6 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
-import app.zimly.backup.BatteryOptimizations
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.data.media.LocalMediaResolver
 import app.zimly.backup.data.media.SourceType
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -55,7 +53,6 @@ class SyncViewModel(
     // --> instead extend AndroidViewModel
     private val contentResolver: ContentResolver,
     // TODO keeping a ref to application IS a problem
-    private val batteryOptimizations: BatteryOptimizations
 ) : ViewModel() {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
@@ -66,9 +63,6 @@ class SyncViewModel(
     // This identifier is used to identify already running sync instances and prevent simultaneous
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${remoteId}"
-
-    private val _batterySaver: MutableStateFlow<Boolean> = MutableStateFlow(!batteryOptimizations.isIgnoringBatteryOptimizations())
-    val batterySaver: StateFlow<Boolean> = _batterySaver.asStateFlow()
 
     var syncConfigurationState: Flow<SyncConfigurationState> = snapshotFlow { remoteId }
         .map { dao.loadById(it) }
@@ -276,10 +270,6 @@ class SyncViewModel(
 
     suspend fun clearError() {
         _error.emit(null)
-    }
-
-    fun disableBatterSaver() {
-        batteryOptimizations.openSettings()
     }
 
     data class SyncConfigurationState(

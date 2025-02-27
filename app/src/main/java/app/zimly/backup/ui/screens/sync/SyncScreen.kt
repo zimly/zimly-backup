@@ -19,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.outlined.BatteryAlert
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
@@ -62,7 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
-import app.zimly.backup.BatteryOptimizations
+import app.zimly.backup.ui.screens.sync.battery.BatterySaverScreen
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.theme.ZimzyncTheme
@@ -81,7 +80,7 @@ fun SyncScreen(
         initializer {
             val workManager = WorkManager.getInstance(application.applicationContext)
 
-            SyncViewModel(dao, remoteId, workManager, application.contentResolver, BatteryOptimizations(application))
+            SyncViewModel(dao, remoteId, workManager, application.contentResolver)
         }
     }),
 ) {
@@ -89,7 +88,6 @@ fun SyncScreen(
     val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
-    val batterySaver by viewModel.batterySaver.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
@@ -107,7 +105,6 @@ fun SyncScreen(
         error,
         source,
         progress,
-        batterySaver,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
@@ -118,8 +115,7 @@ fun SyncScreen(
         createDiff = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } },
         edit = { edit(remoteId) },
         back,
-        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
-        disableBatterSaver = { viewModel.disableBatterSaver()}
+        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } }
     )
 }
 
@@ -130,14 +126,12 @@ private fun SyncCompose(
     error: String?,
     source: @Composable () -> Unit,
     progress: SyncViewModel.Progress,
-    batterySaver: Boolean,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
     createDiff: () -> Unit,
     edit: () -> Unit,
     back: () -> Unit,
     clearError: () -> Unit,
-    disableBatterSaver: () -> Unit
 ) {
     val enableActions = progress.status !in setOf(
         SyncViewModel.Status.CALCULATING,
@@ -228,7 +222,7 @@ private fun SyncCompose(
             Column {
                 progress.status?.let { ProgressBar(progress) }
 
-                if (batterySaver) Battery(disableBatterSaver)
+                BatterySaverScreen()
             }
         }
     }
@@ -343,37 +337,6 @@ private fun DiffDetails(
 }
 
 @Composable
-private fun Battery(disable: () -> Unit) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = containerBackground(),
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-
-        Row (modifier = Modifier
-            .padding(1.dp)
-            .fillMaxWidth(),verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Outlined.BatteryAlert,
-                "Progress",
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Text("Battery Saver detected", modifier = Modifier.weight(1f))
-            TextButton(
-                onClick = { disable() },
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 1.dp), // Reset padding
-            ) {
-                Text(text = "Disable")
-            }
-
-        }
-    }
-}
-
-@Composable
 private fun ProgressBar(progress: SyncViewModel.Progress) {
 
     val bytesPerSec = remember {
@@ -470,14 +433,12 @@ fun InProgressPreview() {
             error = null,
             {},
             progressState,
-            true,
             sync = {},
             createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-            disableBatterSaver = {}
         )
     }
 }
@@ -511,14 +472,12 @@ fun CompletedPreview() {
             error = null,
             { },
             progressState,
-            true,
             sync = {},
             createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-            disableBatterSaver = {}
         )
     }
 }
@@ -544,14 +503,12 @@ fun IdlePreview() {
             error = null,
             {  },
             progressState,
-            true,
             sync = {},
             createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-            disableBatterSaver = {}
         )
     }
 }
@@ -578,14 +535,12 @@ fun CalculatingPreview() {
             error = null,
             { },
             progressState,
-            false,
             sync = {},
             createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-            disableBatterSaver = {}
         )
     }
 }
