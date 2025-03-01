@@ -44,6 +44,7 @@ class BatterySaverViewModel(application: Application) : AndroidViewModel(applica
 
     // Ensuring this is the application Context, not an Activity
     private val powerManager = application.getSystemService(android.os.PowerManager::class.java)
+    private val batteryManager = application.getSystemService(android.os.BatteryManager::class.java)
     private val packageName = application.applicationContext.packageName
 
     private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -51,12 +52,16 @@ class BatterySaverViewModel(application: Application) : AndroidViewModel(applica
     private val _showDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
 
+    private fun isCharging(): Boolean {
+        return batteryManager.isCharging
+    }
+
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return powerManager.isIgnoringBatteryOptimizations(packageName)
     }
 
     fun updateBatteryState() {
-        _showWarning.value = !isIgnoringBatteryOptimizations()
+        _showWarning.value = !(isIgnoringBatteryOptimizations() || isCharging())
     }
 
     fun openSettings(context: Context) {
