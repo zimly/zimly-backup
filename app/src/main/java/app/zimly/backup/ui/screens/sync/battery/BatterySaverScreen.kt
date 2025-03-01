@@ -122,21 +122,20 @@ private fun BatterySaverWarning(openSettings: () -> Unit) {
 
         Row(
             modifier = Modifier
-                .padding(1.dp)
-                .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 Icons.Outlined.BatteryAlert,
-                "Batter Alert",
+                "Battery Alert",
                 tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
             Text("Battery Saver Detected", modifier = Modifier.weight(1f))
             TextButton(
                 onClick = { openSettings() },
                 contentPadding = PaddingValues(
-                    horizontal = 24.dp,
-                    vertical = 1.dp
+                    horizontal = 16.dp,
                 ), // Reset padding
             ) {
                 Text(text = "Learn More")
