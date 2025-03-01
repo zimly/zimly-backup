@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BatteryAlert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -23,6 +24,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -37,7 +40,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class BatterySaverViewModel(application: Application): AndroidViewModel(application) {
+class BatterySaverViewModel(application: Application) : AndroidViewModel(application) {
 
     // Ensuring this is the application Context, not an Activity
     private val powerManager = application.getSystemService(android.os.PowerManager::class.java)
@@ -45,6 +48,8 @@ class BatterySaverViewModel(application: Application): AndroidViewModel(applicat
 
     private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showWarning: StateFlow<Boolean> = _showWarning.asStateFlow()
+    private val _showDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return powerManager.isIgnoringBatteryOptimizations(packageName)
@@ -59,6 +64,14 @@ class BatterySaverViewModel(application: Application): AndroidViewModel(applicat
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
         context.startActivity(intent)
+    }
+
+    fun openDialog() {
+        _showDialog.value = true
+    }
+
+    fun closeDialog() {
+        _showDialog.value = false
     }
 
     companion object {
@@ -79,13 +92,17 @@ fun BatterySaverScreen(viewModel: BatterySaverViewModel = viewModel(factory = Ba
     val lifecycleOwner = LocalLifecycleOwner.current
     val state by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
     val showWarning by viewModel.showWarning.collectAsStateWithLifecycle()
+    val showDialog by viewModel.showDialog.collectAsStateWithLifecycle()
 
     LaunchedEffect(state) {
         viewModel.updateBatteryState()
     }
 
     if (showWarning)
-        BatterySaverWarning { viewModel.openSettings(context) }
+        BatterySaverWarning { viewModel.openDialog() }
+
+    if (showDialog)
+        BatterySaverInfoDialog({ viewModel.closeDialog() }, { viewModel.openSettings(context) })
 }
 
 @Composable
@@ -98,23 +115,72 @@ private fun BatterySaverWarning(openSettings: () -> Unit) {
             .fillMaxWidth()
     ) {
 
-        Row (modifier = Modifier
-            .padding(1.dp)
-            .fillMaxWidth(),verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .padding(1.dp)
+                .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
+        ) {
             Icon(
                 Icons.Outlined.BatteryAlert,
-                "Progress",
+                "Batter Alert",
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(end = 8.dp)
             )
-            Text("Battery Saver detected", modifier = Modifier.weight(1f))
+            Text("Battery Saver Detected", modifier = Modifier.weight(1f))
             TextButton(
                 onClick = { openSettings() },
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 1.dp), // Reset padding
+                contentPadding = PaddingValues(
+                    horizontal = 24.dp,
+                    vertical = 1.dp
+                ), // Reset padding
             ) {
-                Text(text = "Disable")
+                Text(text = "Learn More")
             }
-
         }
     }
+}
+
+@Composable
+fun BatterySaverInfoDialog(
+    closeDialog: () -> Unit,
+    openSettings: () -> Unit,
+) {
+    AlertDialog(
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.BatteryAlert,
+                contentDescription = "Battery Saver Alert",
+                tint = MaterialTheme.colorScheme.error)
+        },
+        title = {
+            Text(text = "Battery Saver Detected")
+        },
+        text = {
+            Text(
+                text = buildAnnotatedString {
+                    append("Battery Saver is enabled, which may interrupt background synchronization.")
+                    append("\n\nTo prevent this you can either:\n")
+                    append("  • Plug in the charger\n")
+                    append("  • Disable Battery Saver for Zimly")
+                },
+                textAlign = TextAlign.Left,
+                modifier = Modifier.padding(start = 12.dp)
+
+            )
+        },
+        onDismissRequest = {
+            closeDialog()
+        },
+        confirmButton = {
+            TextButton(onClick = { openSettings() }) {
+                Text("Open Settings")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { closeDialog() }
+            ) {
+                Text("Dismiss")
+            }
+        }
+    )
 }
