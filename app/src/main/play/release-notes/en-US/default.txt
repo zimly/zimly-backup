@@ -1,5 +1,5 @@
-2.1.1
-* Fix potential null-pointer when listing media collections #24
+2.2.0
+* Add warning and actionable for Battery Saver #27
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
