@@ -93,50 +93,60 @@ fun SyncScreen(
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
 
-    val source = @Composable {
-        when(remote.sourceType) {
-            SourceType.MEDIA -> MediaCollectionCompose(remote.sourceUri, application)
-            SourceType.FOLDER -> DocumentsFolderCompose(remote.sourceUri, application)
-            null -> {}
-        }
-    }
+    // Use Dispatchers.Default to not block Main thread
+    val createDiff: () -> Unit = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
+
+    val enableActions = progress.status !in setOf(
+        SyncViewModel.Status.CALCULATING,
+        SyncViewModel.Status.IN_PROGRESS
+    )
     SyncCompose(
-        remote,
+        remote.name,
         error,
-        source,
-        progress,
+        enableActions,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
                 viewModel.sync()
             }
         },
-        // Use Dispatchers.Default to not block Main thread
-        createDiff = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } },
         edit = { edit(remoteId) },
         back,
         clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } }
-    )
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp),) {
+
+            Bucket(remote)
+            when(remote.sourceType) {
+                SourceType.MEDIA -> MediaCollectionCompose(remote.sourceUri, application)
+                SourceType.FOLDER -> DocumentsFolderCompose(remote.sourceUri, application)
+                null -> {}
+            }
+            DiffDetails(progress, enableActions, createDiff)
+
+        }
+        Column {
+            progress.status?.let { ProgressBar(progress) }
+
+            BatterySaverScreen()
+        }
+
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SyncCompose(
-    remote: SyncViewModel.SyncConfigurationState,
+    remoteName: String,
     error: String?,
-    source: @Composable () -> Unit,
-    progress: SyncViewModel.Progress,
+    enableActions: Boolean,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
-    createDiff: () -> Unit,
     edit: () -> Unit,
     back: () -> Unit,
     clearError: () -> Unit,
+    content: @Composable () -> Unit
 ) {
-    val enableActions = progress.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
     // If the UI state contains an error, show snackbar
     if (!error.isNullOrEmpty()) {
         LaunchedEffect(snackbarState) {
@@ -158,7 +168,7 @@ private fun SyncCompose(
             TopAppBar(
                 title = {
                     Text(
-                        remote.name,
+                        remoteName,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -212,18 +222,7 @@ private fun SyncCompose(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp),) {
-
-                Bucket(remote)
-                source()
-                DiffDetails(progress, enableActions, createDiff)
-
-            }
-            Column {
-                progress.status?.let { ProgressBar(progress) }
-
-                BatterySaverScreen()
-            }
+            content()
         }
     }
 }
@@ -426,20 +425,23 @@ fun InProgressPreview() {
     )
     val snackbarState = remember { SnackbarHostState() }
 
+    val enableActions = progressState.status !in setOf(
+        SyncViewModel.Status.CALCULATING,
+        SyncViewModel.Status.IN_PROGRESS
+    )
+
 
     ZimzyncTheme(darkTheme = true) {
         SyncCompose(
-            remote = remote,
+            remoteName = remote.name,
             error = null,
-            {},
-            progressState,
+            enableActions,
             sync = {},
-            createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-        )
+        ) {}
     }
 }
 
@@ -465,20 +467,22 @@ fun CompletedPreview() {
     )
     val snackbarState = remember { SnackbarHostState() }
 
+    val enableActions = progressState.status !in setOf(
+        SyncViewModel.Status.CALCULATING,
+        SyncViewModel.Status.IN_PROGRESS
+    )
 
     ZimzyncTheme(darkTheme = true) {
         SyncCompose(
-            remote = remote,
+            remoteName = remote.name,
             error = null,
-            { },
-            progressState,
+            enableActions,
             sync = {},
-            createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-        )
+        ) {}
     }
 }
 
@@ -496,20 +500,22 @@ fun IdlePreview() {
     val progressState = SyncViewModel.Progress()
     val snackbarState = remember { SnackbarHostState() }
 
+    val enableActions = progressState.status !in setOf(
+        SyncViewModel.Status.CALCULATING,
+        SyncViewModel.Status.IN_PROGRESS
+    )
 
     ZimzyncTheme(darkTheme = true) {
         SyncCompose(
-            remote = remote,
+            remoteName = remote.name,
             error = null,
-            {  },
-            progressState,
+            enableActions,
             sync = {},
-            createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-        )
+        ) {}
     }
 }
 
@@ -528,19 +534,21 @@ fun CalculatingPreview() {
 
     val snackbarState = remember { SnackbarHostState() }
 
+    val enableActions = progressState.status !in setOf(
+        SyncViewModel.Status.CALCULATING,
+        SyncViewModel.Status.IN_PROGRESS
+    )
 
     ZimzyncTheme(darkTheme = true) {
         SyncCompose(
-            remote = remote,
+            remoteName = remote.name,
             error = null,
-            { },
-            progressState,
+            enableActions,
             sync = {},
-            createDiff = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-        )
+        ) {}
     }
 }
