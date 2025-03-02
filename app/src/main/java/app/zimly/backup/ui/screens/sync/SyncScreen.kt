@@ -63,7 +63,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
-import app.zimly.backup.ui.screens.sync.battery.BatterySaverScreen
+import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
@@ -128,7 +128,7 @@ fun SyncScreen(
         Column {
             progress.status?.let { ProgressBar(progress) }
 
-            BatterySaverScreen()
+            BatterySaverContainer()
         }
 
     }

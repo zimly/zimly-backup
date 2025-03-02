@@ -87,7 +87,7 @@ class BatterySaverViewModel(private val powerStatus: PowerStatusProvider) : View
 }
 
 @Composable
-fun BatterySaverScreen(viewModel: BatterySaverViewModel = viewModel(factory = BatterySaverViewModel.Factory)) {
+fun BatterySaverContainer(viewModel: BatterySaverViewModel = viewModel(factory = BatterySaverViewModel.Factory)) {
 
     val context = LocalContext.current.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
