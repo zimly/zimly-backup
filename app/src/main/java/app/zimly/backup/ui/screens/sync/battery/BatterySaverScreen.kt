@@ -3,6 +3,8 @@ package app.zimly.backup.ui.screens.sync.battery
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.os.BatteryManager
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,7 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -40,12 +42,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class BatterySaverViewModel(application: Application) : AndroidViewModel(application) {
-
-    // Ensuring this is the application Context, not an Activity
-    private val powerManager = application.getSystemService(android.os.PowerManager::class.java)
-    private val batteryManager = application.getSystemService(android.os.BatteryManager::class.java)
-    private val packageName = application.applicationContext.packageName
+class BatterySaverViewModel(
+    private val powerManager: PowerManager,
+    private val batteryManager: BatteryManager,
+    private val packageName: String
+) : ViewModel() {
 
     private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showWarning: StateFlow<Boolean> = _showWarning.asStateFlow()
@@ -84,7 +85,11 @@ class BatterySaverViewModel(application: Application) : AndroidViewModel(applica
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
-                BatterySaverViewModel(application)
+                // Ensuring this is the application Context, not an Activity
+                val powerManager = application.getSystemService(android.os.PowerManager::class.java)
+                val batteryManager = application.getSystemService(android.os.BatteryManager::class.java)
+                val packageName = application.applicationContext.packageName
+                BatterySaverViewModel(powerManager, batteryManager, packageName)
             }
         }
     }
@@ -154,7 +159,8 @@ fun BatterySaverInfoDialog(
             Icon(
                 imageVector = Icons.Outlined.BatteryAlert,
                 contentDescription = "Battery Saver Alert",
-                tint = MaterialTheme.colorScheme.error)
+                tint = MaterialTheme.colorScheme.error
+            )
         },
         title = {
             Text(text = "Battery Saver Detected")
