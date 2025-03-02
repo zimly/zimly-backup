@@ -85,7 +85,7 @@ class BatterySaverViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
-                // Ensuring this is the application Context, not an Activity
+
                 val powerManager = application.getSystemService(android.os.PowerManager::class.java)
                 val batteryManager = application.getSystemService(android.os.BatteryManager::class.java)
                 val packageName = application.applicationContext.packageName
