@@ -100,6 +100,17 @@ fun SyncScreen(
         SyncViewModel.Status.CALCULATING,
         SyncViewModel.Status.IN_PROGRESS
     )
+
+    val sourceContainer:  @Composable () -> Unit = {
+        when (remote.sourceType) {
+            SourceType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
+            SourceType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
+            null -> {}
+        }
+    }
+
+    val batterySaverContainer:  @Composable () -> Unit = { BatterySaverContainer() }
+
     SyncLayout(
         remote.name,
         error,
@@ -112,23 +123,19 @@ fun SyncScreen(
         },
         edit = { edit(remoteId) },
         back,
-        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } }
+        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Bucket(remote)
-            when(remote.sourceType) {
-                SourceType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
-                SourceType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
-                null -> {}
-            }
+            sourceContainer()
             DiffDetails(progress, enableActions, createDiff)
 
         }
         Column {
             progress.status?.let { ProgressBar(progress) }
 
-            BatterySaverContainer()
+            batterySaverContainer()
         }
 
     }
