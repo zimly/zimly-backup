@@ -114,7 +114,7 @@ fun SyncScreen(
         back,
         clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } }
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp),) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
             Bucket(remote)
             when(remote.sourceType) {
