@@ -100,7 +100,7 @@ fun SyncScreen(
         SyncViewModel.Status.CALCULATING,
         SyncViewModel.Status.IN_PROGRESS
     )
-    SyncCompose(
+    SyncLayout(
         remote.name,
         error,
         enableActions,
@@ -136,7 +136,7 @@ fun SyncScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SyncCompose(
+private fun SyncLayout(
     remoteName: String,
     error: String?,
     enableActions: Boolean,
@@ -432,7 +432,7 @@ fun InProgressPreview() {
 
 
     ZimzyncTheme(darkTheme = true) {
-        SyncCompose(
+        SyncLayout(
             remoteName = remote.name,
             error = null,
             enableActions,
@@ -473,7 +473,7 @@ fun CompletedPreview() {
     )
 
     ZimzyncTheme(darkTheme = true) {
-        SyncCompose(
+        SyncLayout(
             remoteName = remote.name,
             error = null,
             enableActions,
@@ -506,7 +506,7 @@ fun IdlePreview() {
     )
 
     ZimzyncTheme(darkTheme = true) {
-        SyncCompose(
+        SyncLayout(
             remoteName = remote.name,
             error = null,
             enableActions,
@@ -540,7 +540,7 @@ fun CalculatingPreview() {
     )
 
     ZimzyncTheme(darkTheme = true) {
-        SyncCompose(
+        SyncLayout(
             remoteName = remote.name,
             error = null,
             enableActions,
