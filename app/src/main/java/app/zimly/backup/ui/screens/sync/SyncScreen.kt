@@ -118,8 +118,8 @@ fun SyncScreen(
 
             Bucket(remote)
             when(remote.sourceType) {
-                SourceType.MEDIA -> MediaCollectionCompose(remote.sourceUri)
-                SourceType.FOLDER -> DocumentsFolderCompose(remote.sourceUri)
+                SourceType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
+                SourceType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
                 null -> {}
             }
             DiffDetails(progress, enableActions, createDiff)

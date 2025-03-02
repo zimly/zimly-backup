@@ -1,6 +1,5 @@
 package app.zimly.backup.ui.screens.sync
 
-import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,7 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -26,28 +25,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import app.zimly.backup.data.media.LocalDocumentsResolver
-import app.zimly.backup.ui.screens.editor.field.UriField
-import app.zimly.backup.ui.screens.sync.DocumentsFolderViewModel.Companion.factory
+import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.ui.screens.sync.MediaCollectionViewModel.Companion.factory
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 @Composable
-fun DocumentsFolderCompose(
-    folderPath: String,
-    viewModel: DocumentsFolderViewModel = viewModel(factory = factory(folderPath)),
+fun MediaCollectionContainer(
+    collectionPath: String,
+    viewModel: MediaCollectionViewModel = viewModel(factory = factory(collectionPath))
 ) {
-    val folder by viewModel.folderState.collectAsStateWithLifecycle(DocumentsFolderState())
 
-    DocumentsFolder(folder)
+    val folder by viewModel.folderState.collectAsStateWithLifecycle(MediaCollectionState())
+
+    MediaCollection(folder)
 }
 
 @Composable
-private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
-
-    val displayName = UriField.displayName(documentsFolderState.folder)
+private fun MediaCollection(collectionState: MediaCollectionState) {
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -56,7 +53,7 @@ private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
             Icon(
-                Icons.Outlined.Folder,
+                Icons.Outlined.Photo,
                 "Media",
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
@@ -66,48 +63,57 @@ private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Folder")
-                Text(displayName)
+                Text(text = "Collection")
+                Text(text = collectionState.collection)
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Documents")
-                Text(text = "${documentsFolderState.documents}")
+                Text(text = "Photos")
+                Text(text = "${collectionState.photos}")
             }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(text = "Videos")
+                Text(text = "${collectionState.videos}")
+            }
+
         }
     }
 }
 
-data class DocumentsFolderState(
-    var folder: Uri = Uri.EMPTY,
-    var documents: Int = 0,
+data class MediaCollectionState(
+    var collection: String = "",
+    var photos: Int = 0,
+    var videos: Int = 0,
 )
 
-class DocumentsFolderViewModel(
-    localContentResolver: LocalDocumentsResolver,
-    folderPath: Uri
+class MediaCollectionViewModel(
+    localMediaResolver: LocalMediaResolver,
+    collection: String
 ) : ViewModel() {
 
-    val folderState = snapshotFlow { folderPath }.map {
-        val documentsCount = localContentResolver.listObjects().size
-        return@map DocumentsFolderState(it, documentsCount)
+    val folderState = snapshotFlow { collection }.map {
+        val photoCount = localMediaResolver.photoCount()
+        val videoCount = localMediaResolver.videoCount()
+        return@map MediaCollectionState(it, photoCount, videoCount)
     }.flowOn(Dispatchers.IO)
 
     companion object {
 
-        val factory: (folderPath: String) -> ViewModelProvider.Factory = { folderPath ->
+        val factory: (collection: String) -> ViewModelProvider.Factory = { collection ->
             viewModelFactory {
                 initializer {
                     val application = checkNotNull(this[APPLICATION_KEY])
 
-                    val folderUri = Uri.parse(folderPath)
-                    val contentResolver = LocalDocumentsResolver(application.contentResolver, folderUri)
-
-                    DocumentsFolderViewModel(contentResolver, folderUri)
+                    val contentResolver = LocalMediaResolver(application.contentResolver, collection)
+                    MediaCollectionViewModel(contentResolver, collection)
                 }
             }
         }
     }
+
 }
