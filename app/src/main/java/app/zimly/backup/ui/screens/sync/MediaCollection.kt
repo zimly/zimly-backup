@@ -1,6 +1,5 @@
 package app.zimly.backup.ui.screens.sync
 
-import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,11 +19,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.ui.screens.sync.MediaCollectionViewModel.Companion.factory
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
@@ -33,13 +35,7 @@ import kotlinx.coroutines.flow.map
 @Composable
 fun MediaCollectionCompose(
     collectionPath: String,
-    application: Application,
-    viewModel: MediaCollectionViewModel = viewModel(factory = viewModelFactory {
-        initializer {
-            val mediaResolver = LocalMediaResolver(application.contentResolver, collectionPath)
-            MediaCollectionViewModel(mediaResolver, collectionPath)
-        }
-    }),
+    viewModel: MediaCollectionViewModel = viewModel(factory = factory(collectionPath))
 ) {
 
     val folder by viewModel.folderState.collectAsStateWithLifecycle(MediaCollectionState())
@@ -105,4 +101,19 @@ class MediaCollectionViewModel(
         val videoCount = localMediaResolver.videoCount()
         return@map MediaCollectionState(it, photoCount, videoCount)
     }.flowOn(Dispatchers.IO)
+
+    companion object {
+
+        val factory: (collection: String) -> ViewModelProvider.Factory = { collection ->
+            viewModelFactory {
+                initializer {
+                    val application = checkNotNull(this[APPLICATION_KEY])
+
+                    val contentResolver = LocalMediaResolver(application.contentResolver, collection)
+                    MediaCollectionViewModel(contentResolver, collection)
+                }
+            }
+        }
+    }
+
 }

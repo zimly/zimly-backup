@@ -61,9 +61,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
-import app.zimly.backup.ui.screens.sync.battery.BatterySaverScreen
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.ui.screens.sync.battery.BatterySaverScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
@@ -118,8 +118,8 @@ fun SyncScreen(
 
             Bucket(remote)
             when(remote.sourceType) {
-                SourceType.MEDIA -> MediaCollectionCompose(remote.sourceUri, application)
-                SourceType.FOLDER -> DocumentsFolderCompose(remote.sourceUri, application)
+                SourceType.MEDIA -> MediaCollectionCompose(remote.sourceUri)
+                SourceType.FOLDER -> DocumentsFolderCompose(remote.sourceUri)
                 null -> {}
             }
             DiffDetails(progress, enableActions, createDiff)

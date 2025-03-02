@@ -1,6 +1,5 @@
 package app.zimly.backup.ui.screens.sync
 
-import android.app.Application
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,12 +20,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.ui.screens.editor.field.UriField
+import app.zimly.backup.ui.screens.sync.DocumentsFolderViewModel.Companion.factory
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
@@ -35,16 +37,8 @@ import kotlinx.coroutines.flow.map
 @Composable
 fun DocumentsFolderCompose(
     folderPath: String,
-    application: Application,
-    viewModel: DocumentsFolderViewModel = viewModel(factory = viewModelFactory {
-        initializer {
-            val folderUri = Uri.parse(folderPath)
-            val localDocumentsResolver = LocalDocumentsResolver(application.contentResolver, folderUri)
-            DocumentsFolderViewModel(localDocumentsResolver, folderUri)
-        }
-    }),
+    viewModel: DocumentsFolderViewModel = viewModel(factory = factory(folderPath)),
 ) {
-
     val folder by viewModel.folderState.collectAsStateWithLifecycle(DocumentsFolderState())
 
     DocumentsFolder(folder)
@@ -100,4 +94,20 @@ class DocumentsFolderViewModel(
         val documentsCount = localContentResolver.listObjects().size
         return@map DocumentsFolderState(it, documentsCount)
     }.flowOn(Dispatchers.IO)
+
+    companion object {
+
+        val factory: (folderPath: String) -> ViewModelProvider.Factory = { folderPath ->
+            viewModelFactory {
+                initializer {
+                    val application = checkNotNull(this[APPLICATION_KEY])
+
+                    val folderUri = Uri.parse(folderPath)
+                    val contentResolver = LocalDocumentsResolver(application.contentResolver, folderUri)
+
+                    DocumentsFolderViewModel(contentResolver, folderUri)
+                }
+            }
+        }
+    }
 }
