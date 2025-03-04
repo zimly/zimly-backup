@@ -43,7 +43,6 @@ fun InProgressPreview() {
         SyncViewModel.Status.IN_PROGRESS
     )
 
-
     ZimzyncTheme(darkTheme = true) {
         SyncLayout(
             remoteName = remote.name,
@@ -101,63 +100,11 @@ fun CompletedPreview() {
                 progressState,
                 enableActions,
                 createDiff = {},
-                sourceContainer = {
-                    when (remote.sourceType) {
-                        SourceType.MEDIA -> {
-                            MediaCollectionContainer(remote.sourceUri, viewModel = viewModel {
-                                val localMediaResolver =
-                                    object : LocalMediaResolver, LocalContentResolver {
-                                        override fun photoCount(): Int {
-                                            return 23
-                                        }
-
-                                        override fun videoCount(): Int {
-                                            return 12
-                                        }
-
-                                        override fun getStream(uri: Uri): InputStream {
-                                            TODO("Not yet implemented")
-                                        }
-
-                                        override fun listObjects(): List<ContentObject> {
-                                            return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
-
-                                        }
-                                    }
-                                MediaCollectionViewModel(localMediaResolver, remote.sourceUri)
-                            })
-                        }
-                        SourceType.FOLDER -> {
-                            DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
-                                val localContentResolver = object : LocalContentResolver {
-
-                                    override fun getStream(uri: Uri): InputStream {
-                                        TODO("Not yet implemented")
-                                    }
-
-                                    override fun listObjects(): List<ContentObject> {
-                                        return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
-                                    }
-                                }
-                                DocumentsFolderViewModel(localContentResolver, Uri.parse(remote.sourceUri))
-                            })
-                        }
-                        null -> {}
-                    }
-                },
+                sourceContainer = { ContentContainer(remote) } ,
                 batterySaverContainer = {
-
-                    val viewModel = BatterySaverViewModel(object : PowerStatusProvider {
-                        override fun isCharging(): Boolean {
-                            return false
-                        }
-
-                        override fun isBatterSaverDisabled(): Boolean {
-                            return false
-                        }
-
+                    BatterySaverContainer(viewModel = viewModel {
+                        BatterySaverViewModel(StubPowerStatusProvider())
                     })
-                    BatterySaverContainer(viewModel)
                 }
             )
         }
@@ -230,4 +177,75 @@ fun CalculatingPreview() {
             clearError = {},
         ) {}
     }
+}
+
+@Composable
+private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
+    when (remote.sourceType) {
+        SourceType.MEDIA -> {
+            MediaCollectionContainer(remote.sourceUri, viewModel = viewModel {
+                MediaCollectionViewModel(StubMediaResolver(), remote.sourceUri)
+            })
+        }
+
+        SourceType.FOLDER -> {
+            DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
+                DocumentsFolderViewModel(
+                    StubContentResolver(),
+                    Uri.parse(remote.sourceUri)
+                )
+            })
+        }
+
+        null -> {}
+    }
+
+}
+
+private class StubContentResolver : LocalContentResolver {
+
+    override fun getStream(uri: Uri): InputStream {
+        TODO("Not yet implemented")
+    }
+
+    override fun listObjects(): List<ContentObject> {
+        return listOf(
+            ContentObject(
+                "name",
+                124L,
+                "image/png",
+                Uri.EMPTY
+            )
+        )
+    }
+}
+
+
+private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
+    override fun photoCount(): Int {
+        return 23
+    }
+
+    override fun videoCount(): Int {
+        return 12
+    }
+
+    override fun getStream(uri: Uri): InputStream {
+        TODO("Not yet implemented")
+    }
+
+    override fun listObjects(): List<ContentObject> {
+        return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
+    }
+}
+
+private class StubPowerStatusProvider : PowerStatusProvider {
+    override fun isCharging(): Boolean {
+        return false
+    }
+
+    override fun isBatterSaverDisabled(): Boolean {
+        return false
+    }
+
 }
