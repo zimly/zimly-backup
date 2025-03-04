@@ -43,18 +43,7 @@ fun InProgressPreview() {
         SyncViewModel.Status.IN_PROGRESS
     )
 
-    ZimzyncTheme(darkTheme = true) {
-        SyncLayout(
-            remoteName = remote.name,
-            error = null,
-            enableActions,
-            sync = {},
-            edit = {},
-            back = {},
-            snackbarState = snackbarState,
-            clearError = {},
-        ) {}
-    }
+    PreviewSync(remote, enableActions, snackbarState, progressState)
 }
 
 @Preview(showBackground = true)
@@ -84,33 +73,8 @@ fun CompletedPreview() {
         SyncViewModel.Status.IN_PROGRESS
     )
 
-    ZimzyncTheme(darkTheme = true) {
-        SyncLayout(
-            remoteName = remote.name,
-            error = null,
-            enableActions,
-            sync = {},
-            edit = {},
-            back = {},
-            snackbarState = snackbarState,
-            clearError = {},
-        ) {
-            SyncOverview(
-                remote,
-                progressState,
-                enableActions,
-                createDiff = {},
-                sourceContainer = { ContentContainer(remote) } ,
-                batterySaverContainer = {
-                    BatterySaverContainer(viewModel = viewModel {
-                        BatterySaverViewModel(StubPowerStatusProvider())
-                    })
-                }
-            )
-        }
-    }
+    PreviewSync(remote, enableActions, snackbarState, progressState)
 }
-
 
 @Preview(showBackground = true)
 @Composable
@@ -130,20 +94,8 @@ fun IdlePreview() {
         SyncViewModel.Status.IN_PROGRESS
     )
 
-    ZimzyncTheme(darkTheme = true) {
-        SyncLayout(
-            remoteName = remote.name,
-            error = null,
-            enableActions,
-            sync = {},
-            edit = {},
-            back = {},
-            snackbarState = snackbarState,
-            clearError = {},
-        ) {
-        }
-    }
-}
+    PreviewSync(remote, enableActions, snackbarState, progressState)}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -165,6 +117,15 @@ fun CalculatingPreview() {
         SyncViewModel.Status.IN_PROGRESS
     )
 
+    PreviewSync(remote, enableActions, snackbarState, progressState)}
+
+@Composable
+private fun PreviewSync(
+    remote: SyncViewModel.SyncConfigurationState,
+    enableActions: Boolean,
+    snackbarState: SnackbarHostState,
+    progressState: SyncViewModel.Progress
+) {
     ZimzyncTheme(darkTheme = true) {
         SyncLayout(
             remoteName = remote.name,
@@ -175,7 +136,20 @@ fun CalculatingPreview() {
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-        ) {}
+        ) {
+            SyncOverview(
+                remote,
+                progressState,
+                enableActions,
+                createDiff = {},
+                sourceContainer = { ContentContainer(remote) },
+                batterySaverContainer = {
+                    BatterySaverContainer(viewModel = viewModel {
+                        BatterySaverViewModel(StubPowerStatusProvider())
+                    })
+                }
+            )
+        }
     }
 }
 
