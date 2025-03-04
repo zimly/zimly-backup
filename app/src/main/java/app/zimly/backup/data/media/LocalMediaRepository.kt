@@ -8,7 +8,10 @@ import android.provider.MediaStore
 import android.util.Log
 import java.io.InputStream
 
-
+/**
+ * Wraps the [ContentResolver] for media specific queries. Compared to [LocalMediaResolver]
+ * thr repository is not bound to a collection or scope and can be used for more general queries.
+ */
 class LocalMediaRepository(private val contentResolver: ContentResolver): MediaRepository {
 
     companion object {
@@ -160,7 +163,10 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
     }
 }
 
-
+/**
+ * Wraps the [ContentResolver] for scoped media collection specific queries. The scope is passed as
+ * a bucket, or collection.
+ */
 class LocalMediaResolverImpl(private val contentResolver: ContentResolver, private val bucket: String): LocalContentResolver, LocalMediaResolver {
 
     private var mediaRepository: MediaRepository = LocalMediaRepository(contentResolver)
