@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.ui.screens.editor.field.UriField
 import app.zimly.backup.ui.screens.sync.DocumentsFolderViewModel.Companion.factory
@@ -86,7 +87,7 @@ data class DocumentsFolderState(
 )
 
 class DocumentsFolderViewModel(
-    localContentResolver: LocalDocumentsResolver,
+    localContentResolver: LocalContentResolver,
     folderPath: Uri
 ) : ViewModel() {
 

@@ -26,6 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.data.media.LocalMediaResolverImpl
 import app.zimly.backup.ui.screens.sync.MediaCollectionViewModel.Companion.factory
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
@@ -109,7 +110,7 @@ class MediaCollectionViewModel(
                 initializer {
                     val application = checkNotNull(this[APPLICATION_KEY])
 
-                    val contentResolver = LocalMediaResolver(application.contentResolver, collection)
+                    val contentResolver = LocalMediaResolverImpl(application.contentResolver, collection)
                     MediaCollectionViewModel(contentResolver, collection)
                 }
             }

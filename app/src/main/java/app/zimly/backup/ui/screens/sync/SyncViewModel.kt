@@ -15,7 +15,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import app.zimly.backup.data.media.LocalDocumentsResolver
-import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.data.media.LocalMediaResolverImpl
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.s3.MinioRepository
@@ -128,7 +128,7 @@ class SyncViewModel(
             val remote = dao.loadById(remoteId)
             val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
 
-            val resolver = if (remote.sourceType == SourceType.MEDIA) LocalMediaResolver(contentResolver, remote.sourceUri) else LocalDocumentsResolver(contentResolver, Uri.parse(remote.sourceUri))
+            val resolver = if (remote.sourceType == SourceType.MEDIA) LocalMediaResolverImpl(contentResolver, remote.sourceUri) else LocalDocumentsResolver(contentResolver, Uri.parse(remote.sourceUri))
             val syncService = SyncServiceImpl(s3Repo, resolver)
 
             val diff = syncService.diff()

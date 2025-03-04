@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.sync
 
 import android.app.Application
+import android.net.Uri
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -61,13 +62,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
+import app.zimly.backup.data.media.ContentObject
+import app.zimly.backup.data.media.LocalContentResolver
+import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.data.media.LocalMediaResolverImpl
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
+import app.zimly.backup.ui.screens.sync.battery.BatterySaverViewModel
+import app.zimly.backup.ui.screens.sync.battery.PowerStatusProvider
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.InputStream
 
 @Composable
 fun SyncScreen(
@@ -101,16 +109,6 @@ fun SyncScreen(
         SyncViewModel.Status.IN_PROGRESS
     )
 
-    val sourceContainer:  @Composable () -> Unit = {
-        when (remote.sourceType) {
-            SourceType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
-            SourceType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
-            null -> {}
-        }
-    }
-
-    val batterySaverContainer:  @Composable () -> Unit = { BatterySaverContainer() }
-
     SyncLayout(
         remote.name,
         error,
@@ -125,19 +123,44 @@ fun SyncScreen(
         back,
         clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        SyncOverview(
+            remote,
+            progress,
+            enableActions,
+            createDiff,
+            sourceContainer = {
+                when (remote.sourceType) {
+                    SourceType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
+                    SourceType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
+                    null -> {}
+                }
+            },
+            batterySaverContainer = { BatterySaverContainer() }
+        )
 
-            Bucket(remote)
-            sourceContainer()
-            DiffDetails(progress, enableActions, createDiff)
+    }
+}
 
-        }
-        Column {
-            progress.status?.let { ProgressBar(progress) }
+@Composable
+private fun SyncOverview(
+    remote: SyncViewModel.SyncConfigurationState,
+    progress: SyncViewModel.Progress,
+    enableActions: Boolean,
+    createDiff: () -> Unit,
+    sourceContainer: @Composable () -> Unit,
+    batterySaverContainer: @Composable () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            batterySaverContainer()
-        }
+        Bucket(remote)
+        sourceContainer()
+        DiffDetails(progress, enableActions, createDiff)
 
+    }
+    Column {
+        progress.status?.let { ProgressBar(progress) }
+
+        batterySaverContainer()
     }
 }
 
@@ -489,7 +512,72 @@ fun CompletedPreview() {
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-        ) {}
+        ) {
+            SyncOverview(
+                remote,
+                progressState,
+                enableActions,
+                createDiff = {},
+                sourceContainer = {
+                    when (remote.sourceType) {
+                        SourceType.MEDIA -> {
+                            MediaCollectionContainer(remote.sourceUri, viewModel = viewModel {
+                                val localMediaResolver =
+                                    object : LocalMediaResolver, LocalContentResolver {
+                                        override fun photoCount(): Int {
+                                            return 23
+                                        }
+
+                                        override fun videoCount(): Int {
+                                            return 12
+                                        }
+
+                                        override fun getStream(uri: Uri): InputStream {
+                                            TODO("Not yet implemented")
+                                        }
+
+                                        override fun listObjects(): List<ContentObject> {
+                                            return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
+
+                                        }
+                                    }
+                                MediaCollectionViewModel(localMediaResolver, remote.sourceUri)
+                            })
+                        }
+                        SourceType.FOLDER -> {
+                            DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
+                                val localContentResolver = object : LocalContentResolver {
+
+                                    override fun getStream(uri: Uri): InputStream {
+                                        TODO("Not yet implemented")
+                                    }
+
+                                    override fun listObjects(): List<ContentObject> {
+                                        return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
+                                    }
+                                }
+                                DocumentsFolderViewModel(localContentResolver, Uri.parse(remote.sourceUri))
+                            })
+                        }
+                        null -> {}
+                    }
+                },
+                batterySaverContainer = {
+
+                    val viewModel = BatterySaverViewModel(object : PowerStatusProvider {
+                        override fun isCharging(): Boolean {
+                            return false
+                        }
+
+                        override fun isBatterSaverDisabled(): Boolean {
+                            return false
+                        }
+
+                    })
+                    BatterySaverContainer(viewModel)
+                }
+            )
+        }
     }
 }
 
@@ -522,7 +610,8 @@ fun IdlePreview() {
             back = {},
             snackbarState = snackbarState,
             clearError = {},
-        ) {}
+        ) {
+        }
     }
 }
 

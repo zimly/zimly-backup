@@ -167,7 +167,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
 }
 
 
-class LocalMediaResolver(private val contentResolver: ContentResolver, private val bucket: String): LocalContentResolver {
+class LocalMediaResolverImpl(private val contentResolver: ContentResolver, private val bucket: String): LocalContentResolver, LocalMediaResolver {
 
     private var mediaRepository: MediaRepository = LocalMediaRepository(contentResolver)
 
@@ -179,11 +179,11 @@ class LocalMediaResolver(private val contentResolver: ContentResolver, private v
         return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
     }
 
-    fun photoCount(): Int {
+    override fun photoCount(): Int {
         return mediaRepository.getPhotos(setOf(bucket)).count()
     }
 
-    fun videoCount(): Int {
+    override fun videoCount(): Int {
         return mediaRepository.getVideos(setOf(bucket)).count()
     }
 }
@@ -192,6 +192,11 @@ interface MediaRepository {
     fun getVideos(buckets: Set<String>): List<ContentObject>
     fun getPhotos(buckets: Set<String>): List<ContentObject>
     fun getBuckets(): Map<String, Number>
+}
+
+interface LocalMediaResolver {
+    fun photoCount(): Int
+    fun videoCount(): Int
 }
 
 interface LocalContentResolver {

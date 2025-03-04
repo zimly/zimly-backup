@@ -8,6 +8,7 @@ import androidx.work.Data
 import androidx.work.WorkerParameters
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.data.media.LocalMediaResolver
+import app.zimly.backup.data.media.LocalMediaResolverImpl
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
@@ -111,7 +112,7 @@ class SyncWorker(
             val s3Repository = MinioRepository(url, key, secret, bucket)
 
             val localMediaResolver = when (sourceType) {
-                SourceType.MEDIA -> LocalMediaResolver(context.contentResolver, sourcePath)
+                SourceType.MEDIA -> LocalMediaResolverImpl(context.contentResolver, sourcePath)
                 SourceType.FOLDER -> LocalDocumentsResolver(context.contentResolver, Uri.parse(sourcePath))
             }
 
