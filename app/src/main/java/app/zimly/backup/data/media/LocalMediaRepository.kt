@@ -18,7 +18,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
         private val TAG: String? = LocalMediaRepository::class.simpleName
     }
 
-    override fun getPhotos(buckets: Set<String>): List<ContentObject> {
+    override fun getPhotos(collections: Set<String>): List<ContentObject> {
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val projection = arrayOf(
             MediaStore.MediaColumns._ID,
@@ -38,7 +38,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
         Log.d(TAG, "Content URI path: ${contentUri.path ?: "null"}")
 
         val photos = mutableListOf<ContentObject>()
-        val contentBuckets = buckets.joinToString(separator = ",", transform = {bucket -> "'${bucket}'"})
+        val contentBuckets = collections.joinToString(separator = ",", transform = { bucket -> "'${bucket}'"})
         val selection = MediaStore.MediaColumns.BUCKET_DISPLAY_NAME + " IN ($contentBuckets)"
         contentResolver.query(
             contentUri,
@@ -73,7 +73,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
         return photos.toList()
     }
 
-    override fun getVideos(buckets: Set<String>): List<ContentObject> {
+    override fun getVideos(collections: Set<String>): List<ContentObject> {
 
         val videos = mutableListOf<ContentObject>()
 
@@ -93,7 +93,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
         // https://developer.android.com/training/data-storage/shared/media#media_store
         val contentUri = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
 
-        val contentBuckets = buckets.joinToString(separator = ",", transform = {bucket -> "'${bucket}'"})
+        val contentBuckets = collections.joinToString(separator = ",", transform = { bucket -> "'${bucket}'"})
         contentResolver.query(
             contentUri,
             projection,
@@ -165,14 +165,14 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
 
 /**
  * Wraps the [ContentResolver] for scoped media collection specific queries. The scope is passed as
- * a bucket, or collection.
+ * a collection.
  */
-class LocalMediaResolverImpl(private val contentResolver: ContentResolver, private val bucket: String): LocalContentResolver, LocalMediaResolver {
+class LocalMediaResolverImpl(private val contentResolver: ContentResolver, private val collection: String): LocalContentResolver, LocalMediaResolver {
 
     private var mediaRepository: MediaRepository = LocalMediaRepository(contentResolver)
 
     override fun listObjects(): List<ContentObject> {
-        return listOf(mediaRepository.getPhotos(setOf(bucket)), mediaRepository.getVideos(setOf(bucket))).flatten()
+        return listOf(mediaRepository.getPhotos(setOf(collection)), mediaRepository.getVideos(setOf(collection))).flatten()
     }
 
     override fun getStream(uri: Uri): InputStream {
@@ -180,17 +180,17 @@ class LocalMediaResolverImpl(private val contentResolver: ContentResolver, priva
     }
 
     override fun photoCount(): Int {
-        return mediaRepository.getPhotos(setOf(bucket)).count()
+        return mediaRepository.getPhotos(setOf(collection)).count()
     }
 
     override fun videoCount(): Int {
-        return mediaRepository.getVideos(setOf(bucket)).count()
+        return mediaRepository.getVideos(setOf(collection)).count()
     }
 }
 
 interface MediaRepository {
-    fun getVideos(buckets: Set<String>): List<ContentObject>
-    fun getPhotos(buckets: Set<String>): List<ContentObject>
+    fun getVideos(collections: Set<String>): List<ContentObject>
+    fun getPhotos(collections: Set<String>): List<ContentObject>
     fun getBuckets(): Map<String, Number>
 }
 
