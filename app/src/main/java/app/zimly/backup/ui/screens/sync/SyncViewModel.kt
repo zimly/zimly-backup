@@ -1,7 +1,6 @@
 package app.zimly.backup.ui.screens.sync
 
 import android.content.ContentResolver
-import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
@@ -14,8 +13,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
-import app.zimly.backup.data.media.LocalDocumentsResolver
-import app.zimly.backup.data.media.LocalMediaResolverImpl
+import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.data.s3.MinioRepository
@@ -128,8 +126,8 @@ class SyncViewModel(
             val remote = dao.loadById(remoteId)
             val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
 
-            val resolver = if (remote.sourceType == SourceType.MEDIA) LocalMediaResolverImpl(contentResolver, remote.sourceUri) else LocalDocumentsResolver(contentResolver, Uri.parse(remote.sourceUri))
-            val syncService = SyncServiceImpl(s3Repo, resolver)
+            val contentResolver = LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
+            val syncService = SyncServiceImpl(s3Repo, contentResolver)
 
             val diff = syncService.diff()
             // Display result of the minio request to the user

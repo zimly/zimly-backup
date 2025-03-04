@@ -8,12 +8,6 @@ import android.provider.MediaStore
 import android.util.Log
 import java.io.InputStream
 
-data class ContentObject(
-    var name: String,
-    var size: Long,
-    var contentType: String,
-    val path: Uri,
-)
 
 class LocalMediaRepository(private val contentResolver: ContentResolver): MediaRepository {
 
@@ -199,7 +193,3 @@ interface LocalMediaResolver {
     fun videoCount(): Int
 }
 
-interface LocalContentResolver {
-    fun getStream(uri: Uri): InputStream
-    fun listObjects(): List<ContentObject>
-}
