@@ -1,7 +1,6 @@
 package app.zimly.backup.ui.screens.sync
 
 import android.app.Application
-import android.net.Uri
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -52,7 +51,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -62,20 +60,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
-import app.zimly.backup.data.media.ContentObject
-import app.zimly.backup.data.media.LocalContentResolver
-import app.zimly.backup.data.media.LocalMediaResolver
-import app.zimly.backup.data.media.LocalMediaResolverImpl
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
-import app.zimly.backup.ui.screens.sync.battery.BatterySaverViewModel
-import app.zimly.backup.ui.screens.sync.battery.PowerStatusProvider
-import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.InputStream
 
 @Composable
 fun SyncScreen(
@@ -142,7 +132,7 @@ fun SyncScreen(
 }
 
 @Composable
-private fun SyncOverview(
+fun SyncOverview(
     remote: SyncViewModel.SyncConfigurationState,
     progress: SyncViewModel.Progress,
     enableActions: Boolean,
@@ -166,7 +156,7 @@ private fun SyncOverview(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SyncLayout(
+fun SyncLayout(
     remoteName: String,
     error: String?,
     enableActions: Boolean,
@@ -430,221 +420,5 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
                 )
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun InProgressPreview() {
-
-    val remote = SyncViewModel.SyncConfigurationState(
-        name = "Camera Backup",
-        url = "https://minio.zimly.cloud",
-        bucket = "2024-Camera",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
-    )
-    val progressState = SyncViewModel.Progress(
-        status = SyncViewModel.Status.IN_PROGRESS,
-        progressBytesPerSec = 18426334,
-        percentage = 0.77F,
-        diffCount = 51,
-        diffBytes = 51 * 5 * 1_000_000,
-        progressCount = 40,
-        progressBytes = 233 * 1_000_000,
-    )
-    val snackbarState = remember { SnackbarHostState() }
-
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
-
-
-    ZimzyncTheme(darkTheme = true) {
-        SyncLayout(
-            remoteName = remote.name,
-            error = null,
-            enableActions,
-            sync = {},
-            edit = {},
-            back = {},
-            snackbarState = snackbarState,
-            clearError = {},
-        ) {}
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CompletedPreview() {
-
-    val remote = SyncViewModel.SyncConfigurationState(
-        name = "Camera Backup",
-        url = "https://my-backup.dyndns.com",
-        bucket = "zimly-backup",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
-    )
-    val progressState = SyncViewModel.Progress(
-        status = SyncViewModel.Status.COMPLETED,
-        progressBytesPerSec = 18426334,
-        percentage = 1F,
-        diffCount = 51,
-        diffBytes = 51 * 5 * 1_000_000,
-        progressCount = 51,
-        progressBytes = 51 * 5 * 1_000_000,
-    )
-    val snackbarState = remember { SnackbarHostState() }
-
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
-
-    ZimzyncTheme(darkTheme = true) {
-        SyncLayout(
-            remoteName = remote.name,
-            error = null,
-            enableActions,
-            sync = {},
-            edit = {},
-            back = {},
-            snackbarState = snackbarState,
-            clearError = {},
-        ) {
-            SyncOverview(
-                remote,
-                progressState,
-                enableActions,
-                createDiff = {},
-                sourceContainer = {
-                    when (remote.sourceType) {
-                        SourceType.MEDIA -> {
-                            MediaCollectionContainer(remote.sourceUri, viewModel = viewModel {
-                                val localMediaResolver =
-                                    object : LocalMediaResolver, LocalContentResolver {
-                                        override fun photoCount(): Int {
-                                            return 23
-                                        }
-
-                                        override fun videoCount(): Int {
-                                            return 12
-                                        }
-
-                                        override fun getStream(uri: Uri): InputStream {
-                                            TODO("Not yet implemented")
-                                        }
-
-                                        override fun listObjects(): List<ContentObject> {
-                                            return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
-
-                                        }
-                                    }
-                                MediaCollectionViewModel(localMediaResolver, remote.sourceUri)
-                            })
-                        }
-                        SourceType.FOLDER -> {
-                            DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
-                                val localContentResolver = object : LocalContentResolver {
-
-                                    override fun getStream(uri: Uri): InputStream {
-                                        TODO("Not yet implemented")
-                                    }
-
-                                    override fun listObjects(): List<ContentObject> {
-                                        return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
-                                    }
-                                }
-                                DocumentsFolderViewModel(localContentResolver, Uri.parse(remote.sourceUri))
-                            })
-                        }
-                        null -> {}
-                    }
-                },
-                batterySaverContainer = {
-
-                    val viewModel = BatterySaverViewModel(object : PowerStatusProvider {
-                        override fun isCharging(): Boolean {
-                            return false
-                        }
-
-                        override fun isBatterSaverDisabled(): Boolean {
-                            return false
-                        }
-
-                    })
-                    BatterySaverContainer(viewModel)
-                }
-            )
-        }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun IdlePreview() {
-
-    val remote = SyncViewModel.SyncConfigurationState(
-        name = "Camera Backup",
-        url = "https://my-backup.dyndns.com",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
-    )
-    val progressState = SyncViewModel.Progress()
-    val snackbarState = remember { SnackbarHostState() }
-
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
-
-    ZimzyncTheme(darkTheme = true) {
-        SyncLayout(
-            remoteName = remote.name,
-            error = null,
-            enableActions,
-            sync = {},
-            edit = {},
-            back = {},
-            snackbarState = snackbarState,
-            clearError = {},
-        ) {
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CalculatingPreview() {
-
-    val remote = SyncViewModel.SyncConfigurationState(
-        name = "Camera Backup",
-        url = "https://minio.zimly.cloud",
-        bucket = "2024-Camera",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
-    )
-    val progressState = SyncViewModel.Progress(status = SyncViewModel.Status.CALCULATING)
-
-    val snackbarState = remember { SnackbarHostState() }
-
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
-
-    ZimzyncTheme(darkTheme = true) {
-        SyncLayout(
-            remoteName = remote.name,
-            error = null,
-            enableActions,
-            sync = {},
-            edit = {},
-            back = {},
-            snackbarState = snackbarState,
-            clearError = {},
-        ) {}
     }
 }
