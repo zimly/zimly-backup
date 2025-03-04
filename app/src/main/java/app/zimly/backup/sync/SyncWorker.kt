@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import java.io.IOException
 
 class SyncWorker(
     private val context: Context,
@@ -80,35 +81,51 @@ class SyncWorker(
             }
             .catch {
                 Log.e(TAG, "Failed to sync diff.", it)
-                emit(
-                    Result.failure(
-                        Data.Builder()
-                            .putString(SyncOutputs.ERROR, it.message)
-                            .build()
-                    )
-                )
+
+                emit(onError(it))
             }
             .last()
+    }
+
+    /**
+     * Fail or retry depending on the thrown error.
+     */
+    private fun onError(it: Throwable): Result {
+        val result = when (it) {
+            is IOException -> Result.retry() // Network errors → retry
+            else -> Result.failure(
+                Data.Builder()
+                    .putString(SyncOutputs.ERROR, it.message)
+                    .build()
+            )
+        }
+        return result
     }
 
     companion object {
         val TAG: String? = SyncWorker::class.simpleName
 
         fun initSyncService(context: Context, inputData: Data): SyncService {
-            val url = requireNotNull(inputData.getString(SyncInputs.S3_URL)) { "URL cannot be empty" }
-            val key = requireNotNull(inputData.getString(SyncInputs.S3_KEY)) { "Bucket key cannot be empty" }
-            val secret = requireNotNull(inputData.getString(SyncInputs.S3_SECRET)) { "Bucket secret cannot be empty" }
-            val bucket = requireNotNull(inputData.getString(SyncInputs.S3_BUCKET)) { "Bucket cannot be empty" }
+            val url =
+                requireNotNull(inputData.getString(SyncInputs.S3_URL)) { "URL cannot be empty" }
+            val key =
+                requireNotNull(inputData.getString(SyncInputs.S3_KEY)) { "Bucket key cannot be empty" }
+            val secret =
+                requireNotNull(inputData.getString(SyncInputs.S3_SECRET)) { "Bucket secret cannot be empty" }
+            val bucket =
+                requireNotNull(inputData.getString(SyncInputs.S3_BUCKET)) { "Bucket cannot be empty" }
 
             val sourceType = inputData.getString(SyncInputs.SOURCE_TYPE).let {
                 requireNotNull(it) { "Source Type cannot be empty" }
                 SourceType.valueOf(it)
             }
-            val sourcePath = requireNotNull(inputData.getString(SyncInputs.SOURCE_PATH)) { "Source Type cannot be empty" }
+            val sourcePath =
+                requireNotNull(inputData.getString(SyncInputs.SOURCE_PATH)) { "Source Type cannot be empty" }
 
             val s3Repository = MinioRepository(url, key, secret, bucket)
 
-            val localContentResolver = LocalContentResolver.get(context.contentResolver, sourceType, sourcePath)
+            val localContentResolver =
+                LocalContentResolver.get(context.contentResolver, sourceType, sourcePath)
 
             return SyncServiceImpl(s3Repository, localContentResolver)
         }

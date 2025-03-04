@@ -378,6 +378,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         ) {
 
             val text = when (progress.status) {
+                SyncViewModel.Status.RETRYING -> "Retrying"
                 SyncViewModel.Status.CALCULATING -> "Calculating"
                 SyncViewModel.Status.COMPLETED -> "Completed"
                 SyncViewModel.Status.IN_PROGRESS -> if (bytesPerSec.longValue > 0)

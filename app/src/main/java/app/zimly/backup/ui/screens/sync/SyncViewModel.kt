@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import java.time.Duration
 import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -211,6 +213,10 @@ class SyncViewModel(
                         progressState.status = Status.COMPLETED
                     }
 
+                    WorkInfo.State.ENQUEUED -> {
+                        progressState.status = Status.RETRYING
+                    }
+
                     WorkInfo.State.FAILED -> {
                         val output = workInfo.outputData
                         progressState.progressCount = output.getInt(SyncOutputs.PROGRESS_COUNT, 0)
@@ -255,6 +261,7 @@ class SyncViewModel(
             .build()
 
         val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofMinutes(1)) // Exponentially retry
             .setInputData(data)
             .setConstraints(constraints)
             .build()
@@ -290,7 +297,7 @@ class SyncViewModel(
     )
 
     enum class Status {
-        CALCULATING, IN_PROGRESS, COMPLETED,
+        CALCULATING, IN_PROGRESS, COMPLETED, RETRYING,
     }
 
 }
