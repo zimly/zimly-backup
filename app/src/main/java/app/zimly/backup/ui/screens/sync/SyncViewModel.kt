@@ -276,7 +276,6 @@ class SyncViewModel(
         )
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.UNMETERED)
-            .setRequiresBatteryNotLow(true)
             .build()
 
         val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
