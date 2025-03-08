@@ -31,7 +31,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -58,6 +57,28 @@ class SyncViewModel(
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
     companion object {
         val TAG: String? = SyncViewModel::class.simpleName
+
+        /**
+         * [WorkInfo.State] non terminal states, that the will be treated as in-progress syncs.
+         */
+        val IN_PROGRESS_STATES: Set<WorkInfo.State> = setOf(
+            WorkInfo.State.RUNNING,
+            WorkInfo.State.ENQUEUED,
+            WorkInfo.State.BLOCKED)
+
+        /**
+         * Maps [WorkInfo.State]s to UI [Status].
+         */
+        fun mapState(state: WorkInfo.State): Status {
+            return when(state) {
+                WorkInfo.State.ENQUEUED -> Status.CONSTRAINTS_NOT_MET
+                WorkInfo.State.RUNNING -> Status.IN_PROGRESS
+                WorkInfo.State.SUCCEEDED -> Status.COMPLETED
+                WorkInfo.State.FAILED -> Status.FAILED
+                WorkInfo.State.BLOCKED -> Status.WAITING
+                WorkInfo.State.CANCELLED -> Status.CANCELLED
+            }
+        }
     }
 
     // This identifier is used to identify already running sync instances and prevent simultaneous
@@ -152,14 +173,14 @@ class SyncViewModel(
     }
 
     /**
-     * Queries and returns the UUID of any [WorkInfo] in [WorkInfo.State.RUNNING] state, identified
+     * Queries and returns the UUID of any [WorkInfo] in any of [IN_PROGRESS_STATES] state, identified
      * by [uniqueWorkIdentifier].
      *
      * @throws IllegalArgumentException in case more than 1 is found.
      */
     private fun loadSyncState(): Flow<UUID> {
         val query = WorkQuery.Builder.fromUniqueWorkNames(listOf(uniqueWorkIdentifier))
-            .addStates(listOf(WorkInfo.State.RUNNING))
+            .addStates(IN_PROGRESS_STATES.toList())
             .build()
         return workManager.getWorkInfosFlow(query)
             .onEach { require(it.size < 2) { "More than one unique sync job in progress. This should not happen." } }
@@ -174,13 +195,6 @@ class SyncViewModel(
         return workManager.getWorkInfoByIdFlow(id)
             .filterNotNull()
             // filter out unhandled states that result in a "nulled" out progress object.
-            .filter {
-                it.state in arrayOf(
-                    WorkInfo.State.SUCCEEDED,
-                    WorkInfo.State.RUNNING,
-                    WorkInfo.State.FAILED
-                )
-            }
             .map { workInfo ->
 
                 val progressState = Progress()
@@ -197,7 +211,7 @@ class SyncViewModel(
                             progress.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                         progressState.diffCount = progress.getInt(SyncOutputs.DIFF_COUNT, 0)
                         progressState.diffBytes = progress.getLong(SyncOutputs.DIFF_BYTES, 0)
-                        progressState.status = Status.IN_PROGRESS
+                        progressState.status = mapState(workInfo.state)
                     }
 
                     WorkInfo.State.SUCCEEDED -> {
@@ -210,11 +224,16 @@ class SyncViewModel(
                             output.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, 0F)
                         progressState.diffCount = output.getInt(SyncOutputs.DIFF_COUNT, 0)
                         progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
-                        progressState.status = Status.COMPLETED
+                        progressState.status = mapState(workInfo.state)
                     }
 
                     WorkInfo.State.ENQUEUED -> {
-                        progressState.status = Status.RETRYING
+                        progressState.status = mapState(workInfo.state)
+                    }
+
+                    WorkInfo.State.BLOCKED -> {
+                        // This should not happen in our case
+                        progressState.status = mapState(workInfo.state)
                     }
 
                     WorkInfo.State.FAILED -> {
@@ -229,11 +248,11 @@ class SyncViewModel(
                         progressState.diffBytes = output.getLong(SyncOutputs.DIFF_BYTES, 0)
                         progressState.error =
                             output.getString(SyncOutputs.ERROR) ?: "Unknown error."
-                        progressState.status = Status.COMPLETED
+                        progressState.status = mapState(workInfo.state)
                     }
 
-                    else -> {
-                        Log.e(TAG, "State '${workInfo.state}' should not be observed.")
+                    WorkInfo.State.CANCELLED -> {
+                        progressState.status = mapState(workInfo.state)
                     }
                 }
                 progressState
@@ -256,7 +275,7 @@ class SyncViewModel(
             SyncInputs.SOURCE_PATH to remote.sourceUri
         )
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiredNetworkType(NetworkType.UNMETERED)
             .setRequiresBatteryNotLow(true)
             .build()
 
@@ -297,7 +316,7 @@ class SyncViewModel(
     )
 
     enum class Status {
-        CALCULATING, IN_PROGRESS, COMPLETED, RETRYING,
+        CALCULATING, IN_PROGRESS, COMPLETED, CONSTRAINTS_NOT_MET, CANCELLED, WAITING, FAILED,
     }
 
 }

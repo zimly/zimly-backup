@@ -62,6 +62,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
+import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
@@ -94,10 +96,7 @@ fun SyncScreen(
     // Use Dispatchers.Default to not block Main thread
     val createDiff: () -> Unit = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
 
-    val enableActions = progress.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
+    val enableActions = progress.status !in IN_PROGRESS_STATES.map { mapState(it) } + SyncViewModel.Status.CALCULATING
 
     SyncLayout(
         remote.name,
@@ -378,9 +377,12 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         ) {
 
             val text = when (progress.status) {
-                SyncViewModel.Status.RETRYING -> "Retrying"
+                SyncViewModel.Status.CONSTRAINTS_NOT_MET -> "Waiting for network"
+                SyncViewModel.Status.WAITING -> "Waiting"
                 SyncViewModel.Status.CALCULATING -> "Calculating"
                 SyncViewModel.Status.COMPLETED -> "Completed"
+                SyncViewModel.Status.CANCELLED -> "Cancelled"
+                SyncViewModel.Status.FAILED -> "Failed"
                 SyncViewModel.Status.IN_PROGRESS -> if (bytesPerSec.longValue > 0)
                     "${
                         Formatter.formatShortFileSize(
@@ -400,25 +402,41 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
         }
 
         Row {
-            if (progress.status == SyncViewModel.Status.CALCULATING) {
-                LinearProgressIndicator(
-                    strokeCap = StrokeCap.Round,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            } else {
-                val animatedProgress by
-                animateFloatAsState(
-                    label = "Animated Progress",
-                    targetValue = progress.percentage,
-                    animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
-                )
-                LinearProgressIndicator(
-                    progress = { animatedProgress },
-                    strokeCap = StrokeCap.Round,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
+            val launchingStates = setOf(
+                SyncViewModel.Status.CALCULATING,
+                SyncViewModel.Status.WAITING,
+                SyncViewModel.Status.CONSTRAINTS_NOT_MET
+            )
+            when (progress.status) {
+                in launchingStates -> {
+                    LinearProgressIndicator(
+                        strokeCap = StrokeCap.Round,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
+                SyncViewModel.Status.IN_PROGRESS -> {
+                    val animatedProgress by
+                    animateFloatAsState(
+                        label = "Animated Progress",
+                        targetValue = progress.percentage,
+                        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+                    )
+                    LinearProgressIndicator(
+                        progress = { animatedProgress },
+                        strokeCap = StrokeCap.Round,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
+                else -> {
+                    LinearProgressIndicator(
+                        progress = { 0.0F },
+                        strokeCap = StrokeCap.Round,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
             }
         }
     }
