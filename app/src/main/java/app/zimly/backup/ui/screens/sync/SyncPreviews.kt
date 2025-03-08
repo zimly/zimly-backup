@@ -132,6 +132,7 @@ private fun PreviewSync(
             error = null,
             enableActions,
             sync = {},
+            cancelSync = {},
             edit = {},
             back = {},
             snackbarState = snackbarState,

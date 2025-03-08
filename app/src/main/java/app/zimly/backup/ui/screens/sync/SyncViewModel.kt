@@ -292,6 +292,10 @@ class SyncViewModel(
         return syncRequest.id
     }
 
+    fun cancelSync() {
+        workManager.cancelUniqueWork(uniqueWorkIdentifier)
+    }
+
     suspend fun clearError() {
         _error.emit(null)
     }

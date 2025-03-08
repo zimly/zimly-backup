@@ -96,18 +96,19 @@ fun SyncScreen(
     // Use Dispatchers.Default to not block Main thread
     val createDiff: () -> Unit = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
 
-    val enableActions = progress.status !in IN_PROGRESS_STATES.map { mapState(it) } + SyncViewModel.Status.CALCULATING
+    val inProgress = progress.status !in IN_PROGRESS_STATES.map { mapState(it) } + SyncViewModel.Status.CALCULATING
 
     SyncLayout(
         remote.name,
         error,
-        enableActions,
+        inProgress,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
                 viewModel.sync()
             }
         },
+        cancelSync = { viewModel.cancelSync() },
         edit = { edit(remoteId) },
         back,
         clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
@@ -115,7 +116,7 @@ fun SyncScreen(
         SyncOverview(
             remote,
             progress,
-            enableActions,
+            inProgress,
             createDiff,
             sourceContainer = {
                 when (remote.sourceType) {
@@ -158,9 +159,10 @@ fun SyncOverview(
 fun SyncLayout(
     remoteName: String,
     error: String?,
-    enableActions: Boolean,
+    inProgress: Boolean,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
+    cancelSync: () -> Unit,
     edit: () -> Unit,
     back: () -> Unit,
     clearError: () -> Unit,
@@ -218,13 +220,25 @@ fun SyncLayout(
                     .padding(bottom = 32.dp, top = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                Button(
-                    onClick = sync,
-                    enabled = enableActions,
-                    contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
-                    colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
-                ) {
-                    Text(text = "Upload")
+                if (inProgress) {
+                    Button(
+                        onClick = sync,
+                        contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
+                        colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                    ) {
+                        Text(text = "Upload")
+                    }
+
+                } else {
+                    Button(
+                        onClick = cancelSync,
+                        contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    ) {
+                        Text(text = "Cancel")
+                    }
                 }
             }
         },
