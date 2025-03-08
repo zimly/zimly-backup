@@ -1,4 +1,5 @@
 2.2.0
+* Allow cancelling in-progress synchronization #2
 * Add retry mechanism on failed synchronization #27
 * Add warning and actionable for Battery Saver #27
 
