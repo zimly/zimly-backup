@@ -275,7 +275,7 @@ class SyncViewModel(
             SyncInputs.SOURCE_PATH to remote.sourceUri
         )
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
         val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
