@@ -1,11 +1,12 @@
-package app.zimly.backup.data.remote
+package app.zimly.backup.data.db
 
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RenameColumn
-import androidx.room.RenameTable
 import androidx.room.RoomDatabase
 import androidx.room.migration.AutoMigrationSpec
+import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.RemoteDao
 
 @Database(
     entities = [Remote::class],

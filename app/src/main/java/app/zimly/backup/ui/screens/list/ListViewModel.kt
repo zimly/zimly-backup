@@ -2,8 +2,8 @@ package app.zimly.backup.ui.screens.list
 
 import androidx.lifecycle.ViewModel
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.remote.Remote
-import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.RemoteDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine

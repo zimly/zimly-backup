@@ -15,8 +15,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.room.Room
-import app.zimly.backup.data.remote.RemoteDao
-import app.zimly.backup.data.remote.ZimDatabase
+import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.ZimDatabase
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.list.ListScreen
 import app.zimly.backup.ui.screens.permission.PermissionScreen

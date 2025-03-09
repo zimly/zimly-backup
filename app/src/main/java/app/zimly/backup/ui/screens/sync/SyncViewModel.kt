@@ -16,7 +16,7 @@ import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs

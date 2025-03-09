@@ -1,4 +1,4 @@
-package app.zimly.backup.data.remote
+package app.zimly.backup.data.db.remote
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

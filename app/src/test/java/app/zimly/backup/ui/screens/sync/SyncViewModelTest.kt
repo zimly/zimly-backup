@@ -4,8 +4,8 @@ import android.content.ContentResolver
 import android.util.Log
 import androidx.work.WorkManager
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.remote.Remote
-import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.RemoteDao
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk

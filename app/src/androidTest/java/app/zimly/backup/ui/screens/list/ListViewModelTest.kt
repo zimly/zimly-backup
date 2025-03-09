@@ -5,9 +5,9 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.remote.Remote
-import app.zimly.backup.data.remote.RemoteDao
-import app.zimly.backup.data.remote.ZimDatabase
+import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.ZimDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`

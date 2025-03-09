@@ -10,8 +10,8 @@ import androidx.lifecycle.viewModelScope
 import app.zimly.backup.data.media.LocalMediaRepository
 import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.remote.Remote
-import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.field.TextField
 import kotlinx.coroutines.flow.MutableStateFlow

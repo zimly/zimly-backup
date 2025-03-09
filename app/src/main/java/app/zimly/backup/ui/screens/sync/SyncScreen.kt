@@ -61,7 +61,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.remote.RemoteDao
+import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
