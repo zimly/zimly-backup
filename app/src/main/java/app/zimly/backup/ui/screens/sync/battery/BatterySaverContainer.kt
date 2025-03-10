@@ -218,6 +218,7 @@ fun BatterySaverInfoDialog(
                 )
 
                 Row(
+                    modifier = Modifier.padding(top = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(
