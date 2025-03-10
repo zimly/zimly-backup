@@ -7,7 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.db.ZimDatabase
+import app.zimly.backup.data.db.ZimlyDatabase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
@@ -20,7 +20,7 @@ import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
 class ListViewModelTest {
-    private lateinit var db: ZimDatabase
+    private lateinit var db: ZimlyDatabase
     private lateinit var dao: RemoteDao
     private lateinit var viewModel: ListViewModel
 
@@ -28,7 +28,7 @@ class ListViewModelTest {
     fun createDb() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(
-            context, ZimDatabase::class.java
+            context, ZimlyDatabase::class.java
         ).build()
 
 

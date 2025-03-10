@@ -13,10 +13,10 @@ import app.zimly.backup.data.db.remote.RemoteDao
     version = 3,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
-        AutoMigration(from = 2, to = 3, spec = ZimDatabase.V3Migration::class),
+        AutoMigration(from = 2, to = 3, spec = ZimlyDatabase.V3Migration::class),
     ]
 )
-abstract class ZimDatabase : RoomDatabase() {
+abstract class ZimlyDatabase : RoomDatabase() {
     abstract fun remoteDao(): RemoteDao
 
     @RenameColumn(tableName = "Remote", fromColumnName = "folder", toColumnName = "source_uri")
