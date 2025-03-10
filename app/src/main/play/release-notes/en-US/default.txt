@@ -1,6 +1,7 @@
 2.2.0
 * Allow cancelling in-progress synchronization #2
 * Add retry mechanism on failed synchronization #27
+* More fine-grained status updates on network problems #27
 * Add warning and actionable for Battery Saver #27
 
 Full changelog:
