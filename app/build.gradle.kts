@@ -108,9 +108,9 @@ dependencies {
     // needed for okhttp3/minio:
     // Match version from https://github.com/minio/minio-java/blob/master/build.gradle
     //noinspection GradleDependency
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.0")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.2")
     //noinspection GradleDependency
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")
     implementation("javax.xml.stream:stax-api:1.0-2")
 
     implementation("androidx.core:core-ktx:1.15.0")
@@ -137,15 +137,15 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.testcontainers:minio:1.20.4")
+    testImplementation("org.testcontainers:minio:1.20.6")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-    testImplementation("io.mockk:mockk:1.13.16")
+    testImplementation("io.mockk:mockk:1.13.17")
     testImplementation("androidx.test:core-ktx:1.6.1")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
-    androidTestImplementation("io.mockk:mockk-android:1.13.16")
+    androidTestImplementation("io.mockk:mockk-android:1.13.17")
     androidTestImplementation("androidx.test:rules:1.6.1")
 
     debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
