@@ -147,7 +147,7 @@ fun SyncOverview(
         DiffDetails(progress, enableActions, createDiff)
 
     }
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         progress.status?.let { ProgressBar(progress) }
 
         batterySaverContainer()
@@ -378,8 +378,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight()
-            .padding(top = 16.dp, bottom = 16.dp),
+            .fillMaxHeight(),
         verticalArrangement = Arrangement.Center,
     ) {
         Row(
