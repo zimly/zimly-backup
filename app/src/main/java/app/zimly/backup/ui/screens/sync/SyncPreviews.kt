@@ -6,6 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.zimly.backup.data.db.notification.Notification
+import app.zimly.backup.data.db.notification.NotificationDao
+import app.zimly.backup.data.db.notification.NotificationType
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalMediaResolver
@@ -73,7 +76,7 @@ fun CompletedPreview() {
         SyncViewModel.Status.IN_PROGRESS
     )
 
-    PreviewSync(remote, enableActions, snackbarState, progressState)
+    PreviewSync(remote, enableActions, snackbarState, progressState, true)
 }
 
 @Preview(showBackground = true)
@@ -124,7 +127,8 @@ private fun PreviewSync(
     remote: SyncViewModel.SyncConfigurationState,
     enableActions: Boolean,
     snackbarState: SnackbarHostState,
-    progressState: SyncViewModel.Progress
+    progressState: SyncViewModel.Progress,
+    batteryWarning: Boolean = false
 ) {
     ZimzyncTheme(darkTheme = true) {
         SyncLayout(
@@ -146,7 +150,12 @@ private fun PreviewSync(
                 sourceContainer = { ContentContainer(remote) },
                 batterySaverContainer = {
                     BatterySaverContainer(viewModel = viewModel {
-                        BatterySaverViewModel(StubPowerStatusProvider())
+                        val stubNotificationDao = object: NotificationDao {
+                            override suspend fun loadByType(type: NotificationType): Notification? { return null }
+                            override suspend fun update(notification: Notification) {}
+                            override suspend fun insert(notification: Notification) {}
+                        }
+                        BatterySaverViewModel(StubPowerStatusProvider(!batteryWarning), stubNotificationDao)
                     })
                 }
             )
@@ -214,13 +223,13 @@ private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
     }
 }
 
-private class StubPowerStatusProvider : PowerStatusProvider {
+private class StubPowerStatusProvider(private val disabled: Boolean) : PowerStatusProvider {
     override fun isCharging(): Boolean {
         return false
     }
 
     override fun isBatterSaverDisabled(): Boolean {
-        return false
+        return disabled
     }
 
 }
