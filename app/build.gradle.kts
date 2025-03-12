@@ -92,6 +92,7 @@ play {
 dependencies {
 
     // https://developer.android.com/develop/ui/compose/bom
+    // Not very happy with this, feels like it's not fully thought through, e.g. androidx dependencies.
     val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
     implementation(composeBom)
     testImplementation(composeBom)
@@ -113,11 +114,15 @@ dependencies {
     implementation("javax.xml.stream:stax-api:1.0-2")
 
     implementation("androidx.core:core-ktx:1.15.0")
+
+    // Managed dependencies
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material3:material3-window-size-class")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+
+    // Pinned, otherwise transient from e.g. work manager
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
@@ -141,11 +146,13 @@ dependencies {
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+
+    // https://developer.android.com/jetpack/androidx/releases/test
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
-    androidTestImplementation("io.mockk:mockk-android:1.13.17")
     androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("io.mockk:mockk-android:1.13.17")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
