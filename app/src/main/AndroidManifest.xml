@@ -32,21 +32,18 @@
         android:icon="@mipmap/ic_launcher"
         android:label="Zimly"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Zimzync"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         tools:targetApi="34">
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Zimzync">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".CrashActivity"
-            android:theme="@style/Theme.Zimzync">
+        <activity android:name=".CrashActivity">
         </activity>
 
     </application>

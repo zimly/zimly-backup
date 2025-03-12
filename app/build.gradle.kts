@@ -123,7 +123,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.navigation:navigation-compose:2.8.8")
-    implementation("com.google.android.material:material:1.12.0")
 
     // https://developer.android.com/codelabs/android-workmanager#2
     implementation("androidx.work:work-runtime-ktx:$workManagerVersion")
