@@ -97,6 +97,7 @@ dependencies {
     implementation(composeBom)
     testImplementation(composeBom)
     androidTestImplementation(composeBom)
+    debugImplementation(composeBom)
 
     val workManagerVersion = "2.10.0"
     val roomVersion = "2.6.1"
