@@ -29,7 +29,7 @@ class GarageIntegrationTest {
     private val apiSecret = "cf81ffd289cd56a4ec1fea99e488cfa04537a30fc416769131e14c7237b70348"
 
     private lateinit var minioRepository: MinioRepository
-    private val containerName = "dxflrs/garage:v1.0.1"
+    private val containerName = "dxflrs/garage:v1.1.0"
     private val s3Port = 3900
 
     @get:Rule
