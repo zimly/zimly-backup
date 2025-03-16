@@ -4,6 +4,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
     id("com.github.triplet.play") version "3.11.0"
+    kotlin("plugin.serialization") version "1.9.22" // Used for API calls in tests
 }
 
 
@@ -140,6 +141,7 @@ dependencies {
     // To use Kotlin annotation processing tool (ksp)
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.testcontainers:minio:1.20.6")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")

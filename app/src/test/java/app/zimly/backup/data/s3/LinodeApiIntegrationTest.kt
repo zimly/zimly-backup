@@ -1,7 +1,7 @@
 package app.zimly.backup.data.s3
 
-import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.ContentObject
+import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.sync.SyncServiceImpl
 import io.mockk.every
 import io.mockk.mockk
@@ -12,26 +12,24 @@ import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
+import org.junit.AfterClass
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
 import kotlin.time.TimeSource
 
-class LinodeIntegrationTest {
+class LinodeApiIntegrationTest {
 
     private lateinit var s3Repository: MinioRepository
 
     @Before
     fun setUp() {
-
-        val url = "https://fr-par-1.linodeobjects.com"
-        val bucket = "zimly-test"
-        val key = System.getenv("S3_LINODE_TEST_KEY")
-        val secret = System.getenv("S3_LINODE_TEST_SECRET")
-
-        requireNotNull(key) { "Test case needs valid AWS key for zimly-test bucket" }
-        requireNotNull(secret) { "Test case needs valid AWS secret for zimly-test bucket" }
-
-        this.s3Repository = MinioRepository(url, key, secret, bucket)
+        this.s3Repository = MinioRepository(
+            bucket.s3Endpoint,
+            accessKey.accessKey,
+            accessKey.secretKey,
+            bucket.label
+        )
     }
 
     @Test
@@ -72,7 +70,14 @@ class LinodeIntegrationTest {
     fun createDiff() {
         val localContentResolver = mockk<LocalContentResolver>()
 
-        every { localContentResolver.listObjects() } returns listOf(ContentObject("test_image.png", 123L, "image/png", mockk()))
+        every { localContentResolver.listObjects() } returns listOf(
+            ContentObject(
+                "test_image.png",
+                123L,
+                "image/png",
+                mockk()
+            )
+        )
 
         val ss = SyncServiceImpl(s3Repository, localContentResolver)
 
@@ -84,5 +89,38 @@ class LinodeIntegrationTest {
     @After
     fun tearDown() = runBlocking {
         s3Repository.removeAll()
+    }
+
+    companion object {
+        private lateinit var bucket: LinodeApi.BucketResponse
+        private lateinit var accessKey: LinodeApi.KeyResponse
+
+        private val token = System.getenv("LINODE_API_TOKEN")
+            ?: throw Exception("LINODE_API_TOKEN anv variable missing")
+
+        private val api = LinodeApi(token)
+
+        @JvmStatic
+        @BeforeClass
+        fun bootstrap() {
+
+            val bucketName = "zimly-test"
+            val key = "zimly-test"
+
+            this.bucket = api.createBucket(bucketName)
+            this.accessKey = api.createKey(key, bucket.label)
+
+            requireNotNull(accessKey.accessKey) { "Test case needs valid AWS key for zimly-test bucket" }
+            requireNotNull(accessKey.secretKey) { "Test case needs valid AWS secret for zimly-test bucket" }
+
+        }
+
+        @JvmStatic
+        @AfterClass
+        fun cleanup() {
+            api.deleteKey(accessKey.id)
+            api.deleteBucket(bucket.region, bucket.label)
+            api.cancelSubscription()
+        }
     }
 }

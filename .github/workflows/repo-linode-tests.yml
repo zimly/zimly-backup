@@ -15,6 +15,5 @@ jobs:
           java-version: 17
       - name: Run Linode Repository tests
         env:
-          S3_LINODE_TEST_KEY: ${{ secrets.S3_LINODE_TEST_KEY }}
-          S3_LINODE_TEST_SECRET: ${{ secrets.S3_LINODE_TEST_SECRET }}
+          LINODE_API_TOKEN: ${{ secrets.LINODE_API_TOKEN }}
         run: ./gradlew -PintegrationTests=linode check --rerun-tasks
