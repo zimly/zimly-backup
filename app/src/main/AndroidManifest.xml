@@ -32,8 +32,7 @@
         android:icon="@mipmap/ic_launcher"
         android:label="Zimly"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
-        tools:targetApi="34">
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
         <activity
             android:name=".MainActivity"
             android:exported="true">
