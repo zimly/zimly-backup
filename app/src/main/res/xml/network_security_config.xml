@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+This loosens the default network security policies to allow:
+  * Custom, user-provided CAs
+  * Unencrypted, insecure traffic (http)
+
+This gives the end-user the flexibility to target all kinds of self-hosted, remote targets.
+
+Ref:
+https://developer.android.com/privacy-and-security/security-config#base-config
+
+-->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration">
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- This allows all user-installed CA certificates -->
+            <certificates src="user" tools:ignore="AcceptsUserCertificates" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
