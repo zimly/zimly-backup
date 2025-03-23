@@ -34,6 +34,7 @@ import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import androidx.core.net.toUri
 
 @Composable
 fun DocumentsFolderContainer(
@@ -103,7 +104,7 @@ class DocumentsFolderViewModel(
                 initializer {
                     val application = checkNotNull(this[APPLICATION_KEY])
 
-                    val folderUri = Uri.parse(folderPath)
+                    val folderUri = folderPath.toUri()
                     val contentResolver = LocalDocumentsResolver(application.contentResolver, folderUri)
 
                     DocumentsFolderViewModel(contentResolver, folderUri)

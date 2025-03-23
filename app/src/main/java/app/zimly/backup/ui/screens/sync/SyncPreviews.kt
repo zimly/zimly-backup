@@ -5,6 +5,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.zimly.backup.data.db.notification.Notification
 import app.zimly.backup.data.db.notification.NotificationDao
@@ -176,7 +177,7 @@ private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
             DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
                 DocumentsFolderViewModel(
                     StubContentResolver(),
-                    Uri.parse(remote.sourceUri)
+                    remote.sourceUri.toUri()
                 )
             })
         }

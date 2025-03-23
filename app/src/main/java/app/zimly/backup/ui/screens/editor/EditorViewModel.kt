@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 class EditorViewModel(application: Application, private val dao: RemoteDao, remoteId: Int?) :
     AndroidViewModel(application) {
@@ -90,7 +91,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 backupSource.update(remote.sourceType)
                 when (remote.sourceType) {
                     SourceType.MEDIA -> backupSource.mediaField.update(remote.sourceUri)
-                    SourceType.FOLDER -> backupSource.folderField.update(Uri.parse(remote.sourceUri))
+                    SourceType.FOLDER -> backupSource.folderField.update(remote.sourceUri.toUri())
                 }
             }
         }
