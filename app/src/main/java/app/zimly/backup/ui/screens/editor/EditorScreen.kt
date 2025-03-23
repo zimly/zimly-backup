@@ -96,24 +96,12 @@ private fun EditorCompose(
     verify: () -> Unit,
 ) {
     // If the UI state contains an error, show snackbar
-    if (state.value.error.isNotEmpty()) {
-        LaunchedEffect(snackbarState) {
-            val result = snackbarState.showSnackbar(
-                message = state.value.error,
-                withDismissAction = true,
-                duration = SnackbarDuration.Indefinite
-            )
-            when (result) {
-                SnackbarResult.Dismissed -> clearSnackbar()
-                SnackbarResult.ActionPerformed -> clearSnackbar()
-            }
-        }
-    } else if (state.value.verified != null) {
+    if (state.value.notification != null) {
             LaunchedEffect(snackbarState) {
                 val result = snackbarState.showSnackbar(
-                    message = state.value.verified!!,
+                    message = state.value.notification!!,
                     withDismissAction = true,
-                    duration = SnackbarDuration.Short
+                    duration = if (state.value.notificationError) SnackbarDuration.Indefinite else SnackbarDuration.Short
                 )
                 when (result) {
                     SnackbarResult.Dismissed -> clearSnackbar()

@@ -67,7 +67,8 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
             internal.update {
                 it.copy(
                     title = "New configuration",
-                    error = errorMessage
+                    notificationError = true,
+                    notification = errorMessage
                 )
             }
         }
@@ -127,7 +128,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
             }
             success()
         } else {
-            internal.update { it.copy(error = "Form has errors, won't save.") }
+            internal.update { it.copy(notification = "Form has errors, won't save.", notificationError = true) }
         }
     }
 
@@ -140,7 +141,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     }
 
     fun clearSnackbar() {
-        internal.update { it.copy(error = "", verified = null) }
+        internal.update { it.copy(notification = null, notificationError = false) }
     }
 
     suspend fun verify() {
@@ -154,9 +155,9 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
             try {
                 val bucketExists = repo.bucketExists()
                 val message = if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
-                internal.update { it.copy(verified = message) }
+                internal.update { it.copy(notification = message) }
             } catch (e: Exception) {
-                internal.update { it.copy(error = "Connection failed: $e", verified = null) }
+                internal.update { it.copy(notification = "Connection failed: $e", notificationError = true) }
             }
         }
     }
@@ -166,8 +167,8 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
         var uid: Int? = null,
         var title: String = "",
         var mediaCollections: Set<String> = emptySet(),
-        var error: String = "",
-        var verified: String? = null,
+        var notificationError: Boolean = false,
+        var notification: String? = null,
     )
 
 }
