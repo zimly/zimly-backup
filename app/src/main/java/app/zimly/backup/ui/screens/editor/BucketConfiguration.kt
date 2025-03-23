@@ -14,13 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.CloudUpload
-import androidx.compose.material.icons.sharp.Check
-import androidx.compose.material.icons.sharp.ErrorOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,7 +46,6 @@ fun BucketConfiguration(
     key: TextField,
     secret: TextField,
     bucket: TextField,
-    verified: Boolean?,
     verify: () -> Unit
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -151,29 +147,11 @@ fun BucketConfiguration(
                     enabled = true, // TODO conditionally
                     onClick = verify,
                     // Padding the icon size conditionally
-                    contentPadding = if (verified != null) PaddingValues(start = 32.dp, end = 8.dp) else PaddingValues(horizontal = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp),
                     modifier = Modifier
                         .height(32.dp),
                 ) {
                     Text(text = "Verify")
-                }
-                verified?.let {
-
-                    if (it) {
-                        Icon(
-                            Icons.Sharp.Check,
-                            "Successful",
-                            tint = MaterialTheme.colorScheme.primary,
-                            //modifier = Modifier.padding(top = 8.dp, end = 8.dp)
-                        )
-                    } else {
-                        Icon(
-                            Icons.Sharp.ErrorOutline,
-                            "Failure",
-                            tint = MaterialTheme.colorScheme.error,
-                            //modifier = Modifier.padding(top = 8.dp, end = 8.dp)
-                        )
-                    }
                 }
             }
         }
@@ -190,8 +168,7 @@ fun BucketConfigurationPreview() {
     val key = TextField()
     val secret = TextField()
     val bucket = TextField()
-    val verified = true
     ZimzyncTheme {
-        BucketConfiguration(name, url, key, secret, bucket, verified) {}
+        BucketConfiguration(name, url, key, secret, bucket) {}
     }
 }

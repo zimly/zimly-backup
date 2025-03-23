@@ -68,7 +68,7 @@ fun EditorScreen(
         secret = viewModel.secret,
         bucket = viewModel.bucket,
         backupSource = viewModel.backupSource,
-        clearError = viewModel::clearError,
+        clearSnackbar = viewModel::clearSnackbar,
         save = {
             viewModel.viewModelScope.launch {
                 viewModel.save(back)
@@ -90,7 +90,7 @@ private fun EditorCompose(
     secret: TextField,
     bucket: TextField,
     backupSource: BackupSourceField,
-    clearError: () -> Unit,
+    clearSnackbar: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
     verify: () -> Unit,
@@ -104,12 +104,23 @@ private fun EditorCompose(
                 duration = SnackbarDuration.Indefinite
             )
             when (result) {
-                SnackbarResult.Dismissed -> clearError()
-                SnackbarResult.ActionPerformed -> clearError()
+                SnackbarResult.Dismissed -> clearSnackbar()
+                SnackbarResult.ActionPerformed -> clearSnackbar()
             }
-
         }
-    }
+    } else if (state.value.verified != null) {
+            LaunchedEffect(snackbarState) {
+                val result = snackbarState.showSnackbar(
+                    message = state.value.verified!!,
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Short
+                )
+                when (result) {
+                    SnackbarResult.Dismissed -> clearSnackbar()
+                    SnackbarResult.ActionPerformed -> clearSnackbar()
+                }
+            }
+        }
 
     Scaffold(
         topBar = {
@@ -153,7 +164,7 @@ private fun EditorCompose(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
         ) {
-            BucketConfiguration(name, url, key, secret, bucket, state.value.verified, verify)
+            BucketConfiguration(name, url, key, secret, bucket, verify)
             BackupSourceConfiguration(backupSource, state.value.mediaCollections)
         }
     }
@@ -194,7 +205,7 @@ fun EditPreview() {
             secret,
             bucket,
             backupSource,
-            clearError = {},
+            clearSnackbar = {},
             save = {},
             back = {},
             verify = {},

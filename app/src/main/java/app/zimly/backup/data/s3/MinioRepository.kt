@@ -78,7 +78,7 @@ class MinioRepository(
     }
 
 
-    override suspend fun verify(): Boolean {
+    override suspend fun bucketExists(): Boolean {
         return suspendCancellableCoroutine { continuation ->
             val param = BucketExistsArgs.builder().bucket(bucket).build()
             mc().bucketExists(param).whenComplete { result, exception ->
@@ -204,7 +204,7 @@ interface S3Repository {
     ): Flow<Progress>
 
     suspend fun createBucket(bucket: String)
-    suspend fun verify(): Boolean
+    suspend fun bucketExists(): Boolean
     suspend fun get(name: String): GetObjectResponse
     suspend fun remove(name: String)
 }

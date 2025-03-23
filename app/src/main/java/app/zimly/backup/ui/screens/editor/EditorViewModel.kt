@@ -139,8 +139,8 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
         contentResolver.takePersistableUriPermission(folder, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
-    fun clearError() {
-        internal.update { it.copy(error = "") }
+    fun clearSnackbar() {
+        internal.update { it.copy(error = "", verified = null) }
     }
 
     suspend fun verify() {
@@ -152,10 +152,11 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
             val repo = MinioRepository(url, key, secret, bucket)
 
             try {
-                val verified = repo.verify()
-                internal.update { it.copy(verified = verified) }
+                val bucketExists = repo.bucketExists()
+                val message = if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
+                internal.update { it.copy(verified = message) }
             } catch (e: Exception) {
-                internal.update { it.copy(error = "Bucket verification failed: $e", verified = false) }
+                internal.update { it.copy(error = "Connection failed: $e", verified = null) }
             }
         }
     }
@@ -166,7 +167,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
         var title: String = "",
         var mediaCollections: Set<String> = emptySet(),
         var error: String = "",
-        var verified: Boolean? = null,
+        var verified: String? = null,
     )
 
 }
