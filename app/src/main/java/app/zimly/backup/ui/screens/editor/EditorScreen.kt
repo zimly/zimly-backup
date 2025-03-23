@@ -74,7 +74,8 @@ fun EditorScreen(
                 viewModel.save(back)
             }
         },
-        back
+        back,
+        verify = { viewModel.viewModelScope.launch { viewModel.verify() } }
     )
 }
 
@@ -92,6 +93,7 @@ private fun EditorCompose(
     clearError: () -> Unit,
     save: () -> Unit,
     back: () -> Unit,
+    verify: () -> Unit,
 ) {
     // If the UI state contains an error, show snackbar
     if (state.value.error.isNotEmpty()) {
@@ -151,7 +153,7 @@ private fun EditorCompose(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
         ) {
-            BucketConfiguration(name, url, key, secret, bucket)
+            BucketConfiguration(name, url, key, secret, bucket, state.value.verified, verify)
             BackupSourceConfiguration(backupSource, state.value.mediaCollections)
         }
     }
@@ -195,6 +197,7 @@ fun EditPreview() {
             clearError = {},
             save = {},
             back = {},
+            verify = {},
         )
     }
 }

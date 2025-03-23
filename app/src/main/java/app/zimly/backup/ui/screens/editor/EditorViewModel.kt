@@ -7,11 +7,12 @@ import android.util.Log
 import android.webkit.URLUtil
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.LocalMediaRepository
 import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.field.TextField
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,7 +88,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 bucket.update(remote.bucket)
 
                 backupSource.update(remote.sourceType)
-                when(remote.sourceType) {
+                when (remote.sourceType) {
                     SourceType.MEDIA -> backupSource.mediaField.update(remote.sourceUri)
                     SourceType.FOLDER -> backupSource.folderField.update(Uri.parse(remote.sourceUri))
                 }
@@ -96,13 +97,12 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     }
 
     suspend fun save(success: () -> Unit) {
-        val valid =
-            name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && backupSource.isValid()
+        val valid = isValid()
 
         if (valid) {
 
             val sourceType = backupSource.state.value.type
-            val sourceUri = when(sourceType) {
+            val sourceUri = when (sourceType) {
                 SourceType.MEDIA -> backupSource.mediaField.state.value.value
                 SourceType.FOLDER -> backupSource.folderField.state.value.value.toString()
             }
@@ -130,6 +130,10 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
         }
     }
 
+    private fun isValid(): Boolean {
+            return name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && backupSource.isValid()
+    }
+
     private fun persistPermissions(folder: Uri) {
         contentResolver.takePersistableUriPermission(folder, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
@@ -138,12 +142,30 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
         internal.update { it.copy(error = "") }
     }
 
+    suspend fun verify() {
+        if (isValid()) {
+            val url = url.state.value.value
+            val key = key.state.value.value
+            val secret = secret.state.value.value
+            val bucket = bucket.state.value.value
+            val repo = MinioRepository(url, key, secret, bucket)
+
+            try {
+                val verified = repo.verify()
+                internal.update { it.copy(verified = verified) }
+            } catch (e: Exception) {
+                internal.update { it.copy(error = "Bucket verification failed: $e", verified = false) }
+            }
+        }
+    }
+
 
     data class UiState(
         var uid: Int? = null,
         var title: String = "",
         var mediaCollections: Set<String> = emptySet(),
         var error: String = "",
+        var verified: Boolean? = null,
     )
 
 }
