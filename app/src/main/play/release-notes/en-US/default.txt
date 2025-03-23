@@ -1,5 +1,5 @@
-2.2.1
-* Support self-signed certificates by allowing user-provided CAs #29
+2.3.0
+* Add a Verify button for testing connectivity to remote bucket #9
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
