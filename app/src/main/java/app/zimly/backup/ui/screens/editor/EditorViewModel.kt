@@ -99,9 +99,8 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     }
 
     suspend fun save(success: () -> Unit) {
-        val valid = isValid()
 
-        if (valid) {
+        if (isValid()) {
 
             val sourceType = backupSource.state.value.type
             val sourceUri = when (sourceType) {
@@ -133,7 +132,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     }
 
     private fun isValid(): Boolean {
-            return name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && backupSource.isValid()
+        return name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && backupSource.isValid()
     }
 
     private fun persistPermissions(folder: Uri) {
@@ -159,6 +158,8 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
             } catch (e: Exception) {
                 internal.update { it.copy(notification = "Connection failed: $e", notificationError = true) }
             }
+        } else {
+            internal.update { it.copy(notification = "Form has errors, can't connect.", notificationError = true) }
         }
     }
 
