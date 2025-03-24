@@ -44,7 +44,7 @@ class MinioRepository(
         MinioAsyncClient.builder()
             .httpClient(client(progressTracker))
             .endpoint(url)
-            .region(region)
+            .region(region) // This might override some AWS stuff happening inside #endpoint()
             .credentials(key, secret)
             .build()
     } catch (e: Exception) {
