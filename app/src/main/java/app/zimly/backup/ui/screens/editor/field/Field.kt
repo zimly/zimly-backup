@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.update
  * ViewModel for views.
  *
  * Validation and error state are triggered by [FocusState] changes and value updates.
+ *
+ * TODO: Ideally the value (model representation) and the state (UI representation) should be split:
+ * Field<V, S> and a transformer function for translating.
  */
 abstract class Field<T>(
     private val errorMessage: String = "This field is required.",
