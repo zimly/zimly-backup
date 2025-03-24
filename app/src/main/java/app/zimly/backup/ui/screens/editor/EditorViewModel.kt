@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import app.zimly.backup.ui.screens.editor.field.RegionField
 
 class EditorViewModel(application: Application, private val dao: RemoteDao, remoteId: Int?) :
     AndroidViewModel(application) {
@@ -47,6 +48,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
     val key = TextField()
     val secret = TextField()
     val bucket = TextField()
+    val region = RegionField()
     val backupSource = BackupSourceField()
 
 
@@ -88,6 +90,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.update(remote.key)
                 secret.update(remote.secret)
                 bucket.update(remote.bucket)
+                region.update(remote.region)
 
                 backupSource.update(remote.sourceType)
                 when (remote.sourceType) {
@@ -117,6 +120,7 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
                 key.state.value.value,
                 secret.state.value.value,
                 bucket.state.value.value,
+                region.state.value.value,
                 sourceType,
                 sourceUri,
             )
@@ -149,7 +153,8 @@ class EditorViewModel(application: Application, private val dao: RemoteDao, remo
             val key = key.state.value.value
             val secret = secret.state.value.value
             val bucket = bucket.state.value.value
-            val repo = MinioRepository(url, key, secret, bucket)
+            val region = region.state.value.value
+            val repo = MinioRepository(url, key, secret, bucket, region)
 
             try {
                 val bucketExists = repo.bucketExists()

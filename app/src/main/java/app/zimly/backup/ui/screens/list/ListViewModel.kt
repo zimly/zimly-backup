@@ -53,7 +53,7 @@ class ListViewModel(private val dataStore: RemoteDao) : ViewModel() {
     suspend fun copy() {
         selected.forEach {
             val sel = dataStore.loadById(it)
-            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, SourceType.MEDIA, sel.sourceUri)
+            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, SourceType.MEDIA, sel.sourceUri)
 
             dataStore.insert(copy)
         }

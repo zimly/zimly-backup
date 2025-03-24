@@ -36,12 +36,14 @@ class MinioRepository(
     private val url: String,
     private val key: String,
     private val secret: String,
-    private val bucket: String
+    private val bucket: String,
+    private val region: String? = null
 ) : S3Repository {
 
     private fun mc(progressTracker: ProgressTracker? = null): MinioAsyncClient = try {
         MinioAsyncClient.builder()
             .httpClient(client(progressTracker))
+            .region(region) // endpoint setter magic might override this
             .endpoint(url)
             .credentials(key, secret)
             .build()

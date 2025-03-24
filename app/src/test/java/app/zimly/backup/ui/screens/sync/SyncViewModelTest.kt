@@ -68,6 +68,7 @@ class SyncViewModelTest {
             "CTUFC",
             "GVGVZCZIVGKGC",
             "bucket",
+            null,
             SourceType.MEDIA,
             "Images"
         )

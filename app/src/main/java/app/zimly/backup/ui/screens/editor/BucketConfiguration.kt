@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import app.zimly.backup.ui.screens.editor.field.RegionField
 import app.zimly.backup.ui.screens.editor.field.TextField
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -46,6 +47,7 @@ fun BucketConfiguration(
     key: TextField,
     secret: TextField,
     bucket: TextField,
+    region: RegionField,
     verify: () -> Unit
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -70,6 +72,7 @@ fun BucketConfiguration(
                 val keyState = key.state.collectAsState()
                 val secretState = secret.state.collectAsState()
                 val bucketState = bucket.state.collectAsState()
+                val regionState = region.state.collectAsState()
 
                 OutlinedTextField(
                     modifier = Modifier
@@ -135,6 +138,19 @@ fun BucketConfiguration(
                     isError = bucketState.value.error != null,
                     supportingText = { bucketState.value.error?.let { Text(it) } }
                 )
+                OutlinedTextField(
+                    modifier = Modifier
+                        .onFocusChanged { region.focus(it) }
+                        .fillMaxWidth(),
+                    label = { Text("Region") },
+                    // Handle null case, should this go into field instead? value vs state representation.
+                    value = regionState.value.value ?: "",
+                    onValueChange = { if (it.isEmpty()) region.update(null) else region.update(it) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    isError = regionState.value.error != null,
+                    supportingText = { regionState.value.error?.let { Text(it) } }
+                )
+
             }
             Row(
                 modifier = Modifier
@@ -168,7 +184,8 @@ fun BucketConfigurationPreview() {
     val key = TextField()
     val secret = TextField()
     val bucket = TextField()
+    val region = RegionField()
     ZimzyncTheme {
-        BucketConfiguration(name, url, key, secret, bucket) {}
+        BucketConfiguration(name, url, key, secret, bucket, region) {}
     }
 }

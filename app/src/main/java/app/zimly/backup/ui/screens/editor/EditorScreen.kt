@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.field.RegionField
 import app.zimly.backup.ui.screens.editor.field.TextField
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,6 +68,7 @@ fun EditorScreen(
         key = viewModel.key,
         secret = viewModel.secret,
         bucket = viewModel.bucket,
+        region = viewModel.region,
         backupSource = viewModel.backupSource,
         clearSnackbar = viewModel::clearSnackbar,
         save = {
@@ -89,6 +91,7 @@ private fun EditorCompose(
     key: TextField,
     secret: TextField,
     bucket: TextField,
+    region: RegionField,
     backupSource: BackupSourceField,
     clearSnackbar: () -> Unit,
     save: () -> Unit,
@@ -152,7 +155,7 @@ private fun EditorCompose(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
         ) {
-            BucketConfiguration(name, url, key, secret, bucket, verify)
+            BucketConfiguration(name, url, key, secret, bucket, region, verify)
             BackupSourceConfiguration(backupSource, state.value.mediaCollections)
         }
     }
@@ -182,6 +185,8 @@ fun EditPreview() {
         val bucket = TextField(
             errorMessage = "This field is required.",
             validate = { it.isNotEmpty() })
+        val region = RegionField()
+
         val backupSource = BackupSourceField()
 
         EditorCompose(
@@ -192,6 +197,7 @@ fun EditPreview() {
             key,
             secret,
             bucket,
+            region,
             backupSource,
             clearSnackbar = {},
             save = {},

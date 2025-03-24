@@ -147,7 +147,7 @@ class SyncViewModel(
         }
         try {
             val remote = dao.loadById(remoteId)
-            val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket)
+            val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
             val contentResolver = LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
             val syncService = SyncServiceImpl(s3Repo, contentResolver)
@@ -271,6 +271,7 @@ class SyncViewModel(
             SyncInputs.S3_KEY to remote.key,
             SyncInputs.S3_SECRET to remote.secret,
             SyncInputs.S3_BUCKET to remote.bucket,
+            SyncInputs.S3_REGION to remote.region,
             SyncInputs.SOURCE_TYPE to remote.sourceType.name,
             SyncInputs.SOURCE_PATH to remote.sourceUri
         )

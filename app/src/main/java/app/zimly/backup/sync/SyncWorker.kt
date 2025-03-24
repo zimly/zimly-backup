@@ -114,6 +114,7 @@ class SyncWorker(
                 requireNotNull(inputData.getString(SyncInputs.S3_SECRET)) { "Bucket secret cannot be empty" }
             val bucket =
                 requireNotNull(inputData.getString(SyncInputs.S3_BUCKET)) { "Bucket cannot be empty" }
+            val region = inputData.getString(SyncInputs.S3_REGION)
 
             val sourceType = inputData.getString(SyncInputs.SOURCE_TYPE).let {
                 requireNotNull(it) { "Source Type cannot be empty" }
@@ -122,7 +123,7 @@ class SyncWorker(
             val sourcePath =
                 requireNotNull(inputData.getString(SyncInputs.SOURCE_PATH)) { "Source Type cannot be empty" }
 
-            val s3Repository = MinioRepository(url, key, secret, bucket)
+            val s3Repository = MinioRepository(url, key, secret, bucket, region)
 
             val localContentResolver =
                 LocalContentResolver.get(context.contentResolver, sourceType, sourcePath)
@@ -137,6 +138,7 @@ object SyncInputs {
     const val S3_KEY = "key"
     const val S3_SECRET = "secret"
     const val S3_BUCKET = "bucket"
+    const val S3_REGION = "region"
     const val SOURCE_TYPE = "source_type"
     const val SOURCE_PATH = "source_path"
 }

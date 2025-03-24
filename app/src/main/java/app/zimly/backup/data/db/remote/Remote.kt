@@ -13,6 +13,7 @@ data class Remote(
     @ColumnInfo(name = "key") val key: String,
     @ColumnInfo(name = "secret") val secret: String,
     @ColumnInfo(name = "bucket") val bucket: String,
+    @ColumnInfo(name = "region") val region: String?,
     @ColumnInfo(name = "source_type", defaultValue = "MEDIA") val sourceType: SourceType,
     @ColumnInfo(name = "source_uri") val sourceUri: String,
 )
