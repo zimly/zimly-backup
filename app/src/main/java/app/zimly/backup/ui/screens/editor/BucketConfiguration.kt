@@ -98,6 +98,18 @@ fun BucketConfiguration(
                 )
                 OutlinedTextField(
                     modifier = Modifier
+                        .onFocusChanged { region.focus(it) }
+                        .fillMaxWidth(),
+                    label = { Text("Region (optional)") },
+                    // Handle null case, should this go into field instead? value vs state representation.
+                    value = regionState.value.value ?: "",
+                    onValueChange = { if (it.isEmpty()) region.update(null) else region.update(it) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    isError = regionState.value.error != null,
+                    supportingText = { regionState.value.error?.let { Text(it) } }
+                )
+                OutlinedTextField(
+                    modifier = Modifier
                         .onFocusChanged { key.focus(it) }
                         .fillMaxWidth(),
                     label = { Text("Key") },
@@ -138,19 +150,6 @@ fun BucketConfiguration(
                     isError = bucketState.value.error != null,
                     supportingText = { bucketState.value.error?.let { Text(it) } }
                 )
-                OutlinedTextField(
-                    modifier = Modifier
-                        .onFocusChanged { region.focus(it) }
-                        .fillMaxWidth(),
-                    label = { Text("Region") },
-                    // Handle null case, should this go into field instead? value vs state representation.
-                    value = regionState.value.value ?: "",
-                    onValueChange = { if (it.isEmpty()) region.update(null) else region.update(it) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    isError = regionState.value.error != null,
-                    supportingText = { regionState.value.error?.let { Text(it) } }
-                )
-
             }
             Row(
                 modifier = Modifier
