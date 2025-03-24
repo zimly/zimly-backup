@@ -44,6 +44,7 @@ class ListViewModelTest {
                     "key",
                     "secret",
                     "bucket",
+                    null,
                     SourceType.MEDIA,
                     "Pictures"
                 )
@@ -56,6 +57,7 @@ class ListViewModelTest {
                     "key",
                     "secret",
                     "bucket",
+                    null,
                     SourceType.MEDIA,
                     "Pictures"
                 )
