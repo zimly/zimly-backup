@@ -43,8 +43,8 @@ class MinioRepository(
     private fun mc(progressTracker: ProgressTracker? = null): MinioAsyncClient = try {
         MinioAsyncClient.builder()
             .httpClient(client(progressTracker))
-            .region(region) // endpoint setter magic might override this
             .endpoint(url)
+            .region(region)
             .credentials(key, secret)
             .build()
     } catch (e: Exception) {

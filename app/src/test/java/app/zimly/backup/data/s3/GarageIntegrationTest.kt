@@ -24,6 +24,7 @@ import org.testcontainers.utility.MountableFile
 class GarageIntegrationTest {
 
     private val bucket = "test-bucket"
+    private val region = "garage"
     private val apiKeyName = "test-api-key"
     private val apiKey = "GKd9cde580fadf7f6255e9a3e1"
     private val apiSecret = "cf81ffd289cd56a4ec1fea99e488cfa04537a30fc416769131e14c7237b70348"
@@ -53,7 +54,8 @@ class GarageIntegrationTest {
 
         bootstrapGarage()
 
-        minioRepository = MinioRepository("http://${garageContainer.host}:${garageContainer.firstMappedPort}", apiKey, apiSecret, bucket)
+        val endpoint = "http://${garageContainer.host}:${garageContainer.firstMappedPort}"
+        minioRepository = MinioRepository(endpoint, apiKey, apiSecret, bucket, region)
     }
 
     @Test

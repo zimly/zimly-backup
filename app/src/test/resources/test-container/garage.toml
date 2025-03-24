@@ -8,7 +8,7 @@ rpc_bind_addr = "[::]:3901"
 rpc_secret = "05a7700d03ba48aec5dd010fbb9b55ea7ea8accd53c26852a70b25f4384f8a07"
 
 [s3_api]
-s3_region = "us-east-1" # This is the important piece!
+s3_region = "garage"
 api_bind_addr = "[::]:3900"
 root_domain = "localhost"
 

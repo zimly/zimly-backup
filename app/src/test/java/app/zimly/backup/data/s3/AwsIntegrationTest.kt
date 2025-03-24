@@ -25,13 +25,14 @@ class AwsIntegrationTest {
 
         val url = "https://s3.eu-central-2.amazonaws.com"
         val bucket = "zimly-test"
+        val region = "eu-central-2"
         val key = System.getenv("S3_AWS_TEST_KEY")
         val secret = System.getenv("S3_AWS_TEST_SECRET")
 
         requireNotNull(key) { "Test case needs valid AWS key for zimly-test bucket" }
         requireNotNull(secret) { "Test case needs valid AWS secret for zimly-test bucket" }
 
-        this.s3Repository = MinioRepository(url, key, secret, bucket)
+        this.s3Repository = MinioRepository(url, key, secret, bucket, region)
     }
 
     @Test
