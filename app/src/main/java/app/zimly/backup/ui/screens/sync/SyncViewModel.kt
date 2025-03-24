@@ -92,6 +92,7 @@ class SyncViewModel(
                 name = it.name,
                 url = it.url,
                 bucket = it.bucket,
+                region = it.region,
                 sourceType = it.sourceType,
                 sourceUri = it.sourceUri
             )
@@ -304,6 +305,7 @@ class SyncViewModel(
         var name: String = "",
         var url: String = "",
         var bucket: String = "",
+        var region: String? = null,
         var sourceType: SourceType? = null,
         var sourceUri: String = "",
     )

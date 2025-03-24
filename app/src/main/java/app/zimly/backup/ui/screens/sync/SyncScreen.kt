@@ -281,6 +281,16 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
                 Text(text = "URL", textAlign = TextAlign.Left)
                 Text(remote.url, textAlign = TextAlign.Right)
             }
+            remote.region?.let {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(text = "Region", textAlign = TextAlign.Left)
+                    Text(remote.region!!)
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -288,6 +298,7 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
                 Text(text = "Bucket", textAlign = TextAlign.Left)
                 Text(remote.bucket)
             }
+
         }
     }
 }
