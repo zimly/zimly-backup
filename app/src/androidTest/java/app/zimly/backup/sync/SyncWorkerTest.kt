@@ -6,10 +6,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker.Result.Failure
 import androidx.work.ListenableWorker.Result.Success
 import androidx.work.testing.TestListenableWorkerBuilder
+import app.zimly.backup.data.media.ContentObject
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
-import app.zimly.backup.data.media.ContentObject
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
@@ -34,7 +35,7 @@ class SyncWorkerTest {
 
         // https://stackoverflow.com/a/51794655
         mockkObject(SyncWorker)
-        every { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
+        coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
         val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
         every { syncService.diff() } returns Diff(emptyList(), locals, locals, 1234L)
@@ -58,7 +59,7 @@ class SyncWorkerTest {
     fun syncFailure() {
         val syncService: SyncService = mockk()
         mockkObject(SyncWorker)
-        every { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
+        coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
         val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
         every { syncService.diff() } returns Diff(emptyList(), locals, locals, 1234L)

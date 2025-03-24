@@ -14,9 +14,9 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
+import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
@@ -260,22 +260,13 @@ class SyncViewModel(
             }
     }
 
-    suspend fun sync(): UUID {
+    fun sync(): UUID {
         _progress.update {
             Progress(
                 status = Status.CALCULATING
             )
         }
-        val remote = dao.loadById(remoteId)
-        val data = workDataOf(
-            SyncInputs.S3_URL to remote.url,
-            SyncInputs.S3_KEY to remote.key,
-            SyncInputs.S3_SECRET to remote.secret,
-            SyncInputs.S3_BUCKET to remote.bucket,
-            SyncInputs.S3_REGION to remote.region,
-            SyncInputs.SOURCE_TYPE to remote.sourceType.name,
-            SyncInputs.SOURCE_PATH to remote.sourceUri
-        )
+        val data = workDataOf(SyncInputs.REMOTE_CONFIGURATION_ID to remoteId)
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()

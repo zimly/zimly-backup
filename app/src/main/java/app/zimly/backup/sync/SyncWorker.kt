@@ -2,11 +2,12 @@ package app.zimly.backup.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.media.LocalContentResolver
-import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.last
@@ -105,28 +106,29 @@ class SyncWorker(
     companion object {
         val TAG: String? = SyncWorker::class.simpleName
 
-        fun initSyncService(context: Context, inputData: Data): SyncService {
-            val url =
-                requireNotNull(inputData.getString(SyncInputs.S3_URL)) { "URL cannot be empty" }
-            val key =
-                requireNotNull(inputData.getString(SyncInputs.S3_KEY)) { "Bucket key cannot be empty" }
-            val secret =
-                requireNotNull(inputData.getString(SyncInputs.S3_SECRET)) { "Bucket secret cannot be empty" }
-            val bucket =
-                requireNotNull(inputData.getString(SyncInputs.S3_BUCKET)) { "Bucket cannot be empty" }
-            val region = inputData.getString(SyncInputs.S3_REGION)
+        suspend fun initSyncService(context: Context, inputData: Data): SyncService {
 
-            val sourceType = inputData.getString(SyncInputs.SOURCE_TYPE).let {
-                requireNotNull(it) { "Source Type cannot be empty" }
-                SourceType.valueOf(it)
+            // TODO singleton pattern!
+            val db = Room.databaseBuilder(
+                context.applicationContext,
+                ZimlyDatabase::class.java,
+                "zim-db"
+            ).build()
+            val dao = db.remoteDao()
+
+            val remoteId = inputData.getInt(SyncInputs.REMOTE_CONFIGURATION_ID, -1)
+            if (remoteId == -1) {
+                throw IllegalArgumentException("Remote configuration cannot be loaded, no ID passed.")
             }
-            val sourcePath =
-                requireNotNull(inputData.getString(SyncInputs.SOURCE_PATH)) { "Source Type cannot be empty" }
+            val remote = dao.loadById(remoteId)
+            val s3Repository =
+                MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
-            val s3Repository = MinioRepository(url, key, secret, bucket, region)
-
-            val localContentResolver =
-                LocalContentResolver.get(context.contentResolver, sourceType, sourcePath)
+            val localContentResolver = LocalContentResolver.get(
+                context.contentResolver,
+                remote.sourceType,
+                remote.sourceUri
+            )
 
             return SyncServiceImpl(s3Repository, localContentResolver)
         }
@@ -134,13 +136,7 @@ class SyncWorker(
 }
 
 object SyncInputs {
-    const val S3_URL = "url"
-    const val S3_KEY = "key"
-    const val S3_SECRET = "secret"
-    const val S3_BUCKET = "bucket"
-    const val S3_REGION = "region"
-    const val SOURCE_TYPE = "source_type"
-    const val SOURCE_PATH = "source_path"
+    const val REMOTE_CONFIGURATION_ID = "remote_id"
 }
 
 object SyncOutputs {
