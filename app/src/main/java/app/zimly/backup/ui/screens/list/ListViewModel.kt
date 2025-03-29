@@ -1,14 +1,30 @@
 package app.zimly.backup.ui.screens.list
 
 import androidx.lifecycle.ViewModel
-import app.zimly.backup.data.media.SourceType
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.media.SourceType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 
 class ListViewModel(private val dataStore: RemoteDao) : ViewModel() {
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = checkNotNull(this[APPLICATION_KEY])
+                val db = ZimlyDatabase.getInstance(application.applicationContext)
+                val remoteDao = db.remoteDao()
+                ListViewModel(remoteDao)
+            }
+        }
+    }
 
     private val selected = mutableListOf<Int>()
     // This needs to be a flow of List, not a flow of selected item. Think about it.
