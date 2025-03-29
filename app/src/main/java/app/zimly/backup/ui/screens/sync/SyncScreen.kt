@@ -89,9 +89,11 @@ fun SyncScreen(
     val snackbarState = remember { SnackbarHostState() }
 
     // Use Dispatchers.Default to not block Main thread
-    val createDiff: () -> Unit = { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
+    val createDiff: () -> Unit =
+        { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
 
-    val inProgress = progress.status !in IN_PROGRESS_STATES.map { mapState(it) } + SyncViewModel.Status.CALCULATING
+    val inProgress =
+        progress.status !in IN_PROGRESS_STATES.map { mapState(it) } + SyncViewModel.Status.CALCULATING
 
     SyncLayout(
         remote.name,
@@ -230,7 +232,8 @@ fun SyncLayout(
                         contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
                         colors = ButtonDefaults.buttonColors(
                             contentColor = MaterialTheme.colorScheme.error,
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
                     ) {
                         Text(text = "Cancel")
                     }
@@ -434,6 +437,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
                             .fillMaxWidth()
                     )
                 }
+
                 SyncViewModel.Status.IN_PROGRESS -> {
                     val animatedProgress by
                     animateFloatAsState(
@@ -448,6 +452,7 @@ private fun ProgressBar(progress: SyncViewModel.Progress) {
                             .fillMaxWidth()
                     )
                 }
+
                 else -> {
                     LinearProgressIndicator(
                         progress = { 0.0F },
