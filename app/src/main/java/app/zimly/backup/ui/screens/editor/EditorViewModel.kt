@@ -1,12 +1,19 @@
 package app.zimly.backup.ui.screens.editor
 
-import android.app.Application
+import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.webkit.URLUtil
-import androidx.lifecycle.AndroidViewModel
+import androidx.core.net.toUri
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.LocalMediaRepository
@@ -14,24 +21,40 @@ import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.field.RegionField
 import app.zimly.backup.ui.screens.editor.field.TextField
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
-import app.zimly.backup.ui.screens.editor.field.RegionField
 
-class EditorViewModel(application: Application, private val dao: RemoteDao, remoteId: Int?) :
-    AndroidViewModel(application) {
+class EditorViewModel(
+    private val contentResolver: ContentResolver,
+    private val dao: RemoteDao,
+    mediaRepo: MediaRepository,
+    remoteId: Int?
+) : ViewModel() {
 
     companion object {
         val TAG: String? = EditorViewModel::class.simpleName
-    }
 
-    private val contentResolver by lazy { application.contentResolver }
-    private val mediaRepo: MediaRepository = LocalMediaRepository(contentResolver)
+        // Optional remote ID
+        val REMOTE_ID_KEY = object : CreationExtras.Key<Int?> {}
+
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = checkNotNull(this[APPLICATION_KEY])
+                val remoteId = this[REMOTE_ID_KEY]
+                val db = ZimlyDatabase.getInstance(application.applicationContext)
+                val remoteDao = db.remoteDao()
+
+                val contentResolver = application.contentResolver
+                val mediaRepository = LocalMediaRepository(contentResolver)
+                EditorViewModel(contentResolver, remoteDao, mediaRepository, remoteId)
+            }
+        }
+    }
 
     // https://stackoverflow.com/questions/69689843/jetpack-compose-state-hoisting-previews-and-viewmodels-best-practices
     // TODO ???? https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate

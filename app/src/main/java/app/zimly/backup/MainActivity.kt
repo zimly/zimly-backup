@@ -108,9 +108,7 @@ class MainActivity : ComponentActivity() {
 
                 remoteId?.let {
                     SyncScreen(
-                        remoteDao,
                         remoteId,
-                        application = application,
                         edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
                         back = { navController.popBackStack() })
                 }

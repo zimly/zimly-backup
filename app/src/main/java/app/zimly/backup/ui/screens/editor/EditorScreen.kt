@@ -1,5 +1,6 @@
 package app.zimly.backup.ui.screens.editor
 
+import android.app.Application
 import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,15 +27,14 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.field.RegionField
 import app.zimly.backup.ui.screens.editor.field.TextField
@@ -45,15 +45,13 @@ import kotlinx.coroutines.launch
 @Composable
 fun EditorScreen(
     remoteId: Int?,
-    viewModel: EditorViewModel = viewModel(factory = viewModelFactory {
-        initializer {
-            val application = checkNotNull(this[APPLICATION_KEY])
-            val db = ZimlyDatabase.getInstance(application.applicationContext)
-            val remoteDao = db.remoteDao()
-            EditorViewModel(application, remoteDao, remoteId)
-        }
-    }),
     back: () -> Unit,
+    viewModel: EditorViewModel = viewModel(
+        factory = EditorViewModel.Factory,
+        extras = MutableCreationExtras().apply {
+            set(APPLICATION_KEY, LocalContext.current.applicationContext as Application)
+            set(EditorViewModel.REMOTE_ID_KEY, remoteId)
+        })
 ) {
 
     val state = viewModel.state.collectAsState()
@@ -101,18 +99,18 @@ private fun EditorCompose(
 ) {
     // If the UI state contains an error, show snackbar
     if (state.value.notification != null) {
-            LaunchedEffect(snackbarState) {
-                val result = snackbarState.showSnackbar(
-                    message = state.value.notification!!,
-                    withDismissAction = true,
-                    duration = if (state.value.notificationError) SnackbarDuration.Indefinite else SnackbarDuration.Short
-                )
-                when (result) {
-                    SnackbarResult.Dismissed -> clearSnackbar()
-                    SnackbarResult.ActionPerformed -> clearSnackbar()
-                }
+        LaunchedEffect(snackbarState) {
+            val result = snackbarState.showSnackbar(
+                message = state.value.notification!!,
+                withDismissAction = true,
+                duration = if (state.value.notificationError) SnackbarDuration.Indefinite else SnackbarDuration.Short
+            )
+            when (result) {
+                SnackbarResult.Dismissed -> clearSnackbar()
+                SnackbarResult.ActionPerformed -> clearSnackbar()
             }
         }
+    }
 
     Scaffold(
         topBar = {
