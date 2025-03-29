@@ -1,13 +1,12 @@
 package app.zimly.backup.ui.screens.list
 
 import android.content.Context
-import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.db.ZimlyDatabase
+import app.zimly.backup.data.media.SourceType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.`is`
@@ -27,10 +26,7 @@ class ListViewModelTest {
     @Before
     fun createDb() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(
-            context, ZimlyDatabase::class.java
-        ).build()
-
+        db = ZimlyDatabase.getInstance(context)
 
         this.dao = db.remoteDao()
         this.viewModel = ListViewModel(dao)

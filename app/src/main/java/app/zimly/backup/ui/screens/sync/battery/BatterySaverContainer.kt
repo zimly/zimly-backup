@@ -39,7 +39,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.room.Room
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.notification.Notification
 import app.zimly.backup.data.db.notification.NotificationDao
@@ -112,12 +111,7 @@ class BatterySaverViewModel(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
-                val db = Room.databaseBuilder(
-                    application.applicationContext,
-                    ZimlyDatabase::class.java,
-                    "zim-db"
-                )
-                    .build()
+                val db = ZimlyDatabase.getInstance(application.applicationContext)
                 val notificationDao = db.notificationDao()
 
                 val powerManager = application.getSystemService(PowerManager::class.java)

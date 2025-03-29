@@ -2,7 +2,6 @@ package app.zimly.backup.sync
 
 import android.content.Context
 import android.util.Log
-import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
@@ -108,12 +107,7 @@ class SyncWorker(
 
         suspend fun initSyncService(context: Context, inputData: Data): SyncService {
 
-            // TODO singleton pattern!
-            val db = Room.databaseBuilder(
-                context.applicationContext,
-                ZimlyDatabase::class.java,
-                "zim-db"
-            ).build()
+            val db = ZimlyDatabase.getInstance(context.applicationContext)
             val dao = db.remoteDao()
 
             val remoteId = inputData.getInt(SyncInputs.REMOTE_CONFIGURATION_ID, -1)

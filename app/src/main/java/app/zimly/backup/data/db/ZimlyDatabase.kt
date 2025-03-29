@@ -1,8 +1,10 @@
 package app.zimly.backup.data.db
 
+import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RenameColumn
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.AutoMigrationSpec
 import app.zimly.backup.data.db.notification.Notification
@@ -26,4 +28,22 @@ abstract class ZimlyDatabase : RoomDatabase() {
 
     @RenameColumn(tableName = "Remote", fromColumnName = "folder", toColumnName = "source_uri")
     class V3Migration : AutoMigrationSpec
+
+    companion object {
+
+        @Volatile // ensures thread-safe access to INSTANCE across multiple threads.
+        private var INSTANCE: ZimlyDatabase? = null
+
+        fun getInstance(context: Context): ZimlyDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    ZimlyDatabase::class.java,
+                    "zim-db"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
 }

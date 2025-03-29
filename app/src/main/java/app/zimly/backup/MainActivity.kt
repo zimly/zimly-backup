@@ -14,9 +14,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.room.Room
-import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.ZimlyDatabase
+import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.list.ListScreen
 import app.zimly.backup.ui.screens.permission.PermissionScreen
@@ -36,8 +35,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db = Room.databaseBuilder(applicationContext, ZimlyDatabase::class.java, "zim-db")
-            .build()
+        val db = ZimlyDatabase.getInstance(applicationContext)
         val remoteDao = db.remoteDao()
 
 
