@@ -4,7 +4,12 @@ import android.content.ContentResolver
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -14,6 +19,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.SourceType
@@ -57,6 +63,20 @@ class SyncViewModel(
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
     companion object {
         val TAG: String? = SyncViewModel::class.simpleName
+
+        // Optional remote ID
+        val REMOTE_ID_KEY = object : CreationExtras.Key<Int> {}
+
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = checkNotNull(this[APPLICATION_KEY])
+                val remoteId = checkNotNull(this[REMOTE_ID_KEY])
+                val workManager = WorkManager.getInstance(application.applicationContext)
+                val db = ZimlyDatabase.getInstance(application.applicationContext)
+                val remoteDao = db.remoteDao()
+                SyncViewModel(remoteDao, remoteId, workManager, application.contentResolver)
+            }
+        }
 
         /**
          * [WorkInfo.State] non terminal states, that the will be treated as in-progress syncs.

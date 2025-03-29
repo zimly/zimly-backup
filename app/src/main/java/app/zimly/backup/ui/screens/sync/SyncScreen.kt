@@ -1,5 +1,6 @@
 package app.zimly.backup.ui.screens.sync
 
+import android.app.Application
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -56,11 +57,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.WorkManager
-import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
@@ -74,15 +72,12 @@ fun SyncScreen(
     remoteId: Int,
     edit: (Int) -> Unit,
     back: () -> Unit,
-    viewModel: SyncViewModel = viewModel(factory = viewModelFactory {
-        initializer {
-            val application = checkNotNull(this[APPLICATION_KEY])
-            val workManager = WorkManager.getInstance(application.applicationContext)
-            val db = ZimlyDatabase.getInstance(application.applicationContext)
-            val remoteDao = db.remoteDao()
-            SyncViewModel(remoteDao, remoteId, workManager, application.contentResolver)
-        }
-    }),
+    viewModel: SyncViewModel = viewModel(
+        factory = SyncViewModel.Factory,
+        extras = MutableCreationExtras().apply {
+            set(APPLICATION_KEY, LocalContext.current.applicationContext as Application)
+            set(SyncViewModel.REMOTE_ID_KEY, remoteId)
+        })
 ) {
 
     val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
