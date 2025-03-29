@@ -9,6 +9,6 @@ Key Features:
 * Intuitive User Experience: Enjoy a user-friendly experience with Zimly's emphasis on simplicity and a clean, straightforward interface.
 * Ad-Free & Privacy-Focused
 
-Help make Zimly even better! If you encounter any issues or have feature requests, please share them on GitHub instead of leaving a negative review:
+Help make Zimly even better! If you encounter any issues or have feature requests, please share them on GitHub:
 
 https://github.com/zimly/zimly-backup/issues
