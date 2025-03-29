@@ -94,11 +94,11 @@ dependencies {
 
     // https://developer.android.com/develop/ui/compose/bom
     // Not very happy with this, feels like it's not fully thought through, e.g. androidx dependencies.
-    val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
+    val composeBom = platform("androidx.compose:compose-bom:2025.03.01")
     implementation(composeBom)
     testImplementation(composeBom)
     androidTestImplementation(composeBom)
-    debugImplementation(composeBom)
+    debugImplementation(platform(composeBom))
 
     val workManagerVersion = "2.10.0"
     val roomVersion = "2.6.1"
@@ -129,7 +129,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
     implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("androidx.navigation:navigation-compose:2.8.8")
+    implementation("androidx.navigation:navigation-compose:2.8.9")
 
     // https://developer.android.com/codelabs/android-workmanager#2
     implementation("androidx.work:work-runtime-ktx:$workManagerVersion")
@@ -141,7 +141,7 @@ dependencies {
     // To use Kotlin annotation processing tool (ksp)
     ksp("androidx.room:room-compiler:$roomVersion")
 
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.testcontainers:minio:1.20.6")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
