@@ -154,7 +154,12 @@ class EditorViewModel(
             }
             success()
         } else {
-            internal.update { it.copy(notification = "Form has errors, won't save.", notificationError = true) }
+            internal.update {
+                it.copy(
+                    notification = "Form has errors, won't save.",
+                    notificationError = true
+                )
+            }
         }
     }
 
@@ -181,13 +186,24 @@ class EditorViewModel(
 
             try {
                 val bucketExists = repo.bucketExists()
-                val message = if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
+                val message =
+                    if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
                 internal.update { it.copy(notification = message) }
             } catch (e: Exception) {
-                internal.update { it.copy(notification = "Connection failed: $e", notificationError = true) }
+                internal.update {
+                    it.copy(
+                        notification = "Connection failed: $e",
+                        notificationError = true
+                    )
+                }
             }
         } else {
-            internal.update { it.copy(notification = "Form has errors, can't connect.", notificationError = true) }
+            internal.update {
+                it.copy(
+                    notification = "Form has errors, can't connect.",
+                    notificationError = true
+                )
+            }
         }
     }
 
