@@ -14,8 +14,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import app.zimly.backup.data.db.ZimlyDatabase
-import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.list.ListScreen
 import app.zimly.backup.ui.screens.permission.PermissionScreen
@@ -35,10 +33,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db = ZimlyDatabase.getInstance(applicationContext)
-        val remoteDao = db.remoteDao()
-
-
 
         Thread.setDefaultUncaughtExceptionHandler { _: Thread, throwable: Throwable ->
             Log.e(TAG, "Unhandled Exception!", throwable)
@@ -59,13 +53,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ZimzyncTheme {
-                AppNavigation(remoteDao, permissionViewModel)
+                AppNavigation(permissionViewModel)
             }
         }
     }
 
     @Composable
-    private fun AppNavigation(remoteDao: RemoteDao, permissionViewModel: PermissionViewModel) {
+    private fun AppNavigation(permissionViewModel: PermissionViewModel) {
 
         val granted = permissionViewModel.state.collectAsState()
         val startDest = if (granted.value.granted) REMOTES_LIST else GRANT_PERMISSION
@@ -81,7 +75,6 @@ class MainActivity : ComponentActivity() {
 
             composable(REMOTES_LIST) {
                 ListScreen(
-                    remoteDao,
                     syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
                     addRemote = { navController.navigate("remote-editor/create") })
             }
@@ -92,8 +85,6 @@ class MainActivity : ComponentActivity() {
             ) { backStackEntry ->
                 val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
                 EditorScreen(
-                    application = application,
-                    remoteDao = remoteDao,
                     remoteId = remoteId,
                     back = { navController.popBackStack() }
                 )
@@ -104,8 +95,6 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("remoteId") { nullable = true })
             ) {
                 EditorScreen(
-                    application = application,
-                    remoteDao = remoteDao,
                     remoteId = null,
                     back = { navController.popBackStack() }
                 )

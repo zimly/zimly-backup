@@ -47,12 +47,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.launch
@@ -60,10 +61,12 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ListScreen(
-    remoteDao: RemoteDao,
     // https://programmer.ink/think/a-new-way-to-create-a-viewmodel-creationextras.html
     viewModel: ListViewModel = viewModel(factory = viewModelFactory {
         initializer {
+            val application = checkNotNull(this[APPLICATION_KEY])
+            val db = ZimlyDatabase.getInstance(application.applicationContext)
+            val remoteDao = db.remoteDao()
             ListViewModel(remoteDao)
         }
     }),

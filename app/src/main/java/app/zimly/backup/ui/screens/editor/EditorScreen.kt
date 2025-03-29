@@ -1,6 +1,5 @@
 package app.zimly.backup.ui.screens.editor
 
-import android.app.Application
 import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,11 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.field.RegionField
 import app.zimly.backup.ui.screens.editor.field.TextField
@@ -44,11 +44,12 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun EditorScreen(
-    application: Application,
-    remoteDao: RemoteDao,
     remoteId: Int?,
     viewModel: EditorViewModel = viewModel(factory = viewModelFactory {
         initializer {
+            val application = checkNotNull(this[APPLICATION_KEY])
+            val db = ZimlyDatabase.getInstance(application.applicationContext)
+            val remoteDao = db.remoteDao()
             EditorViewModel(application, remoteDao, remoteId)
         }
     }),

@@ -1,6 +1,5 @@
 package app.zimly.backup.ui.screens.sync
 
-import android.app.Application
 import android.text.format.Formatter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -54,14 +53,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
+import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
@@ -71,16 +71,16 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SyncScreen(
-    dao: RemoteDao,
     remoteId: Int,
-    application: Application,
     edit: (Int) -> Unit,
     back: () -> Unit,
     viewModel: SyncViewModel = viewModel(factory = viewModelFactory {
         initializer {
+            val application = checkNotNull(this[APPLICATION_KEY])
             val workManager = WorkManager.getInstance(application.applicationContext)
-
-            SyncViewModel(dao, remoteId, workManager, application.contentResolver)
+            val db = ZimlyDatabase.getInstance(application.applicationContext)
+            val remoteDao = db.remoteDao()
+            SyncViewModel(remoteDao, remoteId, workManager, application.contentResolver)
         }
     }),
 ) {
