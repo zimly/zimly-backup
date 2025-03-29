@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.list
 
 import android.content.Context
+import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.zimly.backup.data.db.ZimlyDatabase
@@ -26,7 +27,9 @@ class ListViewModelTest {
     @Before
     fun createDb() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = ZimlyDatabase.getInstance(context)
+        db = Room.inMemoryDatabaseBuilder(
+            context, ZimlyDatabase::class.java
+        ).build()
 
         this.dao = db.remoteDao()
         this.viewModel = ListViewModel(dao)
