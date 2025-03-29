@@ -1,6 +1,5 @@
-2.3.0
-* Add a Verify button for testing connectivity to remote bucket #9
-* Add optional region field for S3 configuration #23
+2.4.0
+* Improve dependency resolution in view models #30
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
