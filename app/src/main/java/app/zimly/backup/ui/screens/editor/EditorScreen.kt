@@ -155,7 +155,7 @@ private fun EditorCompose(
                 .verticalScroll(rememberScrollState()),
         ) {
             BucketConfiguration(name, url, key, secret, bucket, region, verify)
-            BackupSourceConfiguration(backupSource, state.value.mediaCollections)
+            BackupSourceConfiguration(backupSource)
         }
     }
 }

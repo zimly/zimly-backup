@@ -16,8 +16,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.media.LocalMediaRepository
-import app.zimly.backup.data.media.MediaRepository
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
@@ -32,7 +30,6 @@ import kotlinx.coroutines.launch
 class EditorViewModel(
     private val contentResolver: ContentResolver,
     private val dao: RemoteDao,
-    mediaRepo: MediaRepository,
     remoteId: Int?
 ) : ViewModel() {
 
@@ -50,8 +47,7 @@ class EditorViewModel(
                 val remoteDao = db.remoteDao()
 
                 val contentResolver = application.contentResolver
-                val mediaRepository = LocalMediaRepository(contentResolver)
-                EditorViewModel(contentResolver, remoteDao, mediaRepository, remoteId)
+                EditorViewModel(contentResolver, remoteDao, remoteId)
             }
         }
     }
@@ -77,11 +73,8 @@ class EditorViewModel(
 
     init {
         try {
-            // TODO push this down into own VM in MediaCollectionSelector?
-            val collections = mediaRepo.getBuckets().keys
             internal.update {
                 it.copy(
-                    mediaCollections = collections,
                     title = "New configuration"
                 )
             }
@@ -211,7 +204,6 @@ class EditorViewModel(
     data class UiState(
         var uid: Int? = null,
         var title: String = "",
-        var mediaCollections: Set<String> = emptySet(),
         var notificationError: Boolean = false,
         var notification: String? = null,
     )

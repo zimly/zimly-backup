@@ -16,41 +16,27 @@ import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
-import app.zimly.backup.ui.screens.editor.field.TextField
 import app.zimly.backup.ui.screens.editor.field.UriField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-fun BackupSourceConfiguration(
-    backupSource: BackupSourceField,
-    mediaCollections: Set<String>
-) {
+fun BackupSourceConfiguration(backupSource: BackupSourceField) {
+
     // TODO Should this only operate on UI state? If not, should it reset the other option?
     // Or should it go together with the lower onSelect into the parent viewmodel or field?
     val sourceSelector: (type: SourceType) -> Unit = {
@@ -109,7 +95,7 @@ fun BackupSourceConfiguration(
         ) {
             when (state.value.type) {
                 SourceType.MEDIA ->
-                    MediaCollectionSelector(mediaCollections, backupSource.mediaField)
+                    MediaSelectorContainer(backupSource.mediaField)
                 SourceType.FOLDER ->
                     DocumentsFolderSelector(backupSource.folderField)
             }
@@ -133,56 +119,6 @@ private fun BackupSourceError(backupSource: BackupSourceField) {
                 color = MaterialTheme.colorScheme.error,
                 fontSize = MaterialTheme.typography.bodySmall.fontSize
             )
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun MediaCollectionSelector(
-    mediaCollections: Set<String>,
-    mediaField: TextField
-) {
-    val select: (collection: String) -> Unit = {
-        mediaField.update(it)
-    }
-    val focus: (state: FocusState) -> Unit = {
-        mediaField.focus(it)
-    }
-    val collection = mediaField.state.collectAsState()
-
-    var expanded by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-    ) {
-        OutlinedTextField(
-            // The `menuAnchor` modifier must be passed to the text field for correctness.
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-                .onFocusChanged { focus(it) },
-            readOnly = true,
-            value = collection.value.value,
-            onValueChange = {},
-            label = { Text("Collection") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            mediaCollections.forEach { gallery ->
-                DropdownMenuItem(
-                    text = { Text(gallery) },
-                    onClick = {
-                        select(gallery)
-                        expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                )
-            }
         }
     }
 }
