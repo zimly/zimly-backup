@@ -3,21 +3,20 @@ package app.zimly.backup
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.viewmodel.MutableCreationExtras
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.list.ListScreen
-import app.zimly.backup.ui.screens.permission.PermissionScreen
-import app.zimly.backup.ui.screens.permission.PermissionViewModel
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
@@ -41,37 +40,39 @@ class MainActivity : ComponentActivity() {
             finish()
         }
 
-        val viewModelStoreOwner: ViewModelStoreOwner = this
-        val permissionViewModel: PermissionViewModel = ViewModelProvider.create(
-            viewModelStoreOwner,
-            factory = PermissionViewModel.Factory,
-            extras = MutableCreationExtras().apply {
-                set(APPLICATION_KEY, application)
-                set(PermissionViewModel.CALLBACK_KEY) { finish() }
-            },
-        )[PermissionViewModel::class]
-
+        val permissionService = PermissionService(applicationContext)
         setContent {
             ZimzyncTheme {
-                AppNavigation(permissionViewModel)
+                AppNavigation(permissionService.isPermissionGranted(), permissionService)
             }
         }
     }
 
     @Composable
-    private fun AppNavigation(permissionViewModel: PermissionViewModel) {
+    private fun AppNavigation(grantedPermissions: Boolean, permissionService: PermissionService) {
 
-        val granted = permissionViewModel.state.collectAsState()
-        val startDest = if (granted.value.granted) REMOTES_LIST else GRANT_PERMISSION
+        val showDialog = remember { mutableStateOf(!grantedPermissions) }
+        val permissionLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { grants ->
+            Log.d("PermissionBox", "Permissions grants: $grants")
+            showDialog.value = false
+        }
+
+        val startDest = if (showDialog.value) GRANT_PERMISSION else REMOTES_LIST
         val navController = rememberNavController()
+
 
         NavHost(navController, startDestination = startDest) {
 
             // Grant permission for app
             // https://stackoverflow.com/questions/60608101/how-request-permissions-with-jetpack-compose
             composable(GRANT_PERMISSION) {
-                PermissionScreen(permissionViewModel)
+                LaunchedEffect(showDialog) {
+                    permissionLauncher.launch(permissionService.getPermissions())
+                }
             }
+
 
             composable(REMOTES_LIST) {
                 ListScreen(
