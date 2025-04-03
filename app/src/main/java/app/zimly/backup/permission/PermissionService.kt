@@ -1,9 +1,25 @@
 package app.zimly.backup.permission
 
 import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 
-class PermissionService {
+class PermissionService(private val context: Context) {
+
+    fun isPermissionGranted(): Boolean {
+        val granted = getPermissions()
+            .map { permission ->
+                ContextCompat.checkSelfPermission(
+                    context,
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+            .reduce { granted, permission -> granted && permission }
+
+        return granted
+    }
 
     /**
      * Returns the needed permissions based on Android SDK version.
