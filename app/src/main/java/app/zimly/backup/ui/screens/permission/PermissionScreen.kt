@@ -1,11 +1,9 @@
 package app.zimly.backup.ui.screens.permission
 
-import android.Manifest
 import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,7 +38,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.ZimlyApplication
-import app.zimly.backup.ui.screens.permission.PermissionViewModel.Companion.getPermissions
+import app.zimly.backup.permission.PermissionService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,12 +55,13 @@ import kotlinx.coroutines.flow.update
 class PermissionViewModel(private val application: Application, private val closeActivity: () -> Unit) :
     AndroidViewModel(application) {
 
+    private val permissionService = PermissionService()
     private val _state = MutableStateFlow(UiState(granted = isPermissionGranted()))
     val state: StateFlow<UiState> = _state.asStateFlow()
 
     // Check initially if the permission is granted
     private fun isPermissionGranted(): Boolean {
-        val granted = getPermissions()
+        val granted = permissionService.getPermissions()
             .map { permission ->
                 ContextCompat.checkSelfPermission(
                     getApplication<Application>().applicationContext,
@@ -77,7 +76,7 @@ class PermissionViewModel(private val application: Application, private val clos
     fun onGranted(grants: Map<String, Boolean>) {
 
         // Lookup and compare the granted permission
-        val granted = checkUserGrants(grants)
+        val granted = permissionService.checkUserGrants(grants)
         if (granted == true) {
             _state.update { it.copy(granted = true) }
         } else {
@@ -93,6 +92,10 @@ class PermissionViewModel(private val application: Application, private val clos
         application.applicationContext.startActivity(intent)
         // Don't send user back to permission-screen
         closeActivity()
+    }
+
+    fun getPermissions(): Array<String> {
+        return permissionService.getPermissions()
     }
 
     data class UiState(
@@ -111,34 +114,6 @@ class PermissionViewModel(private val application: Application, private val clos
 
                 PermissionViewModel(application, callBack)
             }
-        }
-
-        /*
-         * Returns the needed permissions based on Android SDK version.
-         * Changes were introduced to the media permissions in API 33+
-         */
-        fun getPermissions(): Array<String> {
-            val permissions = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                // Compatibility with older versions
-                arrayOf(
-                    Manifest.permission.ACCESS_MEDIA_LOCATION,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                )
-            } else {
-                // New permissions
-                arrayOf(
-                    Manifest.permission.READ_MEDIA_IMAGES,
-                    Manifest.permission.READ_MEDIA_VIDEO,
-                    Manifest.permission.ACCESS_MEDIA_LOCATION
-                )
-            }
-            return permissions
-        }
-
-        fun checkUserGrants(grants: Map<String, Boolean>): Boolean? {
-            return getPermissions()
-                .map { permission -> grants[permission] }
-                .reduce { granted, permission -> granted == true && permission == true }
         }
     }
 }
@@ -191,7 +166,7 @@ fun PermissionScreen(viewModel: PermissionViewModel) {
                 if (!state.value.error) {
                     LaunchedEffect(Unit) {
                         permissionLauncher.launch(
-                            getPermissions()
+                            viewModel.getPermissions()
                         )
                     }
                 }
