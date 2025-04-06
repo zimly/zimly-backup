@@ -24,6 +24,7 @@ import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
+import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
 import app.zimly.backup.sync.SyncServiceImpl
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -57,6 +59,7 @@ class SyncViewModel(
     // TODO keeping a ref to contentResolver might be a problem
     // --> instead extend AndroidViewModel
     private val contentResolver: ContentResolver,
+    private val permissionService: PermissionService
     // TODO keeping a ref to application IS a problem
 ) : ViewModel() {
 
@@ -74,7 +77,14 @@ class SyncViewModel(
                 val workManager = WorkManager.getInstance(application.applicationContext)
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
-                SyncViewModel(remoteDao, remoteId, workManager, application.contentResolver)
+                val permissionService = PermissionService(application.applicationContext)
+                SyncViewModel(
+                    remoteDao,
+                    remoteId,
+                    workManager,
+                    application.contentResolver,
+                    permissionService
+                )
             }
         }
 
@@ -84,13 +94,14 @@ class SyncViewModel(
         val IN_PROGRESS_STATES: Set<WorkInfo.State> = setOf(
             WorkInfo.State.RUNNING,
             WorkInfo.State.ENQUEUED,
-            WorkInfo.State.BLOCKED)
+            WorkInfo.State.BLOCKED
+        )
 
         /**
          * Maps [WorkInfo.State]s to UI [Status].
          */
         fun mapState(state: WorkInfo.State): Status {
-            return when(state) {
+            return when (state) {
                 WorkInfo.State.ENQUEUED -> Status.CONSTRAINTS_NOT_MET
                 WorkInfo.State.RUNNING -> Status.IN_PROGRESS
                 WorkInfo.State.SUCCEEDED -> Status.COMPLETED
@@ -151,6 +162,19 @@ class SyncViewModel(
             initialValue = null,
         )
 
+    private val _syncInProgress = progressState.map { status ->
+        status.status !in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
+    }
+
+    private val _permissionsGranted = MutableStateFlow(permissionService.isPermissionGranted())
+
+    val enableActions: StateFlow<Boolean> = combine(
+        _syncInProgress,
+        _permissionsGranted
+    ) { syncInProgress, permissionsGranted ->
+        syncInProgress && permissionsGranted
+    }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
     /**
      * Calculate the diff between remote bucket and the local gallery. This is a "heavy" computation.
      * Use e.g. [kotlinx.coroutines.Dispatchers.Default] to not block the Main thread. As the UI
@@ -168,9 +192,11 @@ class SyncViewModel(
         }
         try {
             val remote = dao.loadById(remoteId)
-            val s3Repo = MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
+            val s3Repo =
+                MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
-            val contentResolver = LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
+            val contentResolver =
+                LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
             val syncService = SyncServiceImpl(s3Repo, contentResolver)
 
             val diff = syncService.diff()
@@ -292,7 +318,10 @@ class SyncViewModel(
             .build()
 
         val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofMinutes(1)) // Exponentially retry
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                Duration.ofMinutes(1)
+            ) // Exponentially retry
             .setInputData(data)
             .setConstraints(constraints)
             .build()

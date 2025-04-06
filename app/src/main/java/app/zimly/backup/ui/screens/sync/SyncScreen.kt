@@ -60,8 +60,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
-import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.screens.sync.permission.MediaPermissionContainer
 import app.zimly.backup.ui.theme.containerBackground
@@ -84,6 +82,7 @@ fun SyncScreen(
     val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
+    val enableActions by viewModel.enableActions.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
@@ -93,13 +92,10 @@ fun SyncScreen(
     val createDiff: () -> Unit =
         { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
 
-    val inProgress =
-        progress.status !in IN_PROGRESS_STATES.map { mapState(it) } + SyncViewModel.Status.CALCULATING
-
     SyncLayout(
         remote.name,
         error,
-        inProgress,
+        enableActions,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
@@ -114,7 +110,7 @@ fun SyncScreen(
         SyncOverview(
             remote,
             progress,
-            inProgress,
+            enableActions,
             createDiff,
             sourceContainer = {
                 when (remote.sourceType) {
