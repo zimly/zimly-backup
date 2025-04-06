@@ -88,6 +88,13 @@ class MediaSelectorViewModel(
         } ?: false
     }
 
+    fun openDialog() {
+        internal.update { it.copy(showDialog = true) }
+    }
+
+    fun closeDialog() {
+        internal.update { it.copy(showDialog = false) }
+    }
 
     fun openSettings(context: Context) {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -113,6 +120,7 @@ class MediaSelectorViewModel(
     data class UiState(
         val collections: Set<String> = emptySet(),
         val granted: Boolean = false,
+        val showDialog: Boolean = false,
     )
 }
 
@@ -139,18 +147,17 @@ fun MediaSelectorContainer(
     if (state.granted) {
         MediaSelector(selectedCollection.value, state, focus, select)
     } else {
-        var showRationaleDialog by remember { mutableStateOf(false) }
 
-        if (showRationaleDialog) {
+        if (state.showDialog) {
             PermissionRationaleDialog(
                 permissionsDenied,
                 viewModel.getPermission(),
-                { showRationaleDialog = false },
+                { viewModel.closeDialog() },
                 { viewModel.onGranted(it) },
                 { viewModel.openSettings(context) }
             )
         } else {
-            PermissionBox { showRationaleDialog = true }
+            PermissionBox { viewModel.openDialog() }
         }
     }
 }
