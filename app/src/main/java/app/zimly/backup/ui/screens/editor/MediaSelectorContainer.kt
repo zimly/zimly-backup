@@ -147,6 +147,7 @@ fun MediaSelectorContainer(
     if (state.granted) {
         MediaSelector(selectedCollection.value, state, focus, select)
     } else {
+        PermissionBox { viewModel.openDialog() }
 
         if (state.showDialog) {
             PermissionRationaleDialog(
@@ -156,8 +157,6 @@ fun MediaSelectorContainer(
                 { viewModel.onGranted(it) },
                 { viewModel.openSettings(context) }
             )
-        } else {
-            PermissionBox { viewModel.openDialog() }
         }
     }
 }
