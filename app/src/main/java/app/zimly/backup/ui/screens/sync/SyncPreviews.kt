@@ -149,7 +149,7 @@ private fun PreviewSync(
                 enableActions,
                 createDiff = {},
                 sourceContainer = { ContentContainer(remote) },
-                batterySaverContainer = {
+                warningsContainer = {
                     BatterySaverContainer(viewModel = viewModel {
                         val stubNotificationDao = object: NotificationDao {
                             override suspend fun loadByType(type: NotificationType): Notification? { return null }

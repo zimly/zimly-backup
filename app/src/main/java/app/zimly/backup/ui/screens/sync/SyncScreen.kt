@@ -63,6 +63,7 @@ import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
+import app.zimly.backup.ui.screens.sync.permission.MediaPermissionContainer
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -122,7 +123,12 @@ fun SyncScreen(
                     null -> {}
                 }
             },
-            batterySaverContainer = { BatterySaverContainer() }
+            warningsContainer = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MediaPermissionContainer()
+                    BatterySaverContainer()
+                }
+            }
         )
 
     }
@@ -135,7 +141,7 @@ fun SyncOverview(
     enableActions: Boolean,
     createDiff: () -> Unit,
     sourceContainer: @Composable () -> Unit,
-    batterySaverContainer: @Composable () -> Unit
+    warningsContainer: @Composable () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
@@ -147,7 +153,7 @@ fun SyncOverview(
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         progress.status?.let { ProgressBar(progress) }
 
-        batterySaverContainer()
+        warningsContainer()
     }
 }
 

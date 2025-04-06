@@ -159,6 +159,7 @@ fun MediaSelectorContainer(
         mediaField.focus(it)
     }
 
+    // TODO remember
     val permissionsDenied = viewModel.isAnyPermissionPermanentlyDenied(context)
 
     if (state.granted) {
