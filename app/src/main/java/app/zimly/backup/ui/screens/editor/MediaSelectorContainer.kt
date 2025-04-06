@@ -227,7 +227,7 @@ private fun PermissionBox(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Access to media collections not granted.")
+        Text("Access to your photos and videos is required to complete the media backup configuration.")
         TextButton(
             onClick = { showRationaleDialog = true },
             contentPadding = PaddingValues(
@@ -258,7 +258,7 @@ fun PermissionRationaleDialog(
                         append("Zimly requires access to certain permissions to function properly: \n\n")
                         append("  • Access to your media collections\n")
                         append("  • Access to your media's location meta-data (Exif)\n\n")
-                        append("Please grant these permissions to enable backup of your media collections and ensure your Exif meta-data is preserved.")
+                        append("Please grant these permissions to enable backup of your photos and videos and ensure your Exif meta-data is preserved.")
                     },
                     textAlign = TextAlign.Left,
                     modifier = Modifier.padding(start = 12.dp)
