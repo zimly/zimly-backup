@@ -6,6 +6,7 @@ import androidx.work.WorkManager
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.permission.PermissionService
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -75,7 +76,8 @@ class SyncViewModelTest {
         val workManager = mockk<WorkManager>()
         every { workManager.getWorkInfosFlow(any()) } returns emptyFlow()
         val contentResolver = mockk<ContentResolver>()
-        this.viewModel = SyncViewModel(dao, 12, workManager, contentResolver)
+        val permissionService = mockk<PermissionService>()
+        this.viewModel = SyncViewModel(dao, 12, workManager, contentResolver, permissionService)
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
