@@ -42,7 +42,7 @@ fun PermissionBox(
 fun PermissionRationaleDialog(
     permissionsPermanentlyDenied: Boolean,
     permissions: Array<String>,
-    onDismiss: () -> Unit,
+    closeDialog: () -> Unit,
     onGranted: (grants: Map<String, Boolean>) -> Unit,
     openSettings: () -> Unit
 ) {
@@ -52,7 +52,7 @@ fun PermissionRationaleDialog(
         onGranted(grants)
     }
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = closeDialog,
         title = {
             Text("Permissions Required")
         },
@@ -74,17 +74,23 @@ fun PermissionRationaleDialog(
         },
         confirmButton = {
             if (permissionsPermanentlyDenied) {
-                TextButton(onClick = openSettings) {
+                TextButton(onClick = {
+                    openSettings()
+                    closeDialog()
+                }) {
                     Text("Open Settings")
                 }
             } else {
-                TextButton(onClick = { permissionLauncher.launch(permissions) }) {
+                TextButton(onClick = {
+                    permissionLauncher.launch(permissions)
+                    closeDialog()
+                }) {
                     Text("Grant Permissions")
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = closeDialog) {
                 Text("Cancel")
             }
         }
