@@ -74,12 +74,19 @@ fun MediaSelectorContainer(
     if (state.granted) {
         MediaSelector(selectedCollection.value, state, focus, select)
     } else {
-        PermissionBox(
-            permissionsDenied,
-            viewModel.getPermission(),
-            { viewModel.onGranted(it) },
-            { viewModel.openSettings(context) },
-        )
+        var showRationaleDialog by remember { mutableStateOf(false) }
+
+        if (showRationaleDialog) {
+            PermissionRationaleDialog(
+                permissionsDenied,
+                viewModel.getPermission(),
+                { showRationaleDialog = false },
+                { viewModel.onGranted(it) },
+                { viewModel.openSettings(context) }
+            )
+        } else {
+            PermissionBox { showRationaleDialog = true }
+        }
     }
 }
 
@@ -148,7 +155,6 @@ class MediaSelectorViewModel(
     )
 }
 
-
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun MediaSelector(
@@ -196,32 +202,8 @@ private fun MediaSelector(
 
 @Composable
 private fun PermissionBox(
-    permissionsPermanentlyDenied: Boolean,
-    permissions: Array<String>,
-    onGranted: (grants: Map<String, Boolean>) -> Unit,
-    openSettings: () -> Unit
+    showRational: () -> Unit
 ) {
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { grants ->
-        onGranted(grants)
-    }
-
-    var showRationaleDialog by remember { mutableStateOf(false) }
-
-    if (showRationaleDialog) {
-        PermissionRationaleDialog(
-            permissionsPermanentlyDenied,
-            onDismiss = { showRationaleDialog = false },
-            onGrantClick = {
-                showRationaleDialog = false
-                if (permissionsPermanentlyDenied) openSettings() else permissionLauncher.launch(
-                    permissions
-                )
-            }
-        )
-    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -229,7 +211,7 @@ private fun PermissionBox(
     ) {
         Text("Access to your photos and videos is required to complete the media backup configuration.")
         TextButton(
-            onClick = { showRationaleDialog = true },
+            onClick = { showRational() },
             contentPadding = PaddingValues(
                 horizontal = 16.dp,
             ),
@@ -242,9 +224,16 @@ private fun PermissionBox(
 @Composable
 fun PermissionRationaleDialog(
     permissionsPermanentlyDenied: Boolean,
+    permissions: Array<String>,
     onDismiss: () -> Unit,
-    onGrantClick: () -> Unit
+    onGranted: (grants: Map<String, Boolean>) -> Unit,
+    openSettings: () -> Unit
 ) {
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        onGranted(grants)
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -267,8 +256,14 @@ fun PermissionRationaleDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onGrantClick) {
-                Text(if (permissionsPermanentlyDenied) "Open Settings" else "Grant Permissions")
+            if (permissionsPermanentlyDenied) {
+                TextButton(onClick = openSettings) {
+                    Text("Open Settings")
+                }
+            } else {
+                TextButton(onClick = { permissionLauncher.launch(permissions) }) {
+                    Text("Grant Permissions")
+                }
             }
         },
         dismissButton = {
