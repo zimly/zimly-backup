@@ -6,7 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,7 +56,13 @@ fun PermissionRationaleDialog(
         onGranted(grants)
     }
     AlertDialog(
-        onDismissRequest = closeDialog,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.Lock,
+                contentDescription = "Missing Permissions Alert",
+                tint = MaterialTheme.colorScheme.error
+            )
+        },
         title = {
             Text("Permissions Required")
         },
@@ -72,6 +82,7 @@ fun PermissionRationaleDialog(
                 )
             }
         },
+        onDismissRequest = closeDialog,
         confirmButton = {
             if (permissionsPermanentlyDenied) {
                 TextButton(onClick = {
