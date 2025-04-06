@@ -56,11 +56,8 @@ class SyncViewModel(
     private val dao: RemoteDao,
     private val remoteId: Int,
     private val workManager: WorkManager,
-    // TODO keeping a ref to contentResolver might be a problem
-    // --> instead extend AndroidViewModel
     private val contentResolver: ContentResolver,
-    private val permissionService: PermissionService
-    // TODO keeping a ref to application IS a problem
+    permissionService: PermissionService
 ) : ViewModel() {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
@@ -166,8 +163,12 @@ class SyncViewModel(
         status.status !in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
     }
 
+    // TODO update this, when permissions change.
     private val _permissionsGranted = MutableStateFlow(permissionService.isPermissionGranted())
 
+    /**
+     * Disable actions if permissions are missing or a sync is already in progress.
+     */
     val enableActions: StateFlow<Boolean> = combine(
         _syncInProgress,
         _permissionsGranted
