@@ -51,45 +51,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-@Composable
-fun MediaSelectorContainer(
-    mediaField: TextField,
-    viewModel: MediaSelectorViewModel = viewModel(
-        factory = MediaSelectorViewModel.Factory
-    )
-) {
-    val state by viewModel.state.collectAsState()
-    val selectedCollection by mediaField.state.collectAsState()
-
-    val select: (collection: String) -> Unit = {
-        mediaField.update(it)
-    }
-    val focus: (state: FocusState) -> Unit = {
-        mediaField.focus(it)
-    }
-
-    val context = LocalContext.current
-    val permissionsDenied = viewModel.isAnyPermissionPermanentlyDenied(context)
-
-    if (state.granted) {
-        MediaSelector(selectedCollection.value, state, focus, select)
-    } else {
-        var showRationaleDialog by remember { mutableStateOf(false) }
-
-        if (showRationaleDialog) {
-            PermissionRationaleDialog(
-                permissionsDenied,
-                viewModel.getPermission(),
-                { showRationaleDialog = false },
-                { viewModel.onGranted(it) },
-                { viewModel.openSettings(context) }
-            )
-        } else {
-            PermissionBox { showRationaleDialog = true }
-        }
-    }
-}
-
 class MediaSelectorViewModel(
     private val mediaRepository: LocalMediaRepository,
     private val permissionService: PermissionService,
@@ -153,6 +114,45 @@ class MediaSelectorViewModel(
         val collections: Set<String> = emptySet(),
         val granted: Boolean = false,
     )
+}
+
+@Composable
+fun MediaSelectorContainer(
+    mediaField: TextField,
+    viewModel: MediaSelectorViewModel = viewModel(
+        factory = MediaSelectorViewModel.Factory
+    )
+) {
+    val state by viewModel.state.collectAsState()
+    val selectedCollection by mediaField.state.collectAsState()
+
+    val select: (collection: String) -> Unit = {
+        mediaField.update(it)
+    }
+    val focus: (state: FocusState) -> Unit = {
+        mediaField.focus(it)
+    }
+
+    val context = LocalContext.current
+    val permissionsDenied = viewModel.isAnyPermissionPermanentlyDenied(context)
+
+    if (state.granted) {
+        MediaSelector(selectedCollection.value, state, focus, select)
+    } else {
+        var showRationaleDialog by remember { mutableStateOf(false) }
+
+        if (showRationaleDialog) {
+            PermissionRationaleDialog(
+                permissionsDenied,
+                viewModel.getPermission(),
+                { showRationaleDialog = false },
+                { viewModel.onGranted(it) },
+                { viewModel.openSettings(context) }
+            )
+        } else {
+            PermissionBox { showRationaleDialog = true }
+        }
+    }
 }
 
 @Composable
