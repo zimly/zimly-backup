@@ -3,11 +3,8 @@ package app.zimly.backup
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
@@ -17,6 +14,7 @@ import androidx.navigation.navArgument
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.list.ListScreen
+import app.zimly.backup.ui.screens.permission.PermissionRequestScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
@@ -43,36 +41,23 @@ class MainActivity : ComponentActivity() {
         val permissionService = PermissionService(applicationContext, application.packageName)
         setContent {
             ZimzyncTheme {
-                AppNavigation(permissionService.isPermissionGranted(), permissionService)
+                AppNavigation(permissionService.isPermissionGranted())
             }
         }
     }
 
     @Composable
-    private fun AppNavigation(grantedPermissions: Boolean, permissionService: PermissionService) {
+    private fun AppNavigation(grantedPermissions: Boolean) {
 
-        val showDialog = remember { mutableStateOf(!grantedPermissions) }
-        val permissionLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { grants ->
-            Log.d("PermissionBox", "Permissions grants: $grants")
-            showDialog.value = false
-        }
-
-        val startDest = if (showDialog.value) GRANT_PERMISSION else REMOTES_LIST
+        val permissionRequest = remember { mutableStateOf(!grantedPermissions) }
+        val startDest = if (permissionRequest.value) GRANT_PERMISSION else REMOTES_LIST
         val navController = rememberNavController()
-
 
         NavHost(navController, startDestination = startDest) {
 
-            // Grant permission for app
-            // https://stackoverflow.com/questions/60608101/how-request-permissions-with-jetpack-compose
             composable(GRANT_PERMISSION) {
-                LaunchedEffect(showDialog) {
-                    permissionLauncher.launch(permissionService.getPermissions())
-                }
+                PermissionRequestScreen({ permissionRequest.value = false })
             }
-
 
             composable(REMOTES_LIST) {
                 ListScreen(

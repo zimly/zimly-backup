@@ -82,7 +82,6 @@ class MediaPermissionViewModel(
     fun onGranted(grants: Map<String, Boolean>) {
         val allGranted = permissionService.checkUserGrants(grants)
         _showWarning.value = allGranted != true
-
     }
 
     fun updateState() {
