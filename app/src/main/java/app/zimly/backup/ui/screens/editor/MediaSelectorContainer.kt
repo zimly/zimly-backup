@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,9 +38,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -61,9 +65,7 @@ class MediaSelectorViewModel(
     val state: StateFlow<UiState> = internal.asStateFlow()
 
     init {
-        val collections = mediaRepository.getBuckets()
-        val granted = permissionService.isPermissionGranted()
-        internal.update { it.copy(collections = collections.keys, granted = granted) }
+        updateState()
     }
 
     fun onGranted(grants: Map<String, Boolean>) {
@@ -104,6 +106,12 @@ class MediaSelectorViewModel(
         context.startActivity(intent)
     }
 
+    fun updateState() {
+        val collections = mediaRepository.getBuckets()
+        val granted = permissionService.isPermissionGranted()
+        internal.update { it.copy(collections = collections.keys, granted = granted) }
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -133,7 +141,26 @@ fun MediaSelectorContainer(
 ) {
     val state by viewModel.state.collectAsState()
     val selectedCollection by mediaField.state.collectAsState()
+    val context = LocalContext.current
 
+    // Observe lifecycle changes to trigger the permission check when the activity resumes
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.updateState() // Check permission on resume
+            }
+        }
+
+        // Adding observer
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        // Cleanup when the composable leaves the composition
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
     val select: (collection: String) -> Unit = {
         mediaField.update(it)
     }
@@ -141,7 +168,6 @@ fun MediaSelectorContainer(
         mediaField.focus(it)
     }
 
-    val context = LocalContext.current
     val permissionsDenied = viewModel.isAnyPermissionPermanentlyDenied(context)
 
     if (state.granted) {
