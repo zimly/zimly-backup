@@ -1,4 +1,5 @@
 2.4.0
+* Make permission handling less obstructive #31
 * Improve dependency resolution in view models #30
 
 Full changelog:
