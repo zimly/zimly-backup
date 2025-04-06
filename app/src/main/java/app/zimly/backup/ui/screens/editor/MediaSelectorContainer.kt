@@ -2,9 +2,6 @@ package app.zimly.backup.ui.screens.editor
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.DropdownMenuItem
@@ -45,8 +42,7 @@ import kotlinx.coroutines.flow.update
 
 class MediaSelectorViewModel(
     private val mediaRepository: LocalMediaRepository,
-    private val permissionService: PermissionService,
-    private val packageName: String
+    private val permissionService: PermissionService
 ) : ViewModel() {
 
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
@@ -83,11 +79,7 @@ class MediaSelectorViewModel(
     }
 
     fun openSettings(context: Context) {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.fromParts("package", packageName, null)
-        }
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        context.startActivity(intent)
+        permissionService.openSettings(context)
     }
 
     fun updateState() {
@@ -105,9 +97,8 @@ class MediaSelectorViewModel(
                 val application = checkNotNull(this[APPLICATION_KEY])
 
                 val mediaRepository = LocalMediaRepository(application.contentResolver)
-                val permissionService = PermissionService(application.applicationContext)
-                val packageName = application.packageName
-                MediaSelectorViewModel(mediaRepository, permissionService, packageName)
+                val permissionService = PermissionService(application.applicationContext, application.packageName)
+                MediaSelectorViewModel(mediaRepository, permissionService)
             }
         }
     }

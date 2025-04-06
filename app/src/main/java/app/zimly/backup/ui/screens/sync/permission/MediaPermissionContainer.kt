@@ -43,8 +43,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class MediaPermissionViewModel(
-    private val permissionService: PermissionService,
-    private val packageName: String,
+    private val permissionService: PermissionService
 ) : ViewModel() {
 
     private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -57,11 +56,7 @@ class MediaPermissionViewModel(
     }
 
     fun openSettings(context: Context) {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.fromParts("package", packageName, null)
-        }
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        context.startActivity(intent)
+        permissionService.openSettings(context)
     }
 
     fun openDialog() {
@@ -103,9 +98,11 @@ class MediaPermissionViewModel(
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
 
-                val permissionService = PermissionService(application.applicationContext)
-                val packageName = application.packageName
-                MediaPermissionViewModel(permissionService, packageName)
+                val permissionService = PermissionService(
+                    application.applicationContext,
+                    application.packageName
+                )
+                MediaPermissionViewModel(permissionService)
             }
         }
     }

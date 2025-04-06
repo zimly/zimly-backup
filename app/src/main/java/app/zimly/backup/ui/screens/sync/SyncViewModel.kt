@@ -74,7 +74,10 @@ class SyncViewModel(
                 val workManager = WorkManager.getInstance(application.applicationContext)
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
-                val permissionService = PermissionService(application.applicationContext)
+                val permissionService = PermissionService(
+                    application.applicationContext,
+                    application.packageName
+                )
                 SyncViewModel(
                     remoteDao,
                     remoteId,

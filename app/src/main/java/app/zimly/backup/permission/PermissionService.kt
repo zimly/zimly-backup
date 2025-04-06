@@ -3,12 +3,15 @@ package app.zimly.backup.permission
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class PermissionService(private val context: Context) {
+class PermissionService(private val context: Context, private val packageName: String) {
 
     fun isPermissionGranted(): Boolean {
         val granted = getPermissions()
@@ -59,6 +62,14 @@ class PermissionService(private val context: Context) {
             ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED &&
                     !ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
         }
+    }
+
+    fun openSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        context.startActivity(intent)
     }
 
 }

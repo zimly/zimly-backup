@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
             finish()
         }
 
-        val permissionService = PermissionService(applicationContext)
+        val permissionService = PermissionService(applicationContext, application.packageName)
         setContent {
             ZimzyncTheme {
                 AppNavigation(permissionService.isPermissionGranted(), permissionService)
