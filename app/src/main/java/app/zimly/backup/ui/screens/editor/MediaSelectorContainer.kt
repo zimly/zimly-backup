@@ -2,11 +2,10 @@ package app.zimly.backup.ui.screens.editor
 
 import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,8 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
@@ -70,15 +67,11 @@ class MediaSelectorViewModel(
     }
 
     fun isAnyPermissionPermanentlyDenied(context: Context): Boolean {
-        val activity =
-            context as? Activity ?: (context as? ContextWrapper)?.baseContext as? Activity
-
-        return activity?.let {
-            permissionService.getPermissions().any { perm ->
-                ContextCompat.checkSelfPermission(it, perm) != PackageManager.PERMISSION_GRANTED &&
-                        !ActivityCompat.shouldShowRequestPermissionRationale(it, perm)
-            }
-        } ?: false
+        if (context !is Activity) {
+            Log.e(TAG, "Expected an Activity as Context object but got: ${context.javaClass.name}")
+            return false
+        }
+        return permissionService.isAnyPermissionPermanentlyDenied(context)
     }
 
     fun openDialog() {
@@ -104,6 +97,9 @@ class MediaSelectorViewModel(
     }
 
     companion object {
+
+        private val TAG: String? = MediaSelectorViewModel::class.simpleName
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])

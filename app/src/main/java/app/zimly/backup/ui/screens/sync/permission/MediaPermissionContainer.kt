@@ -2,11 +2,10 @@ package app.zimly.backup.ui.screens.sync.permission
 
 import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,8 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
@@ -80,15 +77,11 @@ class MediaPermissionViewModel(
     }
 
     fun isAnyPermissionPermanentlyDenied(context: Context): Boolean {
-        val activity =
-            context as? Activity ?: (context as? ContextWrapper)?.baseContext as? Activity
-
-        return activity?.let {
-            permissionService.getPermissions().any { perm ->
-                ContextCompat.checkSelfPermission(it, perm) != PackageManager.PERMISSION_GRANTED &&
-                        !ActivityCompat.shouldShowRequestPermissionRationale(it, perm)
-            }
-        } ?: false
+        if (context !is Activity) {
+            Log.e(TAG, "Expected an Activity as Context object but got: ${context.javaClass.name}")
+            return false
+        }
+        return permissionService.isAnyPermissionPermanentlyDenied(context)
     }
 
     fun onGranted(grants: Map<String, Boolean>) {
@@ -103,6 +96,8 @@ class MediaPermissionViewModel(
     }
 
     companion object {
+
+        private val TAG: String? = MediaPermissionViewModel::class.simpleName
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
