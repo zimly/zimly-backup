@@ -12,6 +12,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -25,10 +27,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -66,8 +71,9 @@ fun MediaSelectorContainer(
     val context = LocalContext.current
     val permissionsDenied = viewModel.isAnyPermissionPermanentlyDenied(context)
 
-    MediaSelector(selectedCollection.value, state, focus, select)
-    if (!state.granted) {
+    if (state.granted) {
+        MediaSelector(selectedCollection.value, state, focus, select)
+    } else {
         PermissionBox(
             permissionsDenied,
             viewModel.getPermission(),
@@ -139,7 +145,6 @@ class MediaSelectorViewModel(
     data class UiState(
         val collections: Set<String> = emptySet(),
         val granted: Boolean = false,
-        val permissionsDenied: Boolean = false
     )
 }
 
@@ -196,25 +201,80 @@ private fun PermissionBox(
     onGranted: (grants: Map<String, Boolean>) -> Unit,
     openSettings: () -> Unit
 ) {
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
         onGranted(grants)
     }
 
-    Column {
-        Text("Access to media collections not granted.")
-        TextButton(
-            onClick = {
+    var showRationaleDialog by remember { mutableStateOf(false) }
+
+    if (showRationaleDialog) {
+        PermissionRationaleDialog(
+            permissionsPermanentlyDenied,
+            onDismiss = { showRationaleDialog = false },
+            onGrantClick = {
+                showRationaleDialog = false
                 if (permissionsPermanentlyDenied) openSettings() else permissionLauncher.launch(
                     permissions
                 )
-            },
+            }
+        )
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Access to media collections not granted.")
+        TextButton(
+            onClick = { showRationaleDialog = true },
             contentPadding = PaddingValues(
                 horizontal = 16.dp,
             ),
         ) {
-            Text(text = if (permissionsPermanentlyDenied) "Open Settings" else "Grant Permission")
+            Text(text = "Learn More")
         }
     }
+}
+
+@Composable
+fun PermissionRationaleDialog(
+    permissionsPermanentlyDenied: Boolean,
+    onDismiss: () -> Unit,
+    onGrantClick: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Permissions Required")
+        },
+        text = {
+            Column {
+
+                Text(
+                    text = buildAnnotatedString {
+                        append("Zimly requires access to certain permissions to function properly: \n\n")
+                        append("  • Access to your media collections\n")
+                        append("  • Access to your media's location meta-data (Exif)\n\n")
+                        append("Please grant these permissions to enable backup of your media collections and ensure your Exif meta-data is preserved.")
+                    },
+                    textAlign = TextAlign.Left,
+                    modifier = Modifier.padding(start = 12.dp)
+
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onGrantClick) {
+                Text(if (permissionsPermanentlyDenied) "Open Settings" else "Grant Permissions")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
