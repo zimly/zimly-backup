@@ -1,6 +1,12 @@
 package app.zimly.backup.ui.screens.editor
 
-import android.util.Log
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -22,7 +28,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -54,15 +63,24 @@ fun MediaSelectorContainer(
         mediaField.focus(it)
     }
 
+    val context = LocalContext.current
+    val permissionsDenied = viewModel.isAnyPermissionPermanentlyDenied(context)
+
     MediaSelector(selectedCollection.value, state, focus, select)
     if (!state.granted) {
-        PermissionBox({ viewModel.onGranted(it) }, viewModel.getPermission())
+        PermissionBox(
+            permissionsDenied,
+            viewModel.getPermission(),
+            { viewModel.onGranted(it) },
+            { viewModel.openSettings(context) },
+        )
     }
 }
 
 class MediaSelectorViewModel(
     private val mediaRepository: LocalMediaRepository,
-    private val permissionService: PermissionService
+    private val permissionService: PermissionService,
+    private val packageName: String
 ) : ViewModel() {
 
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
@@ -84,6 +102,27 @@ class MediaSelectorViewModel(
         return permissionService.getPermissions()
     }
 
+    fun isAnyPermissionPermanentlyDenied(context: Context): Boolean {
+        val activity =
+            context as? Activity ?: (context as? ContextWrapper)?.baseContext as? Activity
+
+        return activity?.let {
+            permissionService.getPermissions().any { perm ->
+                ContextCompat.checkSelfPermission(it, perm) != PackageManager.PERMISSION_GRANTED &&
+                        !ActivityCompat.shouldShowRequestPermissionRationale(it, perm)
+            }
+        } ?: false
+    }
+
+
+    fun openSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        context.startActivity(intent)
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -91,12 +130,17 @@ class MediaSelectorViewModel(
 
                 val mediaRepository = LocalMediaRepository(application.contentResolver)
                 val permissionService = PermissionService(application.applicationContext)
-                MediaSelectorViewModel(mediaRepository, permissionService)
+                val packageName = application.packageName
+                MediaSelectorViewModel(mediaRepository, permissionService, packageName)
             }
         }
     }
 
-    data class UiState(val collections: Set<String> = emptySet(), val granted: Boolean = false)
+    data class UiState(
+        val collections: Set<String> = emptySet(),
+        val granted: Boolean = false,
+        val permissionsDenied: Boolean = false
+    )
 }
 
 
@@ -147,10 +191,11 @@ private fun MediaSelector(
 
 @Composable
 private fun PermissionBox(
+    permissionsPermanentlyDenied: Boolean,
+    permissions: Array<String>,
     onGranted: (grants: Map<String, Boolean>) -> Unit,
-    permissions: Array<String>
+    openSettings: () -> Unit
 ) {
-
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
@@ -161,13 +206,15 @@ private fun PermissionBox(
         Text("Access to media collections not granted.")
         TextButton(
             onClick = {
-                permissionLauncher.launch(permissions)
+                if (permissionsPermanentlyDenied) openSettings() else permissionLauncher.launch(
+                    permissions
+                )
             },
             contentPadding = PaddingValues(
                 horizontal = 16.dp,
             ),
         ) {
-            Text(text = "Grant Permission")
+            Text(text = if (permissionsPermanentlyDenied) "Open Settings" else "Grant Permission")
         }
     }
 }
