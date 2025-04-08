@@ -82,7 +82,8 @@ fun SyncScreen(
     val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
-    val enableActions by viewModel.enableActions.collectAsStateWithLifecycle()
+    val permissionsGranted by viewModel.permissionsGranted.collectAsStateWithLifecycle()
+    val syncInProgress by viewModel.syncInProgress.collectAsStateWithLifecycle()
 
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
@@ -95,7 +96,8 @@ fun SyncScreen(
     SyncLayout(
         remote.name,
         error,
-        enableActions,
+        permissionsGranted,
+        syncInProgress,
         snackbarState,
         sync = {
             viewModel.viewModelScope.launch {
@@ -107,10 +109,12 @@ fun SyncScreen(
         back,
         clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
     ) {
+        val enableDiffAction = permissionsGranted && !syncInProgress
+
         SyncOverview(
             remote,
             progress,
-            enableActions,
+            enableDiffAction,
             createDiff,
             sourceContainer = {
                 when (remote.sourceType) {
@@ -158,7 +162,8 @@ fun SyncOverview(
 fun SyncLayout(
     remoteName: String,
     error: String?,
-    inProgress: Boolean,
+    enableActions: Boolean,
+    syncInProgress: Boolean,
     snackbarState: SnackbarHostState,
     sync: () -> Unit,
     cancelSync: () -> Unit,
@@ -219,8 +224,9 @@ fun SyncLayout(
                     .padding(bottom = 32.dp, top = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                if (inProgress) {
+                if (!syncInProgress) {
                     Button(
+                        enabled = enableActions,
                         onClick = sync,
                         contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
                         colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
@@ -230,6 +236,7 @@ fun SyncLayout(
 
                 } else {
                     Button(
+                        enabled = enableActions,
                         onClick = cancelSync,
                         contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
                         colors = ButtonDefaults.buttonColors(

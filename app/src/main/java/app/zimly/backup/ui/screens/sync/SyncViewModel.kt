@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -162,22 +161,16 @@ class SyncViewModel(
             initialValue = null,
         )
 
+    // Adds Status.CALCULATING which is a UI centric action.
     private val _syncInProgress = progressState.map { status ->
-        status.status !in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
+        status.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
     }
+    val syncInProgress = _syncInProgress.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // TODO update this, when permissions change.
     private val _permissionsGranted = MutableStateFlow(permissionService.isPermissionGranted())
 
-    /**
-     * Disable actions if permissions are missing or a sync is already in progress.
-     */
-    val enableActions: StateFlow<Boolean> = combine(
-        _syncInProgress,
-        _permissionsGranted
-    ) { syncInProgress, permissionsGranted ->
-        syncInProgress && permissionsGranted
-    }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val permissionsGranted: StateFlow<Boolean> = _permissionsGranted.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     /**
      * Calculate the diff between remote bucket and the local gallery. This is a "heavy" computation.

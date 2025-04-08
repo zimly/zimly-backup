@@ -14,6 +14,9 @@ import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalMediaResolver
 import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
+import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
+import app.zimly.backup.ui.screens.sync.SyncViewModel.Status
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverViewModel
 import app.zimly.backup.ui.screens.sync.battery.PowerStatusProvider
@@ -42,12 +45,10 @@ fun InProgressPreview() {
     )
     val snackbarState = remember { SnackbarHostState() }
 
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
+    val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
+    val enableActions = true
 
-    PreviewSync(remote, enableActions, snackbarState, progressState)
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
 }
 
 @Preview(showBackground = true)
@@ -72,12 +73,10 @@ fun CompletedPreview() {
     )
     val snackbarState = remember { SnackbarHostState() }
 
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
+    val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
+    val enableActions = true
 
-    PreviewSync(remote, enableActions, snackbarState, progressState, true)
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
 }
 
 @Preview(showBackground = true)
@@ -93,13 +92,11 @@ fun IdlePreview() {
     val progressState = SyncViewModel.Progress()
     val snackbarState = remember { SnackbarHostState() }
 
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
+    val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
+    val enableActions = true
 
-    PreviewSync(remote, enableActions, snackbarState, progressState)}
-
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -112,21 +109,41 @@ fun CalculatingPreview() {
         sourceType = SourceType.MEDIA,
         sourceUri = "Camera"
     )
-    val progressState = SyncViewModel.Progress(status = SyncViewModel.Status.CALCULATING)
+    val progressState = SyncViewModel.Progress(status = Status.CALCULATING)
 
     val snackbarState = remember { SnackbarHostState() }
 
-    val enableActions = progressState.status !in setOf(
-        SyncViewModel.Status.CALCULATING,
-        SyncViewModel.Status.IN_PROGRESS
-    )
+    val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
+    val enableActions = true
 
-    PreviewSync(remote, enableActions, snackbarState, progressState)}
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PermissionsMissingPreview() {
+
+    val remote = SyncViewModel.SyncConfigurationState(
+        name = "Camera Backup",
+        url = "https://my-backup.dyndns.com",
+        sourceType = SourceType.MEDIA,
+        sourceUri = "Camera"
+    )
+    val progressState = SyncViewModel.Progress()
+    val snackbarState = remember { SnackbarHostState() }
+
+    val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
+    val enableActions = false
+
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
+}
+
 
 @Composable
 private fun PreviewSync(
     remote: SyncViewModel.SyncConfigurationState,
     enableActions: Boolean,
+    syncInProgress: Boolean,
     snackbarState: SnackbarHostState,
     progressState: SyncViewModel.Progress,
     batteryWarning: Boolean = false
@@ -136,6 +153,7 @@ private fun PreviewSync(
             remoteName = remote.name,
             error = null,
             enableActions,
+            syncInProgress,
             sync = {},
             cancelSync = {},
             edit = {},
@@ -146,7 +164,7 @@ private fun PreviewSync(
             SyncOverview(
                 remote,
                 progressState,
-                enableActions,
+                enableActions && !syncInProgress,
                 createDiff = {},
                 sourceContainer = { ContentContainer(remote) },
                 warningsContainer = {
