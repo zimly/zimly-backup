@@ -14,16 +14,12 @@ import androidx.core.content.ContextCompat
 class PermissionService(private val context: Context, private val packageName: String) {
 
     fun isPermissionGranted(): Boolean {
-        val granted = getPermissions()
-            .map { permission ->
-                ContextCompat.checkSelfPermission(
-                    context,
-                    permission
-                ) == PackageManager.PERMISSION_GRANTED
-            }
-            .reduce { granted, permission -> granted && permission }
-
-        return granted
+        return getPermissions().all { permission ->
+            ContextCompat.checkSelfPermission(
+                context,
+                permission
+            ) == PackageManager.PERMISSION_GRANTED
+        }
     }
 
     /**
@@ -51,10 +47,8 @@ class PermissionService(private val context: Context, private val packageName: S
     /**
      * Takes a map of [Manifest.permission]s and ensures all have been granted.
      */
-    fun checkUserGrants(grants: Map<String, Boolean>): Boolean? {
-        return getPermissions()
-            .map { permission -> grants[permission] }
-            .reduce { granted, permission -> granted == true && permission == true }
+    fun checkUserGrants(grants: Map<String, Boolean>): Boolean {
+        return grants.all { it.value }
     }
 
     fun isAnyPermissionPermanentlyDenied(activity: Activity): Boolean {

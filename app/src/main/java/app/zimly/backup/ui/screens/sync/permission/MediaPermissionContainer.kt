@@ -2,9 +2,6 @@ package app.zimly.backup.ui.screens.sync.permission
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -81,7 +78,7 @@ class MediaPermissionViewModel(
 
     fun onGranted(grants: Map<String, Boolean>) {
         val allGranted = permissionService.checkUserGrants(grants)
-        _showWarning.value = allGranted != true
+        _showWarning.value = allGranted
     }
 
     fun updateState() {

@@ -55,7 +55,7 @@ class MediaSelectorViewModel(
     fun onGranted(grants: Map<String, Boolean>) {
         val allGranted = permissionService.checkUserGrants(grants)
         val collections = mediaRepository.getBuckets()
-        internal.update { it.copy(collections = collections.keys, granted = allGranted == true) }
+        internal.update { it.copy(collections = collections.keys, granted = allGranted) }
     }
 
     fun getPermission(): Array<String> {

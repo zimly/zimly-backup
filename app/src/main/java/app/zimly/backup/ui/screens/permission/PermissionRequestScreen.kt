@@ -25,7 +25,7 @@ class PermissionRequestViewModel(private val permissionService: PermissionServic
 
     fun onGranted(grants: Map<String, Boolean>) {
         val allGranted = permissionService.checkUserGrants(grants)
-        _requestPermissions.value = allGranted != true
+        _requestPermissions.value = allGranted
     }
 
     fun getPermissions(): Array<String> {
