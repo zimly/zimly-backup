@@ -39,7 +39,7 @@ class PermissionServiceTest {
             Manifest.permission.ACCESS_MEDIA_LOCATION
         ).associateWith { true }
 
-        val result = permissionService.checkUserGrants(grants)
+        val result = permissionService.verifyGrants(grants)
 
         assertTrue("All grants should have been given", result)
     }
@@ -53,7 +53,7 @@ class PermissionServiceTest {
             Pair(Manifest.permission.ACCESS_MEDIA_LOCATION, false)
         )
 
-        val result = permissionService.checkUserGrants(grants)
+        val result = permissionService.verifyGrants(grants)
         assertFalse("All grants should have been given", result)
     }
 
@@ -70,7 +70,7 @@ class PermissionServiceTest {
 
         val permissionService = PermissionService(context, "app.zimly.test")
 
-        val result = permissionService.isPermissionGranted()
+        val result = permissionService.permissionsGranted()
 
         assertTrue("Permissions should be granted.", result)
 
@@ -89,7 +89,7 @@ class PermissionServiceTest {
 
         val permissionService = PermissionService(context, "app.zimly.test")
 
-        val result = permissionService.isPermissionGranted()
+        val result = permissionService.permissionsGranted()
 
         assertFalse("Permissions missing.", result)
     }

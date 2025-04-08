@@ -168,7 +168,7 @@ class SyncViewModel(
     val syncInProgress = _syncInProgress.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // TODO update this, when permissions change.
-    private val _permissionsGranted = MutableStateFlow(permissionService.isPermissionGranted())
+    private val _permissionsGranted = MutableStateFlow(permissionService.permissionsGranted())
 
     val permissionsGranted: StateFlow<Boolean> = _permissionsGranted.stateIn(viewModelScope, SharingStarted.Lazily, false)
 

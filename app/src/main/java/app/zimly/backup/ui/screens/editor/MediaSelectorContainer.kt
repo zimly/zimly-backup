@@ -53,13 +53,13 @@ class MediaSelectorViewModel(
     }
 
     fun onGranted(grants: Map<String, Boolean>) {
-        val allGranted = permissionService.checkUserGrants(grants)
+        val allGranted = permissionService.verifyGrants(grants)
         val collections = mediaRepository.getBuckets()
         internal.update { it.copy(collections = collections.keys, granted = allGranted) }
     }
 
     fun getPermission(): Array<String> {
-        return permissionService.getPermissions()
+        return permissionService.requiredPermissions()
     }
 
     fun isAnyPermissionPermanentlyDenied(context: Context): Boolean {
@@ -67,7 +67,7 @@ class MediaSelectorViewModel(
             Log.e(TAG, "Expected an Activity as Context object but got: ${context.javaClass.name}")
             return false
         }
-        return permissionService.isAnyPermissionPermanentlyDenied(context)
+        return permissionService.permissionsDenied(context)
     }
 
     fun openDialog() {
@@ -84,7 +84,7 @@ class MediaSelectorViewModel(
 
     fun updateState() {
         val collections = mediaRepository.getBuckets()
-        val granted = permissionService.isPermissionGranted()
+        val granted = permissionService.permissionsGranted()
         internal.update { it.copy(collections = collections.keys, granted = granted) }
     }
 

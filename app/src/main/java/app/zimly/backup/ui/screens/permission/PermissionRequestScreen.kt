@@ -19,17 +19,17 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class PermissionRequestViewModel(private val permissionService: PermissionService) : ViewModel() {
 
-    private val _requestPermissions = MutableStateFlow(!permissionService.isPermissionGranted())
+    private val _requestPermissions = MutableStateFlow(!permissionService.permissionsGranted())
 
     val requestPermissions: StateFlow<Boolean> = _requestPermissions.asStateFlow()
 
     fun onGranted(grants: Map<String, Boolean>) {
-        val allGranted = permissionService.checkUserGrants(grants)
+        val allGranted = permissionService.verifyGrants(grants)
         _requestPermissions.value = allGranted
     }
 
     fun getPermissions(): Array<String> {
-        return permissionService.getPermissions()
+        return permissionService.requiredPermissions()
     }
 
     companion object {

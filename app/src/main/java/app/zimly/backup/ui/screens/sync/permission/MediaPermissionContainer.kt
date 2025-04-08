@@ -65,7 +65,7 @@ class MediaPermissionViewModel(
     }
 
     fun getPermission(): Array<String> {
-        return permissionService.getPermissions()
+        return permissionService.requiredPermissions()
     }
 
     fun isAnyPermissionPermanentlyDenied(context: Context): Boolean {
@@ -73,16 +73,16 @@ class MediaPermissionViewModel(
             Log.e(TAG, "Expected an Activity as Context object but got: ${context.javaClass.name}")
             return false
         }
-        return permissionService.isAnyPermissionPermanentlyDenied(context)
+        return permissionService.permissionsDenied(context)
     }
 
     fun onGranted(grants: Map<String, Boolean>) {
-        val allGranted = permissionService.checkUserGrants(grants)
+        val allGranted = permissionService.verifyGrants(grants)
         _showWarning.value = allGranted
     }
 
     fun updateState() {
-        val granted = permissionService.isPermissionGranted()
+        val granted = permissionService.permissionsGranted()
         _showWarning.value = !granted
     }
 

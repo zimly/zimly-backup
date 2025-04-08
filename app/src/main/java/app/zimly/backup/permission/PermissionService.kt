@@ -13,10 +13,10 @@ import androidx.core.content.ContextCompat
 
 class PermissionService(private val context: Context, private val packageName: String, permissionsProvider: () -> Array<String> = ::permissionProvider) {
 
-    private val permissions = permissionsProvider()
+    private val requiredPermissions = permissionsProvider()
 
-    fun isPermissionGranted(): Boolean {
-        return getPermissions().all { permission ->
+    fun permissionsGranted(): Boolean {
+        return requiredPermissions().all { permission ->
             ContextCompat.checkSelfPermission(
                 context,
                 permission
@@ -25,25 +25,25 @@ class PermissionService(private val context: Context, private val packageName: S
     }
 
     /**
-     * Returns the needed permissions based on Android SDK version.
-     * Changes were introduced to the media permissions in API 33+
+     * Verifies whether any of the permissions were permanently denied. This means the dialog
+     * won't open any more and the user needs to go through app settings manually.
      */
-    fun getPermissions(): Array<String> {
-        return permissions
+    fun permissionsDenied(activity: Activity): Boolean {
+        return requiredPermissions().any {
+            ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED &&
+                    !ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
+        }
+    }
+
+    fun requiredPermissions(): Array<String> {
+        return requiredPermissions
     }
 
     /**
      * Takes a map of [Manifest.permission]s and ensures all have been granted.
      */
-    fun checkUserGrants(grants: Map<String, Boolean>): Boolean {
+    fun verifyGrants(grants: Map<String, Boolean>): Boolean {
         return grants.all { it.value }
-    }
-
-    fun isAnyPermissionPermanentlyDenied(activity: Activity): Boolean {
-        return getPermissions().any {
-            ContextCompat.checkSelfPermission(activity, it) != PackageManager.PERMISSION_GRANTED &&
-                    !ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
-        }
     }
 
     fun openSettings(context: Context) {
@@ -56,7 +56,8 @@ class PermissionService(private val context: Context, private val packageName: S
 }
 
 /**
- * Provides the required permissions based on the SDK version.
+ * Provides the required permissions based on Android SDK version.
+ * Changes were introduced to the media permissions in API 33+
  */
 fun permissionProvider(): Array<String> {
     return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
