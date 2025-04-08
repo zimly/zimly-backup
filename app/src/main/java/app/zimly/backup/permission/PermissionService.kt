@@ -11,7 +11,9 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class PermissionService(private val context: Context, private val packageName: String) {
+class PermissionService(private val context: Context, private val packageName: String, permissionsProvider: () -> Array<String> = ::permissionProvider) {
+
+    private val permissions = permissionsProvider()
 
     fun isPermissionGranted(): Boolean {
         return getPermissions().all { permission ->
@@ -27,20 +29,6 @@ class PermissionService(private val context: Context, private val packageName: S
      * Changes were introduced to the media permissions in API 33+
      */
     fun getPermissions(): Array<String> {
-        val permissions = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            // Compatibility with older versions
-            arrayOf(
-                Manifest.permission.ACCESS_MEDIA_LOCATION,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            )
-        } else {
-            // New permissions
-            arrayOf(
-                Manifest.permission.READ_MEDIA_IMAGES,
-                Manifest.permission.READ_MEDIA_VIDEO,
-                Manifest.permission.ACCESS_MEDIA_LOCATION
-            )
-        }
         return permissions
     }
 
@@ -65,5 +53,23 @@ class PermissionService(private val context: Context, private val packageName: S
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         context.startActivity(intent)
     }
+}
 
+/**
+ * Provides the required permissions based on the SDK version.
+ */
+fun permissionProvider(): Array<String> {
+    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+        // Compatibility with older versions
+        arrayOf(
+            Manifest.permission.ACCESS_MEDIA_LOCATION,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+    } else {
+        arrayOf(
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.ACCESS_MEDIA_LOCATION
+        )
+    }
 }
