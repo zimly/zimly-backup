@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -20,7 +22,6 @@ import app.zimly.backup.ui.theme.ZimzyncTheme
 
 
 private const val REMOTES_LIST = "remotes-list"
-private const val GRANT_PERMISSION = "grant-permission"
 
 class MainActivity : ComponentActivity() {
 
@@ -49,17 +50,16 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun AppNavigation(grantedPermissions: Boolean) {
 
-        val permissionRequest = remember { mutableStateOf(!grantedPermissions) }
-        val startDest = if (permissionRequest.value) GRANT_PERMISSION else REMOTES_LIST
+        var permissionRequest by remember { mutableStateOf(!grantedPermissions) }
         val navController = rememberNavController()
 
-        NavHost(navController, startDestination = startDest) {
+        NavHost(navController, startDestination = REMOTES_LIST) {
 
-            composable(GRANT_PERMISSION) {
-                PermissionRequestScreen({ permissionRequest.value = false })
-            }
 
             composable(REMOTES_LIST) {
+                if (permissionRequest) {
+                    PermissionRequestScreen({ permissionRequest = false })
+                }
                 ListScreen(
                     syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
                     addRemote = { navController.navigate("remote-editor/create") })
