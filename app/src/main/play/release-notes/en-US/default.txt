@@ -1,6 +1,5 @@
-2.4.0
-* Make permission handling less obstructive #31
-* Improve dependency resolution in view models #30
+2.4.1
+* Allow verifying bucket without source set #32
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
