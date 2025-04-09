@@ -70,7 +70,6 @@ class EditorViewModel(
     val region = RegionField()
     val backupSource = BackupSourceField()
 
-
     init {
         try {
             internal.update {
@@ -119,7 +118,7 @@ class EditorViewModel(
 
     suspend fun save(success: () -> Unit) {
 
-        if (isValid()) {
+        if (formValid()) {
 
             val sourceType = backupSource.state.value.type
             val sourceUri = when (sourceType) {
@@ -156,9 +155,12 @@ class EditorViewModel(
         }
     }
 
-    private fun isValid(): Boolean {
-        return name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid() && backupSource.isValid()
+    private fun formValid(): Boolean {
+        return bucketValid() && backupSource.isValid()
     }
+
+    private fun bucketValid() =
+        name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid()
 
     private fun persistPermissions(folder: Uri) {
         contentResolver.takePersistableUriPermission(folder, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -169,7 +171,7 @@ class EditorViewModel(
     }
 
     suspend fun verify() {
-        if (isValid()) {
+        if (bucketValid()) {
             val url = url.state.value.value
             val key = key.state.value.value
             val secret = secret.state.value.value
@@ -193,7 +195,7 @@ class EditorViewModel(
         } else {
             internal.update {
                 it.copy(
-                    notification = "Form has errors, can't connect.",
+                    notification = "Bucket configuration has errors, can't connect.",
                     notificationError = true
                 )
             }
