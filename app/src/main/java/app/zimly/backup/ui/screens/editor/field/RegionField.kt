@@ -12,4 +12,4 @@ class RegionField(
         it?.let { HttpUtils.REGION_REGEX.matcher(it).find() } ?: true
     },
     defaultValue: String? = null
-) : Field<String?>(errorMessage, validate, defaultValue)
+) : BaseField<String?>(errorMessage, validate, defaultValue)

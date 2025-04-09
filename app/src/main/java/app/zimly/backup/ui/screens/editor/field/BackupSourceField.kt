@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.update
  * Composite field for the backup [SourceType] and value that delegates it's logic to the
  * corresponding fields [mediaField] and [folderField].
  */
-class BackupSourceField {
+class BackupSourceField: Field<SourceType> {
     val mediaField = TextField("Select a collection for backup")
     val folderField = UriField("Select a folder for backup")
 
@@ -21,12 +21,12 @@ class BackupSourceField {
     val state: StateFlow<FieldState> = internal.asStateFlow()
 
     // TODO: Use functions over fields generally?
-    fun error(): Flow<String?> = when (state.value.type) {
+    override fun error(): Flow<String?> = when (state.value.type) {
         SourceType.MEDIA -> mediaField.error()
         SourceType.FOLDER -> folderField.error()
     }
 
-    fun update(value: SourceType) {
+    override fun update(value: SourceType) {
         internal.update { it.copy(type = value) }
     }
 

@@ -7,7 +7,7 @@ class UriField(
     errorMessage: String = "This field is required.",
     validate: (value: Uri) -> Boolean = { it.path?.isNotEmpty() ?: false },
     defaultValue: Uri = Uri.EMPTY
-): Field<Uri>(errorMessage, validate, defaultValue) {
+): BaseField<Uri>(errorMessage, validate, defaultValue) {
 
     // https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
     // What a mess..
