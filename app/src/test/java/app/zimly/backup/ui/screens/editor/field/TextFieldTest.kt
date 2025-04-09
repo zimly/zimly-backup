@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.nullValue
-import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -38,7 +36,9 @@ class TextFieldTest {
             field.error().take(2).toList(errors)
         }
 
+        field.focus(focus)
         field.update(validInput)
+        field.focus(focus)
 
         assertFalse("Field should be invalid first", validations.first())
         assertTrue("Field should be valid after update", validations.last())
@@ -48,8 +48,9 @@ class TextFieldTest {
         job.cancel()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun errorAfterInvalidUpdate() {
+    fun errorAfterInvalidUpdate() = runTest {
         // GIVEN
         val focus = mockk<FocusState>()
         every { focus.hasFocus } returns true andThen false
@@ -58,34 +59,30 @@ class TextFieldTest {
         val validator: (value: String) -> Boolean = { false }
         val field = TextField(errorMessage, validator)
 
-        // WHEN
+        val validations = mutableListOf<Boolean>()
+        val errors = mutableListOf<String?>()
+
+        val jobValid = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.valid().take(2).toList(validations)
+        }
+
+        val jobError = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.error().take(3).toList(errors)
+        }
+
         field.focus(focus)
         field.update("whatever")
         field.focus(focus)
 
-        // THEN
-        assertThat(field.state.value.error, `is`(errorMessage))
-    }
+        assertFalse("Field should be invalid first", validations.first())
+        assertFalse("Field should be invalid after update", validations.last())
 
+        // initial null value not emitted?
+        assertNull("No error initially", errors[0])
+        assertNull("No error after update", errors[1])
+        assertEquals("Error after focus loss", errorMessage, errors[2])
 
-    @Test
-    fun errorAfterFocusLost() {
-        // GIVEN
-        val focus = mockk<FocusState>()
-        every { focus.hasFocus } returns true andThen false
-
-        val errorMessage = "No touchy!"
-        val field = TextField(errorMessage)
-
-        // WHEN
-        field.focus(focus)
-
-        // THEN
-        assertThat(field.state.value.error, nullValue())
-
-        // WHEN
-        field.focus(focus)
-        // THEN
-        assertThat(field.state.value.error, `is`(errorMessage))
+        jobValid.cancel()
+        jobError.cancel()
     }
 }

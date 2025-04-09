@@ -28,12 +28,10 @@ abstract class BaseField<T>(
 
     override fun update(value: T) {
         val valid = validate(value)
-        val error = touched != null && !valid
         internal.update {
             it.copy(
                 value = value,
                 valid = valid,
-                error = if (error) errorMessage else null
             )
         }
     }
