@@ -27,16 +27,19 @@ abstract class BaseField<T>(
     val state: StateFlow<FieldState<T>> = internal.asStateFlow()
 
     override fun update(value: T) {
-        val error = touched != null && !validate(value)
+        val valid = validate(value)
+        val error = touched != null && !valid
         internal.update {
             it.copy(
                 value = value,
+                valid = valid,
                 error = if (error) errorMessage else null
             )
         }
     }
 
     override fun error(): Flow<String?> = state.map { it.error }
+    override fun valid(): Flow<Boolean> = state.map { it.valid }
 
     /**
      * Handle [FocusState] changes on the field. The idea behind this is to not show errors
@@ -70,5 +73,5 @@ abstract class BaseField<T>(
     }
 
 
-    data class FieldState<T>(val value: T, val error: String? = null)
+    data class FieldState<T>(val value: T, val valid: Boolean = false, val error: String? = null)
 }
