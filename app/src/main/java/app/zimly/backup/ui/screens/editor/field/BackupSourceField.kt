@@ -1,7 +1,7 @@
 package app.zimly.backup.ui.screens.editor.field
 
-import androidx.compose.runtime.snapshotFlow
 import app.zimly.backup.data.media.SourceType
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +34,7 @@ class BackupSourceField : Field<SourceType> {
         internal.update { it.copy(type = value) }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun valid(): Flow<Boolean> = state
         .map { it.type }
         .distinctUntilChanged()

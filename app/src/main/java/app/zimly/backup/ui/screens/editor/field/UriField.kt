@@ -9,9 +9,7 @@ class UriField(
     defaultValue: Uri = Uri.EMPTY
 ): BaseField<Uri>(errorMessage, validate, defaultValue) {
 
-    // https://stackoverflow.com/questions/17546101/get-real-path-for-uri-android/61995806#61995806
-    // What a mess..
-    companion object{
+    companion object {
         fun displayName(uri: Uri): String {
             return LocalDocumentsResolver.objectPath(uri)
         }
