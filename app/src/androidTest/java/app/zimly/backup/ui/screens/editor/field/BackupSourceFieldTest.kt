@@ -1,16 +1,16 @@
 package app.zimly.backup.ui.screens.editor.field
 
-import androidx.compose.ui.focus.FocusState
+import android.net.Uri
 import app.zimly.backup.data.media.SourceType
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BackupSourceFieldTest {
@@ -18,8 +18,6 @@ class BackupSourceFieldTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun validInput() = runTest {
-        val focus = mockk<FocusState>()
-        every { focus.hasFocus } returns true andThen false
 
         val validInput = "test-collection"
 
@@ -47,5 +45,39 @@ class BackupSourceFieldTest {
         jobValid.cancel()
         jobError.cancel()
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun invalidInput() = runTest {
+
+        val field = BackupSourceField()
+
+        val validations = mutableListOf<Boolean>()
+        val errors = mutableListOf<String?>()
+
+        val jobValid = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.valid().take(2).toList(validations)
+        }
+
+        val jobError = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.error().take(3).toList(errors)
+        }
+
+        field.update(SourceType.FOLDER)
+        field.folderField.touch()
+        // None selected, folder picker closed
+        field.folderField.update(Uri.EMPTY)
+
+        assertFalse("Field should be invalid first", validations.first())
+        assertFalse("Field should be invalid first", validations[1])
+
+
+        assertNull("No error initially", errors[0])
+        assertNull("No error after update", errors[1])
+
+        jobValid.cancel()
+        jobError.cancel()
+    }
+
 
 }

@@ -25,10 +25,17 @@ class BackupSourceField : Field<SourceType> {
     val state: StateFlow<FieldState> = internal.asStateFlow()
 
     // TODO: Use functions over fields generally?
-    override fun error(): Flow<String?> = when (state.value.type) {
-        SourceType.MEDIA -> mediaField.error()
-        SourceType.FOLDER -> folderField.error()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun error(): Flow<String?> = state
+    .map { it.type }
+    .distinctUntilChanged()
+    .flatMapLatest { type ->
+        when (type) {
+            SourceType.MEDIA -> mediaField.error()
+            SourceType.FOLDER -> folderField.error()
+        }
     }
+
 
     override fun update(value: SourceType) {
         internal.update { it.copy(type = value) }
