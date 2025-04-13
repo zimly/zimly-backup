@@ -5,7 +5,7 @@ import app.zimly.backup.data.db.remote.Remote
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-class BucketForm {
+class BucketForm: Form {
 
     val name = TextField()
     val url = TextField(
@@ -21,15 +21,11 @@ class BucketForm {
         listOf(name, url, key, secret, bucket, region)
     }
 
-    fun valid(): Flow<Boolean> = combine(fields.map { it.valid() }) { values ->
+    override fun valid(): Flow<Boolean> = combine(fields.map { it.valid() }) { values ->
         values.all { it }
     }
 
-    fun errors(): Flow<List<String>> = combine(fields.map { it.error() }) { errors ->
-        errors.filterNotNull()
-    }
-
-    fun validate() {
+    override fun validate() {
         fields.forEach {
             it.validate()
         }

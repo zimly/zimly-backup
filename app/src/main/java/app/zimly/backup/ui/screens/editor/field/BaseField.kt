@@ -9,13 +9,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
- * A field holds the business logic and state representation of an input field. Similar to a
- * ViewModel for views.
- *
- * Validation and error state are triggered by [FocusState] changes and value updates.
- *
- * TODO: Ideally the value (model representation) and the state (UI representation) should be split:
- * Field<V, S> and a transformer function for translating.
+ * A base implementation for [Field]s that exposes [StateFlow] similar to a ViewModel for views.
  */
 abstract class BaseField<T>(
     private val errorMessage: String = "This field is required.",
@@ -28,12 +22,26 @@ abstract class BaseField<T>(
     val state: StateFlow<FieldState<T>> = internal.asStateFlow()
 
     override fun update(value: T) {
+        internalUpdate(value)
+    }
+
+    override fun validate() {
+        internalUpdate(internal.value.value)
+    }
+
+    /**
+     * Takes care of updating the internal state in one go, meaning there's only one emit on the
+     * state [Flow]s. If the value update and validation updates happen separately, there would be
+     * 2 emits, which affects the test assertions and the UI render cycles as well.
+     */
+    private fun internalUpdate(value: T) {
         val valid = validate(value)
+        val showError = !valid && this.touched == true
         internal.update {
             it.copy(
-                value = value,
+                value,
                 valid = valid,
-                error = if (touched == true && !valid) errorMessage else null
+                error = if (showError) errorMessage else null // setting this to null is important!
             )
         }
     }
@@ -44,46 +52,21 @@ abstract class BaseField<T>(
     /**
      * Handle [FocusState] changes on the field. The idea behind this is to not show errors
      * on first touch of the field, but rather when moving on to the next field.
+     *
+     * TODO: Move to a FocusableField interface?
      */
     fun focus(focus: FocusState) {
         if (touched == null && focus.hasFocus) {
-            touched = false
+            this.touched = false
         } else if (touched == false && !focus.hasFocus) {
-            touched = true
+            this.touched = true
         }
-        if (isError()) {
-            internal.update {
-                it.copy(
-                    error = errorMessage
-                )
-            }
-        }
+        validate()
     }
 
-    fun touch() {
+    override fun touch() {
         this.touched = true
     }
-
-    // TODO outdated state used in #isValid !! only works when no value update was run
-    private fun isError(): Boolean {
-        return touched == true && !isValid()
-    }
-
-    // TODO outdated state!
-    fun isValid(): Boolean {
-        return validate(internal.value.value)
-    }
-
-    override fun validate() {
-        touch()
-        val valid = validate(internal.value.value)
-        internal.update {
-            it.copy(
-                error = if (!valid) errorMessage else null // setting this to null is important!
-            )
-        }
-    }
-
 
     data class FieldState<T>(val value: T, val valid: Boolean = false, val error: String? = null)
 }

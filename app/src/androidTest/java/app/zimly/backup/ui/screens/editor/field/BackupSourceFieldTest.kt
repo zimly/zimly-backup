@@ -70,7 +70,7 @@ class BackupSourceFieldTest {
         field.folderField.update(Uri.EMPTY)
 
         assertFalse("Field should be invalid first", validations.first())
-        assertFalse("Field should be invalid first", validations[1])
+        assertFalse("Field should be invalid after update", validations[1])
 
 
         assertNull("No error initially", errors[0])
@@ -81,5 +81,32 @@ class BackupSourceFieldTest {
         jobError.cancel()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun validateEnforcesErrors() = runTest {
 
+        val field = BackupSourceField()
+
+        val validations = mutableListOf<Boolean>()
+        val errors = mutableListOf<String?>()
+
+        val jobValid = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.valid().take(2).toList(validations)
+        }
+
+        val jobError = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.error().take(2).toList(errors)
+        }
+
+        field.validate()
+
+        assertFalse("Field should be invalid first", validations.first())
+        assertFalse("Field should be invalid after validation", validations[1])
+
+        assertNull("No error initially", errors[0])
+        assertEquals("Select a collection for backup", errors[1])
+
+        jobValid.cancel()
+        jobError.cancel()
+    }
 }
