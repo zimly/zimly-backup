@@ -147,7 +147,7 @@ class EditorViewModel(
         } else {
             internal.update {
                 it.copy(
-                    notification = "Form has errors, won't save.",
+                    notification = "Form has errors. Please fill all required fields before saving.",
                     notificationError = true
                 )
             }
