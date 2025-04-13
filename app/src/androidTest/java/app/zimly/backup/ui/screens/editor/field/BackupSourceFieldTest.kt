@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -73,7 +74,8 @@ class BackupSourceFieldTest {
 
 
         assertNull("No error initially", errors[0])
-        assertNull("No error after update", errors[1])
+        assertNull("No error after.. ?", errors[1])
+        assertEquals("Select a folder for backup", errors[2])
 
         jobValid.cancel()
         jobError.cancel()

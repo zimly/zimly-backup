@@ -32,6 +32,7 @@ abstract class BaseField<T>(
             it.copy(
                 value = value,
                 valid = valid,
+                error = if (isError()) errorMessage else null
             )
         }
     }
