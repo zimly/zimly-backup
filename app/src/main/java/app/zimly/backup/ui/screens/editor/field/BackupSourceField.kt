@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -28,7 +27,6 @@ class BackupSourceField : Field<SourceType> {
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun error(): Flow<String?> = state
         .map { it.type }
-        .distinctUntilChanged()
         .flatMapLatest { type ->
             when (type) {
                 SourceType.MEDIA -> mediaField.error()
@@ -44,7 +42,6 @@ class BackupSourceField : Field<SourceType> {
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun valid(): Flow<Boolean> = state
         .map { it.type }
-        .distinctUntilChanged()
         .flatMapLatest { type ->
             when (type) {
                 SourceType.MEDIA -> mediaField.valid()
@@ -55,13 +52,6 @@ class BackupSourceField : Field<SourceType> {
     override fun validate() {
         mediaField.validate()
         folderField.validate()
-    }
-
-    fun isValid(): Boolean {
-        return when (internal.value.type) {
-            SourceType.MEDIA -> mediaField.isValid()
-            SourceType.FOLDER -> folderField.isValid()
-        }
     }
 
     data class FieldState(val type: SourceType, val error: String? = null)

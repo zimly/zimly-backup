@@ -33,7 +33,7 @@ abstract class BaseField<T>(
             it.copy(
                 value = value,
                 valid = valid,
-                error = if (isError()) errorMessage else null
+                error = if (touched == true && !valid) errorMessage else null
             )
         }
     }
@@ -64,10 +64,12 @@ abstract class BaseField<T>(
         this.touched = true
     }
 
+    // TODO outdated state used in #isValid !! only works when no value update was run
     private fun isError(): Boolean {
         return touched == true && !isValid()
     }
 
+    // TODO outdated state!
     fun isValid(): Boolean {
         return validate(internal.value.value)
     }
@@ -75,12 +77,10 @@ abstract class BaseField<T>(
     override fun validate() {
         touch()
         val valid = validate(internal.value.value)
-        if (!valid) {
-            internal.update {
-                it.copy(
-                    error = errorMessage
-                )
-            }
+        internal.update {
+            it.copy(
+                error = if (!valid) errorMessage else null // setting this to null is important!
+            )
         }
     }
 

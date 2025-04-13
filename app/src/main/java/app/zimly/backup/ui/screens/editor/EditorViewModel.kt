@@ -64,10 +64,10 @@ class EditorViewModel(
     val bucketForm = BucketForm()
     val backupSource = BackupSourceField()
 
-    private val isFormValid =
+    private val formValid =
         combine(bucketForm.valid(), backupSource.valid()) { a, b -> a && b }.stateIn(
             viewModelScope,
-            SharingStarted.Lazily,
+            SharingStarted.Eagerly, // IMPORTANT
             false
         )
 
@@ -115,7 +115,7 @@ class EditorViewModel(
 
         bucketForm.validate()
         backupSource.validate()
-        if (isFormValid.value) {
+        if (formValid.value) {
 
             val sourceType = backupSource.state.value.type
             val sourceUri = when (sourceType) {
