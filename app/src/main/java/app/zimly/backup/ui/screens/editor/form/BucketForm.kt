@@ -8,7 +8,7 @@ import app.zimly.backup.ui.screens.editor.form.field.TextField
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-class BucketForm: Form {
+class BucketForm : Form {
 
     val name = TextField()
     val url = TextField(
@@ -28,8 +28,13 @@ class BucketForm: Form {
         values.all { it }
     }
 
+    fun errors(): Flow<List<String>> = combine(fields.map { it.error() }) { errors ->
+        errors.filterNotNull()
+    }
+
     override fun validate() {
         fields.forEach {
+            it.touch()
             it.validate()
         }
     }
