@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
 class BucketForm {
+
     val name = TextField()
     val url = TextField(
         errorMessage = "Not a valid URL.",

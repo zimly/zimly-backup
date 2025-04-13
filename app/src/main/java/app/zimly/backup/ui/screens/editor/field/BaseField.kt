@@ -20,10 +20,11 @@ import kotlinx.coroutines.flow.update
 abstract class BaseField<T>(
     private val errorMessage: String = "This field is required.",
     private val validate: (value: T) -> Boolean,
-    defaultValue: T
+    defaultValue: T,
+    initialValidation: Boolean = false
 ): Field<T> {
     private var touched: Boolean? = null
-    private var internal: MutableStateFlow<FieldState<T>> = MutableStateFlow(FieldState(defaultValue))
+    private var internal: MutableStateFlow<FieldState<T>> = MutableStateFlow(FieldState(defaultValue, initialValidation))
     val state: StateFlow<FieldState<T>> = internal.asStateFlow()
 
     override fun update(value: T) {

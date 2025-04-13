@@ -3,12 +3,41 @@ package app.zimly.backup.ui.screens.editor.field
 import androidx.compose.ui.focus.FocusState
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RegionFieldTest {
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun validUntouched() = runTest {
+
+        val field = RegionField()
+
+        val validations = mutableListOf<Boolean>()
+        val errors = mutableListOf<String?>()
+
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.valid().take(3).toList(validations)
+            field.error().take(3).toList(errors)
+        }
+
+        assertTrue("Field should be valid first", validations.first())
+        assertTrue("Only one validation emitted", validations.size == 1)
+        assertTrue("No errors emitted", errors.isEmpty())
+
+        job.cancel()
+    }
+
 
     @Test
     fun validRegion() {

@@ -11,5 +11,7 @@ class RegionField(
     validate: (value: String?) -> Boolean = {
         it?.let { HttpUtils.REGION_REGEX.matcher(it).find() } ?: true
     },
-    defaultValue: String? = null
-) : BaseField<String?>(errorMessage, validate, defaultValue)
+    defaultValue: String? = null,
+    initialValidation: Boolean = true
+
+) : BaseField<String?>(errorMessage, validate, defaultValue, initialValidation)

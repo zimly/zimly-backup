@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.zimly.backup.ui.screens.editor.field.BucketForm
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -43,6 +44,7 @@ fun BucketConfiguration(
     bucketForm: BucketForm,
     verify: () -> Unit
 ) {
+    val valid by bucketForm.valid().collectAsStateWithLifecycle(false)
     var passwordVisible by remember { mutableStateOf(false) }
 
     Card(
@@ -153,7 +155,7 @@ fun BucketConfiguration(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(
-                    enabled = true, // TODO conditionally
+                    enabled = valid,
                     onClick = verify,
                     // Padding the icon size conditionally
                     contentPadding = PaddingValues(horizontal = 8.dp),
