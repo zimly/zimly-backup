@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import android.webkit.URLUtil
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -19,8 +18,7 @@ import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
-import app.zimly.backup.ui.screens.editor.field.RegionField
-import app.zimly.backup.ui.screens.editor.field.TextField
+import app.zimly.backup.ui.screens.editor.field.BucketForm
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,14 +58,8 @@ class EditorViewModel(
     // Expose Ui State
     val state: StateFlow<UiState> = internal.asStateFlow()
 
-    val name = TextField()
-    val url = TextField(
-        errorMessage = "Not a valid URL.",
-        validate = { URLUtil.isValidUrl(it) })
-    val key = TextField()
-    val secret = TextField()
-    val bucket = TextField()
-    val region = RegionField()
+    val bucketForm = BucketForm()
+
     val backupSource = BackupSourceField()
 
     init {
@@ -100,13 +92,7 @@ class EditorViewModel(
                         title = remote.name,
                     )
                 }
-                name.update(remote.name)
-                url.update(remote.url)
-                key.update(remote.key)
-                secret.update(remote.secret)
-                bucket.update(remote.bucket)
-                region.update(remote.region)
-
+                bucketForm.populate(remote)
                 backupSource.update(remote.sourceType)
                 when (remote.sourceType) {
                     SourceType.MEDIA -> backupSource.mediaField.update(remote.sourceUri)
@@ -128,14 +114,16 @@ class EditorViewModel(
             if (sourceType == SourceType.FOLDER) {
                 persistPermissions(backupSource.folderField.state.value.value)
             }
+
+            val bucketConfiguration = bucketForm.values()
             val remote = Remote(
                 internal.value.uid,
-                name.state.value.value,
-                url.state.value.value,
-                key.state.value.value,
-                secret.state.value.value,
-                bucket.state.value.value,
-                region.state.value.value,
+                bucketConfiguration.name,
+                bucketConfiguration.url,
+                bucketConfiguration.key,
+                bucketConfiguration.secret,
+                bucketConfiguration.bucket,
+                bucketConfiguration.region,
                 sourceType,
                 sourceUri,
             )
@@ -155,12 +143,14 @@ class EditorViewModel(
         }
     }
 
+    // TODO Remove, use state
     private fun formValid(): Boolean {
         return bucketValid() && backupSource.isValid()
     }
 
+    // TODO Remove, use state
     private fun bucketValid() =
-        name.isValid() && url.isValid() && key.isValid() && secret.isValid() && bucket.isValid()
+        bucketForm.name.isValid() && bucketForm.url.isValid() && bucketForm.key.isValid() && bucketForm.secret.isValid() && bucketForm.bucket.isValid()
 
     private fun persistPermissions(folder: Uri) {
         contentResolver.takePersistableUriPermission(folder, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -172,42 +162,45 @@ class EditorViewModel(
 
     suspend fun verify() {
         if (bucketValid()) {
-            val url = url.state.value.value
-            val key = key.state.value.value
-            val secret = secret.state.value.value
-            val bucket = bucket.state.value.value
-            val region = region.state.value.value
-            val repo = MinioRepository(url, key, secret, bucket, region)
+        val bucketConfiguration = bucketForm.values()
+        val repo = MinioRepository(
+            bucketConfiguration.url,
+            bucketConfiguration.key,
+            bucketConfiguration.secret,
+            bucketConfiguration.bucket,
+            bucketConfiguration.region
+        )
 
-            try {
-                val bucketExists = repo.bucketExists()
-                val message =
-                    if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
-                internal.update { it.copy(notification = message) }
-            } catch (e: Exception) {
-                internal.update {
-                    it.copy(
-                        notification = "Connection failed: $e",
-                        notificationError = true
-                    )
-                }
-            }
-        } else {
+        try {
+            val bucketExists = repo.bucketExists()
+            val message =
+                if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
+            internal.update { it.copy(notification = message) }
+        } catch (e: Exception) {
             internal.update {
                 it.copy(
-                    notification = "Bucket configuration has errors, can't connect.",
+                    notification = "Connection failed: $e",
                     notificationError = true
                 )
             }
         }
+    } else
+    {
+        internal.update {
+            it.copy(
+                notification = "Bucket configuration has errors, can't connect.",
+                notificationError = true
+            )
+        }
     }
+}
 
 
-    data class UiState(
-        var uid: Int? = null,
-        var title: String = "",
-        var notificationError: Boolean = false,
-        var notification: String? = null,
-    )
+data class UiState(
+    var uid: Int? = null,
+    var title: String = "",
+    var notificationError: Boolean = false,
+    var notification: String? = null,
+)
 
 }

@@ -1,6 +1,5 @@
 package app.zimly.backup.ui.screens.editor
 
-import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,19 +34,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import app.zimly.backup.ui.screens.editor.field.RegionField
-import app.zimly.backup.ui.screens.editor.field.TextField
+import app.zimly.backup.ui.screens.editor.field.BucketForm
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
 fun BucketConfiguration(
-    name: TextField,
-    url: TextField,
-    key: TextField,
-    secret: TextField,
-    bucket: TextField,
-    region: RegionField,
+    bucketForm: BucketForm,
     verify: () -> Unit
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -67,65 +60,66 @@ fun BucketConfiguration(
         }
         Column(modifier = Modifier.padding(16.dp)) {
             Column {
-                val nameState = name.state.collectAsState()
-                val urlState = url.state.collectAsState()
-                val keyState = key.state.collectAsState()
-                val secretState = secret.state.collectAsState()
-                val bucketState = bucket.state.collectAsState()
-                val regionState = region.state.collectAsState()
+                // Consolidate into one StateFlow?
+                val nameState = bucketForm.name.state.collectAsState()
+                val urlState = bucketForm.url.state.collectAsState()
+                val keyState = bucketForm.key.state.collectAsState()
+                val secretState = bucketForm.secret.state.collectAsState()
+                val bucketState = bucketForm.bucket.state.collectAsState()
+                val regionState = bucketForm.region.state.collectAsState()
 
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { name.focus(it) }
+                        .onFocusChanged { bucketForm.name.focus(it) }
                         .fillMaxWidth(),
                     label = { Text("Name") },
                     value = nameState.value.value,
-                    onValueChange = { name.update(it) },
+                    onValueChange = { bucketForm.name.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     isError = nameState.value.error != null,
                     supportingText = { nameState.value.error?.let { Text(it) } }
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { url.focus(it) }
+                        .onFocusChanged { bucketForm.url.focus(it) }
                         .fillMaxWidth(),
                     label = { Text("URL") },
                     value = urlState.value.value,
-                    onValueChange = { url.update(it) },
+                    onValueChange = { bucketForm.url.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
                     isError = urlState.value.error != null,
                     supportingText = { urlState.value.error?.let { Text(it) } }
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { region.focus(it) }
+                        .onFocusChanged { bucketForm.region.focus(it) }
                         .fillMaxWidth(),
                     label = { Text("Region (optional)") },
                     // Handle null case, should this go into field instead? value vs state representation.
                     value = regionState.value.value ?: "",
-                    onValueChange = { if (it.isEmpty()) region.update(null) else region.update(it) },
+                    onValueChange = { if (it.isEmpty()) bucketForm.region.update(null) else bucketForm.region.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     isError = regionState.value.error != null,
                     supportingText = { regionState.value.error?.let { Text(it) } }
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { key.focus(it) }
+                        .onFocusChanged { bucketForm.key.focus(it) }
                         .fillMaxWidth(),
                     label = { Text("Key") },
                     value = keyState.value.value,
-                    onValueChange = { key.update(it) },
+                    onValueChange = { bucketForm.key.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     isError = keyState.value.error != null,
                     supportingText = { keyState.value.error?.let { Text(it) } }
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { secret.focus(it) }
+                        .onFocusChanged { bucketForm.secret.focus(it) }
                         .fillMaxWidth(),
                     label = { Text("Secret") },
                     value = secretState.value.value,
-                    onValueChange = { secret.update(it) },
+                    onValueChange = { bucketForm.secret.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -141,11 +135,11 @@ fun BucketConfiguration(
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { bucket.focus(it) }
+                        .onFocusChanged { bucketForm.bucket.focus(it) }
                         .fillMaxWidth(),
                     label = { Text("Bucket") },
                     value = bucketState.value.value,
-                    onValueChange = { bucket.update(it) },
+                    onValueChange = { bucketForm.bucket.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     isError = bucketState.value.error != null,
                     supportingText = { bucketState.value.error?.let { Text(it) } }
@@ -176,15 +170,8 @@ fun BucketConfiguration(
 @Preview
 @Composable
 fun BucketConfigurationPreview() {
-    val name = TextField()
-    val url = TextField(
-        errorMessage = "Not a valid URL.",
-        validate = { URLUtil.isValidUrl(it) })
-    val key = TextField()
-    val secret = TextField()
-    val bucket = TextField()
-    val region = RegionField()
+    val bucketForm = BucketForm()
     ZimzyncTheme {
-        BucketConfiguration(name, url, key, secret, bucket, region) {}
+        BucketConfiguration(bucketForm) {}
     }
 }

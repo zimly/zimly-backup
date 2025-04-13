@@ -1,7 +1,6 @@
 package app.zimly.backup.ui.screens.editor
 
 import android.app.Application
-import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,8 +35,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
-import app.zimly.backup.ui.screens.editor.field.RegionField
-import app.zimly.backup.ui.screens.editor.field.TextField
+import app.zimly.backup.ui.screens.editor.field.BucketForm
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -62,12 +60,7 @@ fun EditorScreen(
     EditorCompose(
         state,
         snackbarState,
-        name = viewModel.name,
-        url = viewModel.url,
-        key = viewModel.key,
-        secret = viewModel.secret,
-        bucket = viewModel.bucket,
-        region = viewModel.region,
+        viewModel.bucketForm,
         backupSource = viewModel.backupSource,
         clearSnackbar = viewModel::clearSnackbar,
         save = {
@@ -85,12 +78,7 @@ fun EditorScreen(
 private fun EditorCompose(
     state: State<EditorViewModel.UiState>,
     snackbarState: SnackbarHostState,
-    name: TextField,
-    url: TextField,
-    key: TextField,
-    secret: TextField,
-    bucket: TextField,
-    region: RegionField,
+    bucketForm: BucketForm,
     backupSource: BackupSourceField,
     clearSnackbar: () -> Unit,
     save: () -> Unit,
@@ -154,7 +142,7 @@ private fun EditorCompose(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
         ) {
-            BucketConfiguration(name, url, key, secret, bucket, region, verify)
+            BucketConfiguration(bucketForm, verify)
             BackupSourceConfiguration(backupSource)
         }
     }
@@ -169,34 +157,13 @@ fun EditPreview() {
 
         val snackbarState = remember { SnackbarHostState() }
 
-        val name = TextField(
-            errorMessage = "This field is required.",
-            validate = { it.isNotEmpty() })
-        val url = TextField(
-            errorMessage = "Not a valid URL.",
-            validate = { URLUtil.isValidUrl(it) })
-        val key = TextField(
-            errorMessage = "This field is required.",
-            validate = { it.isNotEmpty() })
-        val secret = TextField(
-            errorMessage = "This field is required.",
-            validate = { it.isNotEmpty() })
-        val bucket = TextField(
-            errorMessage = "This field is required.",
-            validate = { it.isNotEmpty() })
-        val region = RegionField()
-
+        val bucketForm = BucketForm()
         val backupSource = BackupSourceField()
 
         EditorCompose(
             internal.collectAsState(),
             snackbarState,
-            name,
-            url,
-            key,
-            secret,
-            bucket,
-            region,
+            bucketForm,
             backupSource,
             clearSnackbar = {},
             save = {},
