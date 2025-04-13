@@ -9,9 +9,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.nullValue
-import org.hamcrest.MatcherAssert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -39,13 +38,22 @@ class RegionFieldTest {
     }
 
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun validRegion() {
+    fun validRegion() = runTest {
         // GIVEN
         val focus = mockk<FocusState>()
         every { focus.hasFocus } returns true andThen false
 
         val field = RegionField()
+
+        val validations = mutableListOf<Boolean>()
+        val errors = mutableListOf<String?>()
+
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.valid().take(3).toList(validations)
+            field.error().take(3).toList(errors)
+        }
 
         // WHEN
         field.focus(focus)
@@ -53,17 +61,30 @@ class RegionFieldTest {
         field.focus(focus)
 
         // THEN
-        assert(field.isValid()) { "Valid region, should pass!" }
-        MatcherAssert.assertThat(field.state.value.error, `is`(nullValue()))
+        validations.forEach { assertTrue("Fields should be valid", it) }
+        assertEquals(2, validations.size)
+        assertTrue("No errors emitted", errors.isEmpty())
+
+        job.cancel()
+
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun invalidRegion() {
+    fun invalidRegion() = runTest {
         // GIVEN
         val focus = mockk<FocusState>()
         every { focus.hasFocus } returns true andThen false
 
         val field = RegionField()
+
+        val validations = mutableListOf<Boolean>()
+        val errors = mutableListOf<String?>()
+
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.valid().take(3).toList(validations)
+            field.error().take(3).toList(errors)
+        }
 
         // WHEN
         field.focus(focus)
@@ -71,25 +92,39 @@ class RegionFieldTest {
         field.focus(focus)
 
         // THEN
-        assert(!field.isValid()) { "Not a valid region, should fail!" }
-        MatcherAssert.assertThat(field.state.value.error, `is`("Not a valid region."))
+        assertTrue("Field should be valid first", validations.first())
+        assertFalse("Field should be invalid after update", validations[1])
+        assertFalse("Field should be invalid after losing focus", validations[2])
+        assertTrue("Only 3 emits", validations.size == 3)
+
+        assertEquals("Not a valid region.", errors.first())
+        job.cancel()
+
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun nullRegionValid() {
+    fun nullRegionValid() = runTest {
         // GIVEN
         val focus = mockk<FocusState>()
         every { focus.hasFocus } returns true andThen false
 
         val field = RegionField()
 
+        val validations = mutableListOf<Boolean>()
+        val errors = mutableListOf<String?>()
+
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            field.valid().take(3).toList(validations)
+            field.error().take(3).toList(errors)
+        }
+
         // WHEN
         field.focus(focus)
+        field.update(null)
         field.focus(focus)
 
-        // THEN
-        assert(field.isValid()) { "null is a valid region, should pass" }
-        MatcherAssert.assertThat(field.state.value.value, `is`(nullValue()))
-        MatcherAssert.assertThat(field.state.value.error, `is`(nullValue()))
+        job.cancel()
     }
+
 }
