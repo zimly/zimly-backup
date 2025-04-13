@@ -27,14 +27,14 @@ class BackupSourceField : Field<SourceType> {
     // TODO: Use functions over fields generally?
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun error(): Flow<String?> = state
-    .map { it.type }
-    .distinctUntilChanged()
-    .flatMapLatest { type ->
-        when (type) {
-            SourceType.MEDIA -> mediaField.error()
-            SourceType.FOLDER -> folderField.error()
+        .map { it.type }
+        .distinctUntilChanged()
+        .flatMapLatest { type ->
+            when (type) {
+                SourceType.MEDIA -> mediaField.error()
+                SourceType.FOLDER -> folderField.error()
+            }
         }
-    }
 
 
     override fun update(value: SourceType) {
@@ -51,6 +51,11 @@ class BackupSourceField : Field<SourceType> {
                 SourceType.FOLDER -> folderField.valid()
             }
         }
+
+    override fun validate() {
+        mediaField.validate()
+        folderField.validate()
+    }
 
     fun isValid(): Boolean {
         return when (internal.value.type) {

@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.compose.runtime.collectAsState
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -21,8 +20,11 @@ import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.screens.editor.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.field.BucketForm
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -60,8 +62,14 @@ class EditorViewModel(
     val state: StateFlow<UiState> = internal.asStateFlow()
 
     val bucketForm = BucketForm()
-
     val backupSource = BackupSourceField()
+
+    private val isFormValid =
+        combine(bucketForm.valid(), backupSource.valid()) { a, b -> a && b }.stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            false
+        )
 
     init {
         try {
@@ -105,7 +113,9 @@ class EditorViewModel(
 
     suspend fun save(success: () -> Unit) {
 
-        if (formValid()) {
+        bucketForm.validate()
+        backupSource.validate()
+        if (isFormValid.value) {
 
             val sourceType = backupSource.state.value.type
             val sourceUri = when (sourceType) {
@@ -144,15 +154,6 @@ class EditorViewModel(
         }
     }
 
-    // TODO Remove, use state
-    private fun formValid(): Boolean {
-        return bucketValid() && backupSource.isValid()
-    }
-
-    // TODO Remove, use state
-    private fun bucketValid() =
-        bucketForm.name.isValid() && bucketForm.url.isValid() && bucketForm.key.isValid() && bucketForm.secret.isValid() && bucketForm.bucket.isValid()
-
     private fun persistPermissions(folder: Uri) {
         contentResolver.takePersistableUriPermission(folder, Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
@@ -162,7 +163,6 @@ class EditorViewModel(
     }
 
     suspend fun verify() {
-        if (bucketValid()) {
         val bucketConfiguration = bucketForm.values()
         val repo = MinioRepository(
             bucketConfiguration.url,
@@ -185,23 +185,12 @@ class EditorViewModel(
                 )
             }
         }
-    } else
-    {
-        internal.update {
-            it.copy(
-                notification = "Bucket configuration has errors, can't connect.",
-                notificationError = true
-            )
-        }
     }
-}
 
-
-data class UiState(
-    var uid: Int? = null,
-    var title: String = "",
-    var notificationError: Boolean = false,
-    var notification: String? = null,
-)
-
+    data class UiState(
+        var uid: Int? = null,
+        var title: String = "",
+        var notificationError: Boolean = false,
+        var notification: String? = null,
+    )
 }

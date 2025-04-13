@@ -25,6 +25,16 @@ class BucketForm {
         values.all { it }
     }
 
+    fun errors(): Flow<List<String>> = combine(fields.map { it.error() }) { errors ->
+        errors.filterNotNull()
+    }
+
+    fun validate() {
+        fields.forEach {
+            it.validate()
+        }
+    }
+
     // TODO Use BucketConfiguration?
     fun populate(remote: Remote) {
         name.update(remote.name)

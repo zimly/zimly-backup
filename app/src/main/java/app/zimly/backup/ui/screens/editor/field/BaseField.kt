@@ -72,6 +72,18 @@ abstract class BaseField<T>(
         return validate(internal.value.value)
     }
 
+    override fun validate() {
+        touch()
+        val valid = validate(internal.value.value)
+        if (!valid) {
+            internal.update {
+                it.copy(
+                    error = errorMessage
+                )
+            }
+        }
+    }
+
 
     data class FieldState<T>(val value: T, val valid: Boolean = false, val error: String? = null)
 }
