@@ -30,8 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.SourceType
-import app.zimly.backup.ui.screens.editor.field.BackupSourceField
-import app.zimly.backup.ui.screens.editor.field.UriField
+import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable

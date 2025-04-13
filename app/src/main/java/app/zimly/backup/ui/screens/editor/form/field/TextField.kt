@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.editor.field
+package app.zimly.backup.ui.screens.editor.form.field
 
 class TextField(
     errorMessage: String = "This field is required.",

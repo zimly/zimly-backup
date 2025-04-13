@@ -17,8 +17,8 @@ import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
-import app.zimly.backup.ui.screens.editor.field.BackupSourceField
-import app.zimly.backup.ui.screens.editor.field.BucketForm
+import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.form.BucketForm
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

@@ -34,8 +34,8 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import app.zimly.backup.ui.screens.editor.field.BackupSourceField
-import app.zimly.backup.ui.screens.editor.field.BucketForm
+import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch

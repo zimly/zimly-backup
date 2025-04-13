@@ -34,7 +34,7 @@ import app.zimly.backup.data.media.LocalMediaRepository
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.components.PermissionBox
 import app.zimly.backup.ui.components.PermissionRationaleDialog
-import app.zimly.backup.ui.screens.editor.field.TextField
+import app.zimly.backup.ui.screens.editor.form.field.TextField
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

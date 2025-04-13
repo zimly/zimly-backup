@@ -28,7 +28,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalDocumentsResolver
-import app.zimly.backup.ui.screens.editor.field.UriField
+import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.screens.sync.DocumentsFolderViewModel.Companion.factory
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
