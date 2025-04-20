@@ -69,7 +69,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun StartScreen(
-    // https://programmer.ink/think/a-new-way-to-create-a-viewmodel-creationextras.html
     viewModel: StartViewModel = viewModel(factory = StartViewModel.Factory),
     syncRemote: (Int) -> Unit,
     addRemote: () -> Unit,
