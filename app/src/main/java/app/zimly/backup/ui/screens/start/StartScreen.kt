@@ -182,7 +182,7 @@ private fun StartLayout(
         })
     { innerPadding ->
         if (remotes.isEmpty()) {
-            GetStarter(innerPadding)
+            GetStarted(innerPadding)
         }
         RemoteList(innerPadding, remotes, numSelected, select, syncRemote)
     }
@@ -251,7 +251,7 @@ private fun RemoteList(
 }
 
 @Composable
-private fun GetStarter(innerPadding: PaddingValues) {
+private fun GetStarted(innerPadding: PaddingValues) {
     val uriHandler = LocalUriHandler.current
     Column(
         modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
