@@ -15,7 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
-import app.zimly.backup.ui.screens.list.ListScreen
+import app.zimly.backup.ui.screens.list.StartScreen
 import app.zimly.backup.ui.screens.permission.PermissionRequestScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
                 if (permissionRequest) {
                     PermissionRequestScreen({ permissionRequest = false })
                 }
-                ListScreen(
+                StartScreen(
                     syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
                     addRemote = { navController.navigate("remote-editor/create") })
             }

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 
-class ListViewModel(private val dataStore: RemoteDao) : ViewModel() {
+class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -21,7 +21,7 @@ class ListViewModel(private val dataStore: RemoteDao) : ViewModel() {
                 val application = checkNotNull(this[APPLICATION_KEY])
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
-                ListViewModel(remoteDao)
+                StartViewModel(remoteDao)
             }
         }
     }

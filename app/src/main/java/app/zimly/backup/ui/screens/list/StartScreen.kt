@@ -68,9 +68,9 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun ListScreen(
+fun StartScreen(
     // https://programmer.ink/think/a-new-way-to-create-a-viewmodel-creationextras.html
-    viewModel: ListViewModel = viewModel(factory = ListViewModel.Factory),
+    viewModel: StartViewModel = viewModel(factory = StartViewModel.Factory),
     syncRemote: (Int) -> Unit,
     addRemote: () -> Unit,
 ) {
@@ -79,7 +79,7 @@ fun ListScreen(
 
     val snackbarState = remember { SnackbarHostState() }
 
-    ListCompose(
+    StartLayout(
         remotes = remotes,
         snackbarState,
         notification,
@@ -96,7 +96,7 @@ fun ListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ListCompose(
+private fun StartLayout(
     remotes: List<RemoteView>,
     snackbarState: SnackbarHostState,
     notification: String?,
@@ -299,7 +299,7 @@ fun DefaultPreview() {
         val snackbarState = remember { SnackbarHostState() }
         val notification by remember { mutableStateOf<String?>(null) }
 
-        ListCompose(
+        StartLayout(
             remotes = remotes,
             snackbarState,
             notification,
