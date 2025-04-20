@@ -15,7 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
-import app.zimly.backup.ui.screens.list.StartScreen
+import app.zimly.backup.ui.screens.start.StartScreen
 import app.zimly.backup.ui.screens.permission.PermissionRequestScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme

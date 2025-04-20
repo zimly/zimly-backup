@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.list
+package app.zimly.backup.ui.screens.start
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image

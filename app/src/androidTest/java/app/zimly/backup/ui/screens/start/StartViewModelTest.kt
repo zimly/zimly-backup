@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.list
+package app.zimly.backup.ui.screens.start
 
 import android.content.Context
 import androidx.room.Room

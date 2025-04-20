@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.list
+package app.zimly.backup.ui.screens.start
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
