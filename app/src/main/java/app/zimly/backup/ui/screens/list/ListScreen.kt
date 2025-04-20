@@ -8,6 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -93,7 +94,7 @@ fun ListScreen(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ListCompose(
     remotes: List<RemoteView>,
@@ -181,86 +182,103 @@ private fun ListCompose(
         })
     { innerPadding ->
         if (remotes.isEmpty()) {
-            val uriHandler = LocalUriHandler.current
-            Column(
-                modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
-                ) then Modifier
-                    .fillMaxSize()
-                    .offset(y = (-24).dp), // Nudges content upward
-
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.zimly_logo),
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp)
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                Text(
-                    text = "Tap the + button below to create your first backup configuration.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TextButton({ uriHandler.openUri("https://www.zimly.app/docs/") }) {
-                    Text("Get Started Guide")
-                }
-            }
+            GetStarter(innerPadding)
         }
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
-                top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()
-            ) then Modifier.fillMaxWidth()
-        ) {
-            items(remotes) { remote ->
-                Box(
-                    modifier = Modifier
-                        // Note: Order matters!
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(color = containerBackground())
-                        .then(
-                            if (remote.selected) Modifier.border(
-                                width = Dp(2f),
-                                color = MaterialTheme.colorScheme.secondary,
-                                shape = RoundedCornerShape(12.dp)
-                            ) else Modifier
-                        )
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = {
-                                if (numSelected > 0) select(remote.uid) else syncRemote(
-                                    remote.uid
-                                )
-                            },
-                            onLongClick = { select(remote.uid) })
-                        .padding(16.dp)
+        RemoteList(innerPadding, remotes, numSelected, select, syncRemote)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun RemoteList(
+    innerPadding: PaddingValues,
+    remotes: List<RemoteView>,
+    numSelected: Int,
+    select: (Int) -> Unit,
+    syncRemote: (Int) -> Unit
+) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
+            top = innerPadding.calculateTopPadding(),
+            bottom = innerPadding.calculateBottomPadding()
+        ) then Modifier.fillMaxWidth()
+    ) {
+        items(remotes) { remote ->
+            Box(
+                modifier = Modifier
+                    // Note: Order matters!
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(color = containerBackground())
+                    .then(
+                        if (remote.selected) Modifier.border(
+                            width = Dp(2f),
+                            color = MaterialTheme.colorScheme.secondary,
+                            shape = RoundedCornerShape(12.dp)
+                        ) else Modifier
+                    )
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = {
+                            if (numSelected > 0) select(remote.uid) else syncRemote(
+                                remote.uid
+                            )
+                        },
+                        onLongClick = { select(remote.uid) })
+                    .padding(16.dp)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
-                            Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Column(modifier = Modifier.wrapContentWidth()) {
-                            Box(contentAlignment = Alignment.TopEnd) {
-                                val icon = when (remote.sourceType) {
-                                    SourceType.MEDIA -> Icons.Outlined.Image
-                                    SourceType.FOLDER -> Icons.Outlined.Folder
-                                }
-                                Icon(icon, "Remote Configuration")
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
+                        Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Column(modifier = Modifier.wrapContentWidth()) {
+                        Box(contentAlignment = Alignment.TopEnd) {
+                            val icon = when (remote.sourceType) {
+                                SourceType.MEDIA -> Icons.Outlined.Image
+                                SourceType.FOLDER -> Icons.Outlined.Folder
                             }
+                            Icon(icon, "Remote Configuration")
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun GetStarter(innerPadding: PaddingValues) {
+    val uriHandler = LocalUriHandler.current
+    Column(
+        modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
+            top = innerPadding.calculateTopPadding(),
+            bottom = innerPadding.calculateBottomPadding()
+        ) then Modifier
+            .fillMaxSize()
+            .offset(y = (-24).dp), // Nudges content upward
+
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.zimly_logo),
+            contentDescription = null,
+            modifier = Modifier.size(64.dp)
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = "Tap the + button below to create your first backup configuration.",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextButton({ uriHandler.openUri("https://www.zimly.app/docs/") }) {
+            Text("Get Started Guide")
         }
     }
 }
