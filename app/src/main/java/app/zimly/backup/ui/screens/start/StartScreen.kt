@@ -79,35 +79,37 @@ fun StartScreen(
 
     val snackbarState = remember { SnackbarHostState() }
 
+    val numSelected = viewModel.numSelected()
+
     StartLayout(
-        remotes = remotes,
         snackbarState,
         notification,
         clearMessage = { viewModel.clearMessage() },
-        syncRemote = syncRemote,
         addRemote = addRemote,
-        select = { viewModel.select(it) },
+        numSelected,
         back = { viewModel.resetSelect() },
         copy = { viewModel.viewModelScope.launch { viewModel.copy() } },
         delete = { viewModel.viewModelScope.launch { viewModel.delete() } },
-        numSelected = viewModel.numSelected()
-    )
+    ) { innerPadding ->
+        if (remotes.isEmpty()) {
+            GetStarted(innerPadding)
+        }
+        RemoteList(innerPadding, remotes, numSelected, { viewModel.select(it) }, syncRemote)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StartLayout(
-    remotes: List<RemoteView>,
     snackbarState: SnackbarHostState,
     notification: String?,
     clearMessage: () -> Unit,
-    syncRemote: (Int) -> Unit,
     addRemote: () -> Unit,
-    select: (Int) -> Unit,
+    numSelected: Int,
     back: () -> Unit,
     copy: () -> Unit,
     delete: () -> Unit,
-    numSelected: Int
+    content: @Composable (innerPadding: PaddingValues) -> Unit
 ) {
 
     // Show snackbar when message
@@ -181,10 +183,7 @@ private fun StartLayout(
             SnackbarHost(hostState = snackbarState)
         })
     { innerPadding ->
-        if (remotes.isEmpty()) {
-            GetStarted(innerPadding)
-        }
-        RemoteList(innerPadding, remotes, numSelected, select, syncRemote)
+        content(innerPadding)
     }
 }
 
@@ -299,19 +298,22 @@ fun DefaultPreview() {
         val snackbarState = remember { SnackbarHostState() }
         val notification by remember { mutableStateOf<String?>(null) }
 
+        val numSelected = 0
         StartLayout(
-            remotes = remotes,
             snackbarState,
             notification,
-            {},
-            syncRemote = {},
-            addRemote = {},
-            {},
-            {},
-            {},
-            {},
-            0
-        )
+            clearMessage = { },
+            addRemote = { },
+            numSelected,
+            back = { },
+            copy = {  },
+            delete = {  },
+        ) { innerPadding ->
+            if (remotes.isEmpty()) {
+                GetStarted(innerPadding)
+            }
+            RemoteList(innerPadding, remotes, numSelected, { }, { })
+        }
     }
 }
 
