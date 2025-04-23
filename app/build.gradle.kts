@@ -94,14 +94,14 @@ dependencies {
 
     // https://developer.android.com/develop/ui/compose/bom
     // Not very happy with this, feels like it's not fully thought through, e.g. androidx dependencies.
-    val composeBom = platform("androidx.compose:compose-bom:2025.03.01")
+    val composeBom = platform("androidx.compose:compose-bom:2025.04.00")
     implementation(composeBom)
     testImplementation(composeBom)
     androidTestImplementation(composeBom)
     debugImplementation(platform(composeBom))
 
     val workManagerVersion = "2.10.0"
-    val roomVersion = "2.6.1"
+    val roomVersion = "2.7.0"
     val lifecycleVersion = "2.8.7"
 
     // minio / S3
@@ -115,7 +115,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")
     implementation("javax.xml.stream:stax-api:1.0-2")
 
-    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.core:core-ktx:1.16.0")
 
     // Managed dependencies
     implementation("androidx.compose.material3:material3")
@@ -145,7 +145,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.testcontainers:minio:1.20.6")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-    testImplementation("io.mockk:mockk:1.13.17")
+    testImplementation("io.mockk:mockk:1.14.0")
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 
@@ -155,7 +155,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
     androidTestImplementation("androidx.test:rules:1.6.1")
-    androidTestImplementation("io.mockk:mockk-android:1.13.17")
+    androidTestImplementation("io.mockk:mockk-android:1.14.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
