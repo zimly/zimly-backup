@@ -1,6 +1,5 @@
-2.4.1
-* Improve form validation handling #32
-* Allow verifying bucket without source set #32
+2.4.2
+* Show a Get Started screen on empty DB #34
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
