@@ -21,13 +21,15 @@ import okio.buffer
  * https://getstream.io/blog/android-upload-progress/
  * https://github.com/square/okhttp/blob/master/samples/guide/src/main/java/okhttp3/recipes/Progress.java
  */
-internal class ProgressInterceptor(
+internal class UploadProgressInterceptor(
     private val progressTracker: ProgressTracker,
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val req = wrapRequest(chain.request())
         val res = chain.proceed(req)
+
+        // TODO could we wrap the response instead? Does it carry bytesRead somehow?
         if (req.body is ProgressRequestBody && res.isSuccessful) {
             progressTracker.stepBy((req.body as ProgressRequestBody).read)
         }
