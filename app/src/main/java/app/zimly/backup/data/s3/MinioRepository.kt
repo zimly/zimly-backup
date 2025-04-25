@@ -56,7 +56,7 @@ class MinioRepository(
         private val TAG: String? = MinioRepository::class.simpleName
 
         /**
-         * Creates a http client with optional [ProgressInterceptor].
+         * Creates a http client with optional [UploadProgressInterceptor].
          *
          * Partly taken from [io.minio.http.HttpUtils.newDefaultHttpClient]
          */
@@ -71,7 +71,7 @@ class MinioRepository(
                 .protocols(listOf(Protocol.HTTP_1_1))
 
             // attach interceptor if given
-            progressTracker?.let { builder.addInterceptor(ProgressInterceptor(it)) }
+            progressTracker?.let { builder.addInterceptor(UploadProgressInterceptor(it)) }
             // Alternatively attach a builder#eventListenerFactory and listen to requestBodyEnd, but same problems
             // with request body returning too early. Might still be slicker than the interceptor
 
@@ -130,7 +130,6 @@ class MinioRepository(
                     continuation.resumeWithException(exception)
                 }
             }
-
         }
     }
 
