@@ -40,9 +40,9 @@ class MinioRepository(
     private val region: String? = null
 ) : S3Repository {
 
-    private fun mc(progressTracker: ProgressTracker? = null): MinioAsyncClient = try {
+    private fun mc(uploadProgressTracker: ProgressTracker? = null, downloadProgressTracker: ProgressTracker? = null): MinioAsyncClient = try {
         MinioAsyncClient.builder()
-            .httpClient(client(progressTracker))
+            .httpClient(client(uploadProgressTracker, downloadProgressTracker))
             .endpoint(url)
             .region(region) // This might override some AWS stuff happening inside #endpoint()
             .credentials(key, secret)
@@ -56,11 +56,11 @@ class MinioRepository(
         private val TAG: String? = MinioRepository::class.simpleName
 
         /**
-         * Creates a http client with optional [UploadProgressInterceptor].
+         * Creates a http client with optional [UploadProgressInterceptor] or [DownloadProgressInterceptor].
          *
          * Partly taken from [io.minio.http.HttpUtils.newDefaultHttpClient]
          */
-        fun client(progressTracker: ProgressTracker?): OkHttpClient {
+        fun client(uploadProgressTracker: ProgressTracker? = null, downloadProgressTracker: ProgressTracker? = null): OkHttpClient {
             val timeout = TimeUnit.MINUTES.toMillis(5)
 
             val builder = OkHttpClient()
@@ -71,7 +71,8 @@ class MinioRepository(
                 .protocols(listOf(Protocol.HTTP_1_1))
 
             // attach interceptor if given
-            progressTracker?.let { builder.addInterceptor(UploadProgressInterceptor(it)) }
+            uploadProgressTracker?.let { builder.addInterceptor(UploadProgressInterceptor(it)) } // TODO networkInterceptor?
+            downloadProgressTracker?.let { builder.addInterceptor(DownloadProgressInterceptor(it)) }
             // Alternatively attach a builder#eventListenerFactory and listen to requestBodyEnd, but same problems
             // with request body returning too early. Might still be slicker than the interceptor
 
@@ -133,6 +134,26 @@ class MinioRepository(
         }
     }
 
+    fun getWithProgress(name: String, size: Long): Flow<Progress> = channelFlow {
+
+        val progressTracker = ProgressTracker(size)
+        launch {
+            progressTracker.observe().collect { send(it) }
+        }
+        suspendCoroutine { continuation ->
+            val params = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
+
+            mc(downloadProgressTracker = progressTracker).getObject(params).whenComplete { result, exception ->
+                if (exception == null) {
+                    continuation.resume(Unit)
+                } else {
+                    continuation.resumeWithException(exception)
+                }
+            }
+        }
+    }
+
+
     override suspend fun remove(name: String) {
         return suspendCancellableCoroutine { continuation ->
 
@@ -183,7 +204,7 @@ class MinioRepository(
                 .stream(stream, size, -1)
                 .build()
 
-            mc(progressTracker).putObject(param).whenComplete { _, exception ->
+            mc(uploadProgressTracker = progressTracker).putObject(param).whenComplete { _, exception ->
                 with(stream) { close() } // Instead of stream.close()
                 if (exception == null) {
                     continuation.resume(Unit)

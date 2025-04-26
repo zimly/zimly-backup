@@ -11,6 +11,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
@@ -18,8 +19,65 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 
-class ProgressIntegrationTest {
+class ProgressTest {
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun download() = runTest {
+
+        val server = MockWebServer()
+
+        val size = 1024 * 5
+        val rndBytes = Random.Default.nextBytes(size)
+
+        val enqueuedResponse = MockResponse()
+            //.throttleBody(500L, 1000L, TimeUnit.MILLISECONDS)
+            .setResponseCode(200)
+            .setBody(Buffer().write(rndBytes))
+            .addHeader("Content-Type", "application/octet-stream")
+
+        server.enqueue(enqueuedResponse)
+
+        // Start the server.
+        server.start()
+
+        val baseUrl = server.url("/")
+
+        val totalSize = size.toLong()
+        val progress = ProgressTracker(totalSize)
+
+        val client = MinioRepository.client(downloadProgressTracker = progress)
+
+        val request: Request = Request.Builder()
+            .url(baseUrl)
+            .build()
+
+        val res = mutableListOf<Progress>()
+
+        // https://developer.android.com/kotlin/flow/test
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+
+            progress.observe()
+                .onEach { println("$it") }
+                .toList(res)
+
+        }
+
+        val response = client.newCall(request).execute()
+        // Ensure we read the body!
+        response.body?.source()?.use { source ->
+            while (!source.exhausted()) {
+                source.readByteArray()
+            }
+        }
+        // First entry is null
+        TestCase.assertTrue(res.first().bytesPerSec == null)
+
+        // Totals add up
+        assertThat(res.last().totalReadBytes, `is`(totalSize))
+        assertThat(res.last().percentage, `is`(1F))
+        assertThat(response.code, `is`(200))
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
@@ -42,7 +100,7 @@ class ProgressIntegrationTest {
         val totalSize = size.toLong() * 2
         val progress = ProgressTracker(totalSize)
 
-        val client = MinioRepository.client(progress)
+        val client = MinioRepository.client(uploadProgressTracker = progress)
 
         val reqBody = rndBytes.toRequestBody()
         val request: Request = Request.Builder()
