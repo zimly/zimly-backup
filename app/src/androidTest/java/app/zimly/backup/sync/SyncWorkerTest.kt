@@ -38,8 +38,8 @@ class SyncWorkerTest {
         coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
         val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
-        every { syncService.diff() } returns Diff(emptyList(), locals, locals, 1234L)
-        every { syncService.sync(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f, 1024L))
+        every { syncService.localDiff() } returns LocalDiff(emptyList(), locals, locals, 1234L)
+        every { syncService.upload(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f, 1024L))
 
         val worker = TestListenableWorkerBuilder<SyncWorker>(context)
             .build()
@@ -62,8 +62,8 @@ class SyncWorkerTest {
         coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
         val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
-        every { syncService.diff() } returns Diff(emptyList(), locals, locals, 1234L)
-        every { syncService.sync(any(), any()) } returns
+        every { syncService.localDiff() } returns LocalDiff(emptyList(), locals, locals, 1234L)
+        every { syncService.upload(any(), any()) } returns
                 flow {
                     emit(SyncProgress(12L, 0, 0.10f, 1024L))
                     error("fml")

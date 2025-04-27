@@ -77,7 +77,7 @@ class AwsIntegrationTest {
 
         val ss = SyncServiceImpl(s3Repository, localContentResolver)
 
-        val diff = ss.diff()
+        val diff = ss.localDiff()
 
         assertThat(diff.diff.size, `is`(1))
     }
