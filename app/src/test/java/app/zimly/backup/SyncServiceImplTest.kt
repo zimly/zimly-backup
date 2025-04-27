@@ -8,7 +8,7 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.s3.MinioRepository
-import app.zimly.backup.sync.Diff
+import app.zimly.backup.sync.LocalDiff
 import app.zimly.backup.sync.SyncServiceImpl
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.runBlocking
@@ -59,14 +59,14 @@ class SyncServiceImplTest {
     fun diff() {
         val ss = SyncServiceImpl(minioRepository, localContentResolver)
 
-        val diff = ss.diff()
+        val diff = ss.localDiff()
         assertThat(diff.remotes.size, `is`(0))
         assertThat(diff.locals.size, `is`(1))
         assertThat(diff.diff.size, `is`(1))
     }
 
     @Test
-    fun syncIT() {
+    fun uploadIT() {
         val image1 = "test_image.png"
         val image2 = "test_image2.png"
         runTest {
@@ -89,10 +89,10 @@ class SyncServiceImplTest {
             val localMediaUri = mockk<Uri>()
             val obj1 = ContentObject(name = image1, size1, "image/png", localMediaUri)
             val obj2 = ContentObject(name = image2, size2, "image/png", localMediaUri)
-            val diff = Diff(remotes = emptyList(), locals = listOf(obj1, obj2), diff = listOf(obj1, obj2), size = totalSize)
+            val diff = LocalDiff(remotes = emptyList(), locals = listOf(obj1, obj2), diff = listOf(obj1, obj2), size = totalSize)
 
             // WHEN
-            val res = ss.sync(diff).last()
+            val res = ss.upload(diff).last()
 
             // THEN
             assertThat(res.uploadedFiles, `is`(2))

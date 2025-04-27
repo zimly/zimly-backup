@@ -34,7 +34,7 @@ class SyncWorker(
         Log.i(TAG, "Launching sync...")
 
         val diff = try {
-            syncService.diff()
+            syncService.localDiff()
         } catch (e: Exception) {
             return Result.failure(
                 Data.Builder()
@@ -54,7 +54,7 @@ class SyncWorker(
                 .build()
         )
 
-        return syncService.sync(diff)
+        return syncService.upload(diff)
             .onEach {
                 setProgressAsync(
                     Data.Builder()

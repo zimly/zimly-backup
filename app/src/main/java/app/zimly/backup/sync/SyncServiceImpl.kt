@@ -26,7 +26,7 @@ class SyncServiceImpl(
         val TAG: String? = SyncServiceImpl::class.simpleName
     }
 
-    override fun diff(): Diff {
+    override fun localDiff(): LocalDiff {
         try {
             val remotes = s3Repository.listObjects()
             val objects = localContentResolver.listObjects()
@@ -34,7 +34,7 @@ class SyncServiceImpl(
                 objects.filter { local -> remotes.none { remote -> remote.name == local.name } }
             val size = diff.sumOf { it.size }
 
-            return Diff(remotes, objects, diff, size)
+            return LocalDiff(remotes, objects, diff, size)
         } catch (e: Exception) {
             var message = e.message
             if (e is ErrorResponseException) {
@@ -50,7 +50,7 @@ class SyncServiceImpl(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    override fun sync(diff: Diff, debounce: Long): Flow<SyncProgress> {
+    override fun upload(diff: LocalDiff, debounce: Long): Flow<SyncProgress> {
         var count = 0
         return diff.diff.asFlow()
             .map { mediaObj -> Pair(mediaObj, localContentResolver.getStream(mediaObj.path)) }
@@ -84,7 +84,7 @@ data class SyncProgress(
     }
 }
 
-data class Diff(
+data class LocalDiff(
     val remotes: List<S3Object>,
     val locals: List<ContentObject>,
     val diff: List<ContentObject>,
@@ -92,7 +92,7 @@ data class Diff(
 )
 
 interface SyncService {
-    fun diff(): Diff
-    fun sync(diff: Diff, debounce: Long = 0L): Flow<SyncProgress>
+    fun localDiff(): LocalDiff
+    fun upload(diff: LocalDiff, debounce: Long = 0L): Flow<SyncProgress>
 }
 

@@ -196,7 +196,7 @@ class SyncViewModel(
                 LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
             val syncService = SyncServiceImpl(s3Repo, contentResolver)
 
-            val diff = syncService.diff()
+            val diff = syncService.localDiff()
             // Display result of the minio request to the user
             _progress.update {
                 Progress(
