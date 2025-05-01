@@ -2,14 +2,14 @@ package app.zimly.backup
 
 import android.net.Uri
 import android.util.Log
-import app.zimly.backup.data.media.LocalContentResolver
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkStatic
 import app.zimly.backup.data.media.ContentObject
+import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.sync.LocalDiff
 import app.zimly.backup.sync.SyncServiceImpl
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -20,6 +20,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
+import java.io.ByteArrayOutputStream
+import kotlin.test.assertEquals
 
 class SyncServiceImplTest {
     private val minioUser = "test"
@@ -56,7 +58,7 @@ class SyncServiceImplTest {
     }
 
     @Test
-    fun diff() {
+    fun localDiff() {
         val ss = SyncServiceImpl(minioRepository, localContentResolver)
 
         val diff = ss.localDiff()
@@ -82,7 +84,7 @@ class SyncServiceImplTest {
             val size2 = stream2.available().toLong()
             val totalSize = size1 + size2
 
-            every { localContentResolver.getStream(any()) } returns stream1 andThen stream2
+            every { localContentResolver.getInputStream(any()) } returns stream1 andThen stream2
 
             val ss = SyncServiceImpl(minioRepository, localContentResolver)
 
@@ -95,7 +97,7 @@ class SyncServiceImplTest {
             val res = ss.upload(diff).last()
 
             // THEN
-            assertThat(res.uploadedFiles, `is`(2))
+            assertThat(res.transferredFiles, `is`(2))
             assertThat(res.readBytes, `is`(totalSize))
             assertThat(res.readBytes, `is`(diff.size))
             assertThat(res.percentage, `is`(1f))
@@ -107,6 +109,52 @@ class SyncServiceImplTest {
 
             val name = minioRepository.get(image1).`object`()
             assertThat(name, `is`(image1))
+
+        }
+    }
+
+    @Test
+    fun downloadIT() {
+        val image1 = "test_image.png"
+        val image2 = "test_image2.png"
+        runTest {
+
+            // GIVEN
+            val path1 = "/testdata/$image1"
+            val path2 = "/testdata/$image2"
+            val stream1 =
+                javaClass.getResourceAsStream(path1) ?: throw Error("Could not open test resource.")
+            val stream2 =
+                javaClass.getResourceAsStream(path2) ?: throw Error("Could not open test resource.")
+            val size1 = stream1.available().toLong()
+            val size2 = stream2.available().toLong()
+            val totalSize = size1 + size2
+
+            minioRepository.put(stream1, image1, "image/png", stream1.available().toLong()).last()
+            minioRepository.put(stream2, image2, "image/png", stream2.available().toLong()).last()
+
+            every { localContentResolver.listObjects() } returns emptyList()
+            val out1 = ByteArrayOutputStream()
+            val out2 = ByteArrayOutputStream()
+            every { localContentResolver.getOutputStream(any(), any(), any()) } returns out1 andThen out2
+
+            val ss = SyncServiceImpl(minioRepository, localContentResolver)
+
+            val diff = ss.remoteDiff()
+
+            val target = mockk<Uri>()
+
+            // WHEN
+            val res = ss.download(diff, target).last()
+
+            // THEN
+            assertThat(res.transferredFiles, `is`(2))
+            assertThat(res.readBytes, `is`(totalSize))
+            assertThat(res.readBytes, `is`(diff.size))
+            assertThat(res.percentage, `is`(1f))
+
+            assertEquals(out1.size(), size1.toInt())
+            assertEquals(out2.size(), size2.toInt())
 
         }
     }

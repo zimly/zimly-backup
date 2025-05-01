@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
 import java.io.InputStream
+import java.io.OutputStream
 
 /**
  * https://developer.android.com/training/data-storage/shared/documents-files#grant-access-directory
@@ -92,8 +93,19 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
         }
     }
 
-    override fun getStream(uri: Uri): InputStream {
+    override fun getInputStream(uri: Uri): InputStream {
         return contentResolver.openInputStream(uri)
             ?: throw Exception("Could not open stream for $uri.")
     }
+
+    override fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream {
+        val newFileUri = DocumentsContract.createDocument(
+            contentResolver,
+            parentUri,
+            mimeType,
+            objectName
+        )
+        return newFileUri?.let { contentResolver.openOutputStream(it) } ?: throw Exception("Could not open stream for $parentUri/$objectName.")
+    }
+
 }
