@@ -22,6 +22,7 @@ import app.zimly.backup.ui.screens.sync.battery.BatterySaverViewModel
 import app.zimly.backup.ui.screens.sync.battery.PowerStatusProvider
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import java.io.InputStream
+import java.io.OutputStream
 
 @Preview(showBackground = true)
 @Composable
@@ -207,7 +208,15 @@ private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
 
 private class StubContentResolver : LocalContentResolver {
 
-    override fun getStream(uri: Uri): InputStream {
+    override fun getInputStream(uri: Uri): InputStream {
+        TODO("Not yet implemented")
+    }
+
+    override fun getOutputStream(
+        parentUri: Uri,
+        objectName: String,
+        mimeType: String
+    ): OutputStream {
         TODO("Not yet implemented")
     }
 
@@ -233,7 +242,15 @@ private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
         return 12
     }
 
-    override fun getStream(uri: Uri): InputStream {
+    override fun getInputStream(uri: Uri): InputStream {
+        TODO("Not yet implemented")
+    }
+
+    override fun getOutputStream(
+        parentUri: Uri,
+        objectName: String,
+        mimeType: String
+    ): OutputStream {
         TODO("Not yet implemented")
     }
 

@@ -4,13 +4,15 @@ import android.content.ContentResolver
 import android.net.Uri
 import androidx.core.net.toUri
 import java.io.InputStream
+import java.io.OutputStream
 
 /**
  * Common interface shared by all implementations or wrappers of [ContentResolver] that queries local
  * [ContentObject]s, like media or documents.
  */
 interface LocalContentResolver {
-    fun getStream(uri: Uri): InputStream
+    fun getInputStream(uri: Uri): InputStream
+    fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream
     fun listObjects(): List<ContentObject>
 
     companion object {

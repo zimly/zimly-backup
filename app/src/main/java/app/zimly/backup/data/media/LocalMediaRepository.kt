@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import java.io.InputStream
+import java.io.OutputStream
 
 /**
  * Wraps the [ContentResolver] for media specific queries. Compared to [LocalMediaResolver]
@@ -175,7 +176,7 @@ class LocalMediaResolverImpl(private val contentResolver: ContentResolver, priva
         return listOf(mediaRepository.getPhotos(setOf(collection)), mediaRepository.getVideos(setOf(collection))).flatten()
     }
 
-    override fun getStream(uri: Uri): InputStream {
+    override fun getInputStream(uri: Uri): InputStream {
         return contentResolver.openInputStream(uri) ?: throw Exception("Could not open stream for $uri.")
     }
 
@@ -185,6 +186,10 @@ class LocalMediaResolverImpl(private val contentResolver: ContentResolver, priva
 
     override fun videoCount(): Int {
         return mediaRepository.getVideos(setOf(collection)).count()
+    }
+
+    override fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream {
+        TODO("Fix interfaces!")
     }
 }
 

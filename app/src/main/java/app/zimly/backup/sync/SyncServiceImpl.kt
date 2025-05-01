@@ -1,5 +1,6 @@
 package app.zimly.backup.sync
 
+import android.net.Uri
 import android.util.Log
 import io.minio.errors.ErrorResponseException
 import app.zimly.backup.data.media.ContentObject
@@ -43,8 +44,8 @@ class SyncServiceImpl(
                 val errorCode = e.errorResponse().code()
                 message = "status: $status, message: $mes, errorCode: $errorCode"
             }
-            Log.e(TAG, "Failed to create diff: $message", e)
-            throw Exception("Failed to create diff: $message", e)
+            Log.e(TAG, "Failed to create local diff: $message", e)
+            throw Exception("Failed to create local diff: $message", e)
 
         }
     }
@@ -53,7 +54,7 @@ class SyncServiceImpl(
     override fun upload(diff: LocalDiff, debounce: Long): Flow<SyncProgress> {
         var count = 0
         return diff.diff.asFlow()
-            .map { mediaObj -> Pair(mediaObj, localContentResolver.getStream(mediaObj.path)) }
+            .map { mediaObj -> Pair(mediaObj, localContentResolver.getInputStream(mediaObj.path)) }
             .onEach { count++ } // TODO too early, should happen after the upload
             .flatMapConcat { (mediaObj, file) ->
                 s3Repository.put(
@@ -71,11 +72,59 @@ class SyncServiceImpl(
             }
             .debounce(debounce)
     }
+
+    override fun remoteDiff(): RemoteDiff {
+        try {
+            val remotes = s3Repository.listObjects()
+            val objects = localContentResolver.listObjects()
+            val diff =
+                remotes.filter { remote -> objects.none { obj -> obj.name == remote.name } }
+            val size = diff.sumOf { it.size }
+
+            return RemoteDiff(remotes, objects, diff, size)
+        } catch (e: Exception) {
+            var message = e.message
+            if (e is ErrorResponseException) {
+                val status = e.response().code
+                val mes = e.response().message
+                val errorCode = e.errorResponse().code()
+                message = "status: $status, message: $mes, errorCode: $errorCode"
+            }
+            Log.e(TAG, "Failed to create remote diff: $message", e)
+            throw Exception("Failed to create remote diff: $message", e)
+
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    override fun download(diff: RemoteDiff, target: Uri, debounce: Long): Flow<SyncProgress> {
+        var count = 0
+        return diff.diff.asFlow()
+            // TODO: Really another request for the content-type?
+            .map { s3Obj -> s3Repository.stat(s3Obj.name) }
+            .map { s3StatObj -> Pair(s3StatObj, localContentResolver.getOutputStream(target, s3StatObj.`object`(), s3StatObj.contentType())) }
+            .onEach { count++ } // TODO too early, should happen after the upload
+            .flatMapConcat { (s3Obj, outputStream) ->
+                s3Repository.get(
+                    s3Obj.`object`(),
+                    s3Obj.size(),
+                    outputStream
+                )
+            }
+            .runningFold(SyncProgress.EMPTY) { acc, value ->
+                val totalBytes =
+                    acc.readBytes + value.readBytes
+                val percentage = totalBytes.toFloat() / diff.size
+                SyncProgress(readBytes = totalBytes, count, percentage, value.bytesPerSec)
+            }
+            .debounce(debounce)
+    }
+
 }
 
 data class SyncProgress(
     val readBytes: Long,
-    val uploadedFiles: Int,
+    val transferredFiles: Int,
     val percentage: Float,
     val bytesPerSecond: Long?
 ) {
@@ -91,8 +140,18 @@ data class LocalDiff(
     val size: Long
 )
 
+data class RemoteDiff(
+    val remotes: List<S3Object>,
+    val locals: List<ContentObject>,
+    val diff: List<S3Object>,
+    val size: Long
+)
+
+
 interface SyncService {
     fun localDiff(): LocalDiff
     fun upload(diff: LocalDiff, debounce: Long = 0L): Flow<SyncProgress>
+    fun remoteDiff(): RemoteDiff
+    fun download(diff: RemoteDiff, target: Uri, debounce: Long = 0L): Flow<SyncProgress>
 }
 

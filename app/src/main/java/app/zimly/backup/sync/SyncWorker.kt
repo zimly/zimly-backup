@@ -58,7 +58,7 @@ class SyncWorker(
             .onEach {
                 setProgressAsync(
                     Data.Builder()
-                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
+                        .putInt(SyncOutputs.PROGRESS_COUNT, it.transferredFiles)
                         .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
                         .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
@@ -70,7 +70,7 @@ class SyncWorker(
             .map {
                 Result.success(
                     Data.Builder()
-                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
+                        .putInt(SyncOutputs.PROGRESS_COUNT, it.transferredFiles)
                         .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
                         .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
