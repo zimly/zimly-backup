@@ -12,6 +12,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
+import okio.buffer
+import okio.sink
+import okio.source
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Test
@@ -31,7 +34,6 @@ class ProgressTest {
         val rndBytes = Random.Default.nextBytes(size)
 
         val enqueuedResponse = MockResponse()
-            //.throttleBody(500L, 1000L, TimeUnit.MILLISECONDS)
             .setResponseCode(200)
             .setBody(Buffer().write(rndBytes))
             .addHeader("Content-Type", "application/octet-stream")
@@ -46,7 +48,8 @@ class ProgressTest {
         val totalSize = size.toLong()
         val progress = ProgressTracker(totalSize)
 
-        val client = MinioRepository.client(downloadProgressTracker = progress)
+        // TODO this is just the okio http client
+        val client = MinioRepository.client()
 
         val request: Request = Request.Builder()
             .url(baseUrl)
@@ -64,10 +67,12 @@ class ProgressTest {
         }
 
         val response = client.newCall(request).execute()
+
         // Ensure we read the body!
         response.body?.source()?.use { source ->
-            while (!source.exhausted()) {
-                source.readByteArray()
+            val countedSource = source.counted(progress).buffer()
+            while (!countedSource.exhausted()) {
+                countedSource.readByteArray()
             }
         }
         // First entry is null
