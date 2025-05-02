@@ -21,7 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class SyncWorkerTest {
+class UploadSyncWorkerTest {
     private lateinit var context: Context
 
     @Before
@@ -34,14 +34,14 @@ class SyncWorkerTest {
         val syncService: SyncService = mockk()
 
         // https://stackoverflow.com/a/51794655
-        mockkObject(SyncWorker)
-        coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
+        mockkObject(UploadSyncWorker)
+        coEvery { UploadSyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
         val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
         every { syncService.localDiff() } returns LocalDiff(emptyList(), locals, locals, 1234L)
         every { syncService.upload(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f, 1024L))
 
-        val worker = TestListenableWorkerBuilder<SyncWorker>(context)
+        val worker = TestListenableWorkerBuilder<UploadSyncWorker>(context)
             .build()
         runBlocking {
             val result = worker.doWork()
@@ -58,8 +58,8 @@ class SyncWorkerTest {
     @Test
     fun syncFailure() {
         val syncService: SyncService = mockk()
-        mockkObject(SyncWorker)
-        coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
+        mockkObject(UploadSyncWorker)
+        coEvery { UploadSyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
         val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
         every { syncService.localDiff() } returns LocalDiff(emptyList(), locals, locals, 1234L)
@@ -69,7 +69,7 @@ class SyncWorkerTest {
                     error("fml")
                 }
 
-        val worker = TestListenableWorkerBuilder<SyncWorker>(context)
+        val worker = TestListenableWorkerBuilder<UploadSyncWorker>(context)
             .build()
         runBlocking {
             val result = worker.doWork()

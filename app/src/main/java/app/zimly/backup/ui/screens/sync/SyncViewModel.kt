@@ -28,7 +28,7 @@ import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
 import app.zimly.backup.sync.SyncServiceImpl
-import app.zimly.backup.sync.SyncWorker
+import app.zimly.backup.sync.UploadSyncWorker
 import app.zimly.backup.sync.getNullable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -314,7 +314,7 @@ class SyncViewModel(
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+        val syncRequest = OneTimeWorkRequestBuilder<UploadSyncWorker>()
             .setBackoffCriteria(
                 BackoffPolicy.EXPONENTIAL,
                 Duration.ofMinutes(1)
