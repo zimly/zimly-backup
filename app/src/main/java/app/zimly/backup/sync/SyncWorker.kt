@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import java.io.IOException
 
-class UploadSyncWorker(
+class SyncWorker(
     private val context: Context,
     workerParameters: WorkerParameters,
 ) : CoroutineWorker(context, workerParameters) {
@@ -33,37 +33,16 @@ class UploadSyncWorker(
 
         Log.i(TAG, "Launching sync...")
 
-        val diff = try {
-            syncService.localDiff()
-        } catch (e: Exception) {
-            return Result.failure(
-                Data.Builder()
-                    .putString(SyncOutputs.ERROR, e.message)
-                    .build()
-            )
-        }
-
-        val diffCount = diff.diff.size
-        val diffBytes = diff.size
-
-        // Set initial diff numbers
-        setProgress(
-            Data.Builder()
-                .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                .build()
-        )
-
-        return syncService.upload(diff)
+        return syncService.synchronize()
             .onEach {
                 setProgressAsync(
                     Data.Builder()
                         .putInt(SyncOutputs.PROGRESS_COUNT, it.transferredFiles)
-                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putLong(SyncOutputs.PROGRESS_BYTES, it.transferredBytes)
                         .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
-                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                        .putInt(SyncOutputs.DIFF_COUNT, it.totalFiles)
+                        .putLong(SyncOutputs.DIFF_BYTES, it.totalBytes)
                         .build()
                 )
             }
@@ -71,11 +50,11 @@ class UploadSyncWorker(
                 Result.success(
                     Data.Builder()
                         .putInt(SyncOutputs.PROGRESS_COUNT, it.transferredFiles)
-                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putLong(SyncOutputs.PROGRESS_BYTES, it.transferredBytes)
                         .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
-                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                        .putInt(SyncOutputs.DIFF_COUNT, it.totalFiles)
+                        .putLong(SyncOutputs.DIFF_BYTES, it.totalBytes)
                         .build()
                 )
             }
@@ -103,8 +82,9 @@ class UploadSyncWorker(
     }
 
     companion object {
-        val TAG: String? = UploadSyncWorker::class.simpleName
+        val TAG: String? = SyncWorker::class.simpleName
 
+        // TODO: provider passed through constructor?
         suspend fun initSyncService(context: Context, inputData: Data): SyncService {
 
             val db = ZimlyDatabase.getInstance(context.applicationContext)
@@ -124,7 +104,8 @@ class UploadSyncWorker(
                 remote.sourceUri
             )
 
-            return SyncServiceImpl(s3Repository, localContentResolver)
+            // TODO: DownloadSyncService(s3Repository, localContentResolver, "".toUri())
+            return UploadSyncService(s3Repository, localContentResolver)
         }
     }
 }

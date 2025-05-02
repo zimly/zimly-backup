@@ -2,7 +2,7 @@ package app.zimly.backup.data.s3
 
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.ContentObject
-import app.zimly.backup.sync.SyncServiceImpl
+import app.zimly.backup.sync.UploadSyncService
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.onEach
@@ -75,9 +75,9 @@ class AwsIntegrationTest {
 
         every { localContentResolver.listObjects() } returns listOf(ContentObject("test_image.png", 123L, "image/png", mockk()))
 
-        val ss = SyncServiceImpl(s3Repository, localContentResolver)
+        val ss = UploadSyncService(s3Repository, localContentResolver)
 
-        val diff = ss.localDiff()
+        val diff = ss.calculateDiff()
 
         assertThat(diff.diff.size, `is`(1))
     }
