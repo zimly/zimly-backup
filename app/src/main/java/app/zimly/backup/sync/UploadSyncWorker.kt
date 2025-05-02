@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import java.io.IOException
 
-class SyncWorker(
+class UploadSyncWorker(
     private val context: Context,
     workerParameters: WorkerParameters,
 ) : CoroutineWorker(context, workerParameters) {
@@ -103,7 +103,7 @@ class SyncWorker(
     }
 
     companion object {
-        val TAG: String? = SyncWorker::class.simpleName
+        val TAG: String? = UploadSyncWorker::class.simpleName
 
         suspend fun initSyncService(context: Context, inputData: Data): SyncService {
 
