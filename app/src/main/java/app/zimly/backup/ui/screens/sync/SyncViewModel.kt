@@ -27,8 +27,8 @@ import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
-import app.zimly.backup.sync.SyncServiceImpl
-import app.zimly.backup.sync.UploadSyncWorker
+import app.zimly.backup.sync.UploadSyncService
+import app.zimly.backup.sync.SyncWorker
 import app.zimly.backup.sync.getNullable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -194,9 +194,9 @@ class SyncViewModel(
 
             val contentResolver =
                 LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
-            val syncService = SyncServiceImpl(s3Repo, contentResolver)
+            val syncService = UploadSyncService(s3Repo, contentResolver)
 
-            val diff = syncService.localDiff()
+            val diff = syncService.calculateDiff()
             // Display result of the minio request to the user
             _progress.update {
                 Progress(
@@ -314,7 +314,7 @@ class SyncViewModel(
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val syncRequest = OneTimeWorkRequestBuilder<UploadSyncWorker>()
+        val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
             .setBackoffCriteria(
                 BackoffPolicy.EXPONENTIAL,
                 Duration.ofMinutes(1)

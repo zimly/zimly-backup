@@ -6,7 +6,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.work.ListenableWorker.Result.Failure
 import androidx.work.ListenableWorker.Result.Success
 import androidx.work.testing.TestListenableWorkerBuilder
-import app.zimly.backup.data.media.ContentObject
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -34,23 +33,28 @@ class UploadSyncWorkerTest {
         val syncService: SyncService = mockk()
 
         // https://stackoverflow.com/a/51794655
-        mockkObject(UploadSyncWorker)
-        coEvery { UploadSyncWorker.Companion.initSyncService(any(), any())} returns syncService
+        mockkObject(SyncWorker)
+        coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
-        val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
-        every { syncService.localDiff() } returns LocalDiff(emptyList(), locals, locals, 1234L)
-        every { syncService.upload(any(), any()) } returns flowOf(SyncProgress(1234L, 1, 1f, 1024L))
+        val totalBytes = 1234L
+        val bps = 1024L
+        every { syncService.synchronize() } returns flowOf(SyncProgress(
+            totalBytes, 1, 1f, bps, 1,
+            totalBytes
+        ))
 
-        val worker = TestListenableWorkerBuilder<UploadSyncWorker>(context)
+        val worker = TestListenableWorkerBuilder<SyncWorker>(context)
             .build()
         runBlocking {
             val result = worker.doWork()
             assert(result is Success)
             assertThat(result.outputData.getInt(SyncOutputs.PROGRESS_COUNT, -1), `is`(1))
             assertThat(result.outputData.getFloat(SyncOutputs.PROGRESS_PERCENTAGE, -1f), `is`(1f))
-            assertThat(result.outputData.getLong(SyncOutputs.PROGRESS_BYTES, -1), `is`(1234L))
-            assertThat(result.outputData.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, -1), `is`(1024L))
-            assertThat(result.outputData.getLong(SyncOutputs.DIFF_BYTES, -1L), `is`(1234L))
+            assertThat(result.outputData.getLong(SyncOutputs.PROGRESS_BYTES, -1), `is`(totalBytes))
+            assertThat(result.outputData.getLong(SyncOutputs.PROGRESS_BYTES_PER_SEC, -1), `is`(
+                bps
+            ))
+            assertThat(result.outputData.getLong(SyncOutputs.DIFF_BYTES, -1L), `is`(totalBytes))
             assertThat(result.outputData.getInt(SyncOutputs.DIFF_COUNT, -1), `is`(1))
         }
     }
@@ -58,18 +62,25 @@ class UploadSyncWorkerTest {
     @Test
     fun syncFailure() {
         val syncService: SyncService = mockk()
-        mockkObject(UploadSyncWorker)
-        coEvery { UploadSyncWorker.Companion.initSyncService(any(), any())} returns syncService
+        mockkObject(SyncWorker)
+        coEvery { SyncWorker.Companion.initSyncService(any(), any())} returns syncService
 
-        val locals = listOf(ContentObject("DCIM01213.png", 1234L, "image/png", mockk()))
-        every { syncService.localDiff() } returns LocalDiff(emptyList(), locals, locals, 1234L)
-        every { syncService.upload(any(), any()) } returns
+        val totalBytes = 1234L
+        val readBytes = 12L
+        val bps = 1024L
+
+        every { syncService.synchronize() } returns flowOf(SyncProgress(
+            totalBytes, 1, 1f, bps, 1,
+            totalBytes
+        ))
+
+        every { syncService.synchronize() } returns
                 flow {
-                    emit(SyncProgress(12L, 0, 0.10f, 1024L))
+                    emit(SyncProgress(readBytes, 0, 0.10f, bps, 1, totalBytes))
                     error("fml")
                 }
 
-        val worker = TestListenableWorkerBuilder<UploadSyncWorker>(context)
+        val worker = TestListenableWorkerBuilder<SyncWorker>(context)
             .build()
         runBlocking {
             val result = worker.doWork()
