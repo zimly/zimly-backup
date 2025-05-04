@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -70,11 +71,11 @@ fun StartScreen(
     addRemote: () -> Unit,
 ) {
     val remotes by viewModel.remotesState.collectAsState(initial = emptyList())
+    val numSelected by viewModel.numSelected().collectAsState(0)
+
     val notification by viewModel.notificationState.collectAsState()
 
     val snackbarState = remember { SnackbarHostState() }
-
-    val numSelected = viewModel.numSelected()
 
     StartLayout(
         snackbarState,
@@ -125,9 +126,10 @@ private fun StartLayout(
         topBar = {
             if (numSelected > 0) {
                 TopAppBar(
+                    modifier = Modifier.testTag("List Selection Actions"),
                     title = {
                         Text(
-                            text = "$numSelected selected ",
+                            text = "$numSelected selected",
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -141,7 +143,10 @@ private fun StartLayout(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { copy() }) {
+                        IconButton(
+                            modifier = Modifier.testTag("Copy Selected"),
+                            onClick = { copy() }
+                        ) {
                             Icon(
                                 imageVector = Icons.Filled.CopyAll,
                                 contentDescription = "Copy Selected Remotes"
@@ -150,13 +155,14 @@ private fun StartLayout(
                         IconButton(onClick = { delete() }) {
                             Icon(
                                 imageVector = Icons.Filled.Delete,
-                                contentDescription = "Copy Selected Remotes"
+                                contentDescription = "Delete Selected Remotes"
                             )
                         }
                     }
                 )
             } else {
                 TopAppBar(
+                    modifier = Modifier.testTag("Zimly Title"),
                     title = {
                         Text(
                             text = "Zimly",

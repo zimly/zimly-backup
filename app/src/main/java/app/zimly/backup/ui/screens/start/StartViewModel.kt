@@ -1,5 +1,6 @@
 package app.zimly.backup.ui.screens.start
 
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -9,9 +10,11 @@ import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.SourceType
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
 
@@ -50,8 +53,8 @@ class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
         _selectedState.value = selected.toList()
     }
 
-    fun numSelected(): Int {
-        return selected.size
+    fun numSelected(): Flow<Int> {
+        return _selectedState.map { it.size }
     }
 
     fun resetSelect() {

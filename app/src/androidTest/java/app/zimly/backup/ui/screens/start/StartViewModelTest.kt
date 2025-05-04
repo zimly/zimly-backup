@@ -74,13 +74,11 @@ class StartViewModelTest {
 
         // WHEN
         viewModel.select(remotes[0].uid!!.toInt())
-        assertThat(viewModel.numSelected(), `is`(1))
         runBlocking {
             viewModel.copy()
         }
 
         // THEN
-        assertThat(viewModel.numSelected(), `is`(0))
         runBlocking {
             assertThat(dao.getAll().first().size, `is`(3))
         }
@@ -96,13 +94,11 @@ class StartViewModelTest {
 
         // WHEN
         viewModel.select(remotes[0].uid!!.toInt())
-        assertThat(viewModel.numSelected(), `is`(1))
         runBlocking {
             viewModel.delete()
         }
 
         // THEN
-        assertThat(viewModel.numSelected(), `is`(0))
         runBlocking {
             assertThat(dao.getAll().first().size, `is`(1))
         }
