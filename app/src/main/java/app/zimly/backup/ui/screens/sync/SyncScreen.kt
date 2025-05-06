@@ -59,7 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.screens.sync.permission.MediaPermissionContainer
 import app.zimly.backup.ui.theme.containerBackground
@@ -117,9 +117,9 @@ fun SyncScreen(
             enableDiffAction,
             createDiff,
             sourceContainer = {
-                when (remote.sourceType) {
-                    SourceType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
-                    SourceType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
+                when (remote.contentType) {
+                    ContentType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
+                    ContentType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
                     null -> {}
                 }
             },

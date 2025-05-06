@@ -1,5 +1,5 @@
 package app.zimly.backup.data.media
 
-enum class SourceType {
+enum class ContentType {
     MEDIA, FOLDER
 }

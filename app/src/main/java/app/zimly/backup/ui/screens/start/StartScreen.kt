@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.launch
@@ -237,9 +237,9 @@ private fun RemoteList(
                     }
                     Column(modifier = Modifier.wrapContentWidth()) {
                         Box(contentAlignment = Alignment.TopEnd) {
-                            val icon = when (remote.sourceType) {
-                                SourceType.MEDIA -> Icons.Outlined.Image
-                                SourceType.FOLDER -> Icons.Outlined.Folder
+                            val icon = when (remote.contentType) {
+                                ContentType.MEDIA -> Icons.Outlined.Image
+                                ContentType.FOLDER -> Icons.Outlined.Folder
                             }
                             Icon(icon, "Remote Configuration")
                         }
@@ -286,7 +286,7 @@ fun DefaultPreview() {
                 uid = it,
                 name = "test $it",
                 url = "https://blob.rawbot.zone/$it",
-                sourceType = if (it % 2 == 0) SourceType.MEDIA else SourceType.FOLDER
+                contentType = if (it % 2 == 0) ContentType.MEDIA else ContentType.FOLDER
             )
         }.toList()
 
@@ -316,6 +316,6 @@ data class RemoteView(
     val uid: Int,
     val name: String,
     val url: String,
-    val sourceType: SourceType,
+    val contentType: ContentType,
     val selected: Boolean = false
 )

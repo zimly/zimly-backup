@@ -15,7 +15,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.form.BucketForm
@@ -102,10 +102,10 @@ class EditorViewModel(
                     )
                 }
                 bucketForm.populate(remote)
-                backupSource.update(remote.sourceType)
-                when (remote.sourceType) {
-                    SourceType.MEDIA -> backupSource.mediaField.update(remote.sourceUri)
-                    SourceType.FOLDER -> backupSource.folderField.update(remote.sourceUri.toUri())
+                backupSource.update(remote.contentType)
+                when (remote.contentType) {
+                    ContentType.MEDIA -> backupSource.mediaField.update(remote.contentUri)
+                    ContentType.FOLDER -> backupSource.folderField.update(remote.contentUri.toUri())
                 }
             }
         }
@@ -119,10 +119,10 @@ class EditorViewModel(
 
             val sourceType = backupSource.state.value.type
             val sourceUri = when (sourceType) {
-                SourceType.MEDIA -> backupSource.mediaField.state.value.value
-                SourceType.FOLDER -> backupSource.folderField.state.value.value.toString()
+                ContentType.MEDIA -> backupSource.mediaField.state.value.value
+                ContentType.FOLDER -> backupSource.folderField.state.value.value.toString()
             }
-            if (sourceType == SourceType.FOLDER) {
+            if (sourceType == ContentType.FOLDER) {
                 persistPermissions(backupSource.folderField.state.value.value)
             }
 

@@ -3,7 +3,7 @@ package app.zimly.backup.ui.screens.sync
 import android.content.ContentResolver
 import android.util.Log
 import androidx.work.WorkManager
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.permission.PermissionService
@@ -70,7 +70,7 @@ class SyncViewModelTest {
             "GVGVZCZIVGKGC",
             "bucket",
             null,
-            SourceType.MEDIA,
+            ContentType.MEDIA,
             "Images"
         )
         val workManager = mockk<WorkManager>()

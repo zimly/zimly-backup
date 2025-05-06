@@ -22,7 +22,7 @@ import androidx.work.workDataOf
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.media.LocalContentResolver
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.sync.SyncInputs
@@ -123,8 +123,8 @@ class SyncViewModel(
                 url = it.url,
                 bucket = it.bucket,
                 region = it.region,
-                sourceType = it.sourceType,
-                sourceUri = it.sourceUri
+                contentType = it.contentType,
+                sourceUri = it.contentUri
             )
         }.flowOn(Dispatchers.IO)
 
@@ -193,7 +193,7 @@ class SyncViewModel(
                 MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
             val contentResolver =
-                LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
+                LocalContentResolver.get(contentResolver, remote.contentType, remote.contentUri)
             val syncService = UploadSyncService(s3Repo, contentResolver)
 
             val diff = syncService.calculateDiff()
@@ -343,7 +343,7 @@ class SyncViewModel(
         var url: String = "",
         var bucket: String = "",
         var region: String? = null,
-        var sourceType: SourceType? = null,
+        var contentType: ContentType? = null,
         var sourceUri: String = "",
     )
 

@@ -29,7 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.theme.containerBackground
@@ -39,7 +39,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
 
     // TODO Should this only operate on UI state? If not, should it reset the other option?
     // Or should it go together with the lower onSelect into the parent viewmodel or field?
-    val sourceSelector: (type: SourceType) -> Unit = {
+    val sourceSelector: (type: ContentType) -> Unit = {
         backupSource.update(it)
     }
     val state = backupSource.state.collectAsState()
@@ -58,8 +58,8 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
         }
 
         val options = mapOf(
-            SourceType.MEDIA to Icons.Outlined.Photo,
-            SourceType.FOLDER to Icons.Outlined.Folder
+            ContentType.MEDIA to Icons.Outlined.Photo,
+            ContentType.FOLDER to Icons.Outlined.Folder
         )
 
         MultiChoiceSegmentedButtonRow(
@@ -94,9 +94,9 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
                 .padding(16.dp)
         ) {
             when (state.value.type) {
-                SourceType.MEDIA ->
+                ContentType.MEDIA ->
                     MediaSelectorContainer(backupSource.mediaField)
-                SourceType.FOLDER ->
+                ContentType.FOLDER ->
                     DocumentsFolderSelector(backupSource.folderField)
             }
             BackupSourceError(backupSource)

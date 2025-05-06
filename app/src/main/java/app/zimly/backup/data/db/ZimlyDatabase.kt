@@ -14,12 +14,13 @@ import app.zimly.backup.data.db.remote.RemoteDao
 
 @Database(
     entities = [Remote::class, Notification::class],
-    version = 5,
+    version = 6,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = ZimlyDatabase.V3Migration::class),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6, spec = ZimlyDatabase.V6Migration::class),
     ]
 )
 abstract class ZimlyDatabase : RoomDatabase() {
@@ -28,6 +29,10 @@ abstract class ZimlyDatabase : RoomDatabase() {
 
     @RenameColumn(tableName = "Remote", fromColumnName = "folder", toColumnName = "source_uri")
     class V3Migration : AutoMigrationSpec
+
+    @RenameColumn(tableName = "Remote", fromColumnName = "source_type", toColumnName = "content_type")
+    @RenameColumn(tableName = "Remote", fromColumnName = "source_uri", toColumnName = "content_uri")
+    class V6Migration : AutoMigrationSpec
 
     companion object {
 

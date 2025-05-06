@@ -100,8 +100,8 @@ class SyncWorker(
 
             val localContentResolver = LocalContentResolver.get(
                 context.contentResolver,
-                remote.sourceType,
-                remote.sourceUri
+                remote.contentType,
+                remote.contentUri
             )
 
             // TODO: DownloadSyncService(s3Repository, localContentResolver, "".toUri())

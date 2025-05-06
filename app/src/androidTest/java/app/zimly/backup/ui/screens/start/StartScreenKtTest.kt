@@ -13,7 +13,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
@@ -60,7 +60,7 @@ class StartScreenKtTest {
                     "secret",
                     "bucket",
                     null,
-                    SourceType.MEDIA,
+                    ContentType.MEDIA,
                     "Pictures"
                 )
             )

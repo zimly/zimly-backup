@@ -9,7 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,7 +37,7 @@ class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
     // Combines remotes from DB with the selected state into a specialized
     // list of RemoteView data objects
     val remotesState = combine(_remotes, _selectedState)
-    { remotes, sel -> remotes.map { RemoteView(it.uid!!, it.name, it.url, it.sourceType, sel.contains(it.uid)) } }
+    { remotes, sel -> remotes.map { RemoteView(it.uid!!, it.name, it.url, it.contentType, sel.contains(it.uid)) } }
 
     // Notification displayed in the SnackBar upon successful copy/delete operations.
     private val _notification = MutableStateFlow<String?>(null)
@@ -72,7 +72,7 @@ class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
     suspend fun copy() {
         selected.forEach {
             val sel = dataStore.loadById(it)
-            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, SourceType.MEDIA, sel.sourceUri)
+            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, ContentType.MEDIA, sel.contentUri)
 
             dataStore.insert(copy)
         }

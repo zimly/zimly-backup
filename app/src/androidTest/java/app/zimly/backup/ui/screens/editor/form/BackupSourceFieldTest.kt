@@ -1,7 +1,7 @@
 package app.zimly.backup.ui.screens.editor.form
 
 import android.net.Uri
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
@@ -36,7 +36,7 @@ class BackupSourceFieldTest {
             field.error().take(3).toList(errors)
         }
 
-        field.update(SourceType.MEDIA)
+        field.update(ContentType.MEDIA)
         field.mediaField.update(validInput)
 
         assertFalse("Field should be invalid first", validations.first())
@@ -65,7 +65,7 @@ class BackupSourceFieldTest {
             field.error().take(3).toList(errors)
         }
 
-        field.update(SourceType.FOLDER)
+        field.update(ContentType.FOLDER)
         field.folderField.touch()
         // None selected, folder picker closed
         field.folderField.update(Uri.EMPTY)

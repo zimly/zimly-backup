@@ -3,7 +3,7 @@ package app.zimly.backup.data.db.remote
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 
 @Entity
 data class Remote(
@@ -14,6 +14,6 @@ data class Remote(
     @ColumnInfo(name = "secret") val secret: String,
     @ColumnInfo(name = "bucket") val bucket: String,
     @ColumnInfo(name = "region") val region: String?,
-    @ColumnInfo(name = "source_type", defaultValue = "MEDIA") val sourceType: SourceType,
-    @ColumnInfo(name = "source_uri") val sourceUri: String,
+    @ColumnInfo(name = "content_type", defaultValue = "MEDIA") val contentType: ContentType,
+    @ColumnInfo(name = "content_uri") val contentUri: String,
 )

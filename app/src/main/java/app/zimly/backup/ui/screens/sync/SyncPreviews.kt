@@ -13,7 +13,7 @@ import app.zimly.backup.data.db.notification.NotificationType
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalMediaResolver
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Status
@@ -32,7 +32,7 @@ fun InProgressPreview() {
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
-        sourceType = SourceType.MEDIA,
+        contentType = ContentType.MEDIA,
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress(
@@ -60,7 +60,7 @@ fun CompletedPreview() {
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         bucket = "zimly-backup",
-        sourceType = SourceType.MEDIA,
+        contentType = ContentType.MEDIA,
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress(
@@ -87,7 +87,7 @@ fun IdlePreview() {
     val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
-        sourceType = SourceType.MEDIA,
+        contentType = ContentType.MEDIA,
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress()
@@ -107,7 +107,7 @@ fun CalculatingPreview() {
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
-        sourceType = SourceType.MEDIA,
+        contentType = ContentType.MEDIA,
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress(status = Status.CALCULATING)
@@ -127,7 +127,7 @@ fun PermissionsMissingPreview() {
     val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
-        sourceType = SourceType.MEDIA,
+        contentType = ContentType.MEDIA,
         sourceUri = "Camera"
     )
     val progressState = SyncViewModel.Progress()
@@ -185,14 +185,14 @@ private fun PreviewSync(
 
 @Composable
 private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
-    when (remote.sourceType) {
-        SourceType.MEDIA -> {
+    when (remote.contentType) {
+        ContentType.MEDIA -> {
             MediaCollectionContainer(remote.sourceUri, viewModel = viewModel {
                 MediaCollectionViewModel(StubMediaResolver(), remote.sourceUri)
             })
         }
 
-        SourceType.FOLDER -> {
+        ContentType.FOLDER -> {
             DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
                 DocumentsFolderViewModel(
                     StubContentResolver(),

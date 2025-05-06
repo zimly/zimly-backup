@@ -18,12 +18,12 @@ interface LocalContentResolver {
     companion object {
 
         /**
-         * Provides the correct [LocalContentResolver] based on [SourceType].
+         * Provides the correct [LocalContentResolver] based on [ContentType].
          */
-        fun get(contentResolver: ContentResolver, type: SourceType, scope: String) =
+        fun get(contentResolver: ContentResolver, type: ContentType, scope: String) =
             when (type) {
-                SourceType.MEDIA -> LocalMediaResolverImpl(contentResolver, scope)
-                SourceType.FOLDER -> LocalDocumentsResolver(contentResolver, scope.toUri())
+                ContentType.MEDIA -> LocalMediaResolverImpl(contentResolver, scope)
+                ContentType.FOLDER -> LocalDocumentsResolver(contentResolver, scope.toUri())
             }
     }
 }
