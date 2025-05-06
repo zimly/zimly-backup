@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -45,7 +46,8 @@ class StartViewModelTest {
                     "bucket",
                     null,
                     ContentType.MEDIA,
-                    "Pictures"
+                    "Pictures",
+                    SyncDirection.UPLOAD
                 )
             )
             dao.insert(
@@ -58,7 +60,8 @@ class StartViewModelTest {
                     "bucket",
                     null,
                     ContentType.MEDIA,
-                    "Pictures"
+                    "Pictures",
+                    SyncDirection.UPLOAD
                 )
             )
         }

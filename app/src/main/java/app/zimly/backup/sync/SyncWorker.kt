@@ -2,10 +2,12 @@ package app.zimly.backup.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import app.zimly.backup.data.db.ZimlyDatabase
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
@@ -104,8 +106,10 @@ class SyncWorker(
                 remote.contentUri
             )
 
-            // TODO: DownloadSyncService(s3Repository, localContentResolver, "".toUri())
-            return UploadSyncService(s3Repository, localContentResolver)
+            return when(remote.direction) {
+                SyncDirection.UPLOAD -> UploadSyncService(s3Repository, localContentResolver)
+                SyncDirection.DOWNLOAD -> DownloadSyncService(s3Repository, localContentResolver, remote.contentUri.toUri())
+            }
         }
     }
 }

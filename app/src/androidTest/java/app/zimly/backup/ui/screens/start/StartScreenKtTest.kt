@@ -13,6 +13,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -34,7 +35,7 @@ class StartScreenKtTest {
         val dao = db.remoteDao()
 
         composeTestRule.setContent {
-            StartScreen(viewModel = StartViewModel(dao), {}, {})
+            StartScreen(viewModel = StartViewModel(dao), { _, _ -> }, {})
         }
 
         composeTestRule.onNodeWithText("Tap the + button below to create your first backup configuration.").assertIsDisplayed()
@@ -61,14 +62,15 @@ class StartScreenKtTest {
                     "bucket",
                     null,
                     ContentType.MEDIA,
-                    "Pictures"
+                    "Pictures",
+                    SyncDirection.UPLOAD
                 )
             )
         }
 
 
         composeTestRule.setContent {
-            StartScreen(viewModel = StartViewModel(dao), {}, {})
+            StartScreen(viewModel = StartViewModel(dao), { _, _ -> }, {})
         }
 
         composeTestRule.onNodeWithText("https://zimly.cloud").assertIsDisplayed()
@@ -94,15 +96,16 @@ class StartScreenKtTest {
                     "secret",
                     "bucket",
                     null,
-                    SourceType.MEDIA,
-                    "Pictures"
+                    ContentType.MEDIA,
+                    "Pictures",
+                    SyncDirection.UPLOAD
                 )
             )
         }
 
 
         composeTestRule.setContent {
-            StartScreen(viewModel = StartViewModel(dao), {}, {})
+            StartScreen(viewModel = StartViewModel(dao), { _,_ -> }, {})
         }
 
         composeTestRule.onNodeWithTag("Zimly Title").assertIsDisplayed()
