@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +14,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.room.util.TableInfo
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.start.StartScreen
@@ -61,12 +64,18 @@ class MainActivity : ComponentActivity() {
                     PermissionRequestScreen({ permissionRequest = false })
                 }
                 StartScreen(
-                    syncRemote = { remoteId -> navController.navigate("remote-sync?remoteId=$remoteId") },
+                    syncRemote = { remoteId, direction ->
+                        when (direction) {
+                            SyncDirection.UPLOAD -> navController.navigate("upload-sync?remoteId=$remoteId")
+                            SyncDirection.DOWNLOAD -> navController.navigate("download-sync?remoteId=$remoteId")
+                        }
+                    },
+
                     addRemote = { navController.navigate("remote-editor/create") })
             }
 
             composable(
-                "remote-editor/edit/{remoteId}",
+                "upload-editor/edit/{remoteId}",
                 arguments = listOf(navArgument("remoteId") { nullable = false })
             ) { backStackEntry ->
                 val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
@@ -77,7 +86,19 @@ class MainActivity : ComponentActivity() {
             }
 
             composable(
-                "remote-editor/create",
+                "download-editor/edit/{remoteId}",
+                arguments = listOf(navArgument("remoteId") { nullable = false })
+            ) { backStackEntry ->
+                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                remoteId?.let {
+                    Column {
+                        Text("Hello $remoteId")
+                    }
+                }
+            }
+
+            composable(
+                "upload-editor/create",
                 arguments = listOf(navArgument("remoteId") { nullable = true })
             ) {
                 EditorScreen(
@@ -85,9 +106,17 @@ class MainActivity : ComponentActivity() {
                     back = { navController.popBackStack() }
                 )
             }
+            composable(
+                "download-editor/create",
+                arguments = listOf(navArgument("remoteId") { nullable = true })
+            ) {
+                Column {
+                    Text("Hello")
+                }
+            }
 
             composable(
-                "remote-sync?remoteId={remoteId}",
+                "upload-sync?remoteId={remoteId}",
                 arguments = listOf(navArgument("remoteId") { nullable = false })
             ) { backStackEntry ->
                 val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
@@ -95,11 +124,29 @@ class MainActivity : ComponentActivity() {
                 remoteId?.let {
                     SyncScreen(
                         remoteId,
-                        edit = { remoteId -> navController.navigate("remote-editor/edit/${remoteId}") },
+                        edit = { remoteId -> navController.navigate("upload-editor/edit/${remoteId}") },
                         back = { navController.popBackStack() })
                 }
             }
+            composable(
+                "download-sync?remoteId={remoteId}",
+                arguments = listOf(navArgument("remoteId") { nullable = false })
+            ) { backStackEntry ->
+                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+
+                remoteId?.let {
+                    Column {
+                        Text("Hello $remoteId")
+                    }
+                }
+            }
+
         }
+    }
+
+    @Composable
+    fun Column(content: @Composable () -> Unit) {
+        TODO("Not yet implemented")
     }
 
 

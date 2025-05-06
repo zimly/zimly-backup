@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -67,7 +68,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun StartScreen(
     viewModel: StartViewModel = viewModel(factory = StartViewModel.Factory),
-    syncRemote: (Int) -> Unit,
+    syncRemote: (Int, SyncDirection) -> Unit,
     addRemote: () -> Unit,
 ) {
     val remotes by viewModel.remotesState.collectAsState(initial = emptyList())
@@ -195,7 +196,7 @@ private fun RemoteList(
     remotes: List<RemoteView>,
     numSelected: Int,
     select: (Int) -> Unit,
-    syncRemote: (Int) -> Unit
+    syncRemote: (Int, SyncDirection) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -221,7 +222,7 @@ private fun RemoteList(
                     .combinedClickable(
                         onClick = {
                             if (numSelected > 0) select(remote.uid) else syncRemote(
-                                remote.uid
+                                remote.uid, remote.direction
                             )
                         },
                         onLongClick = { select(remote.uid) })
@@ -286,7 +287,8 @@ fun DefaultPreview() {
                 uid = it,
                 name = "test $it",
                 url = "https://blob.rawbot.zone/$it",
-                contentType = if (it % 2 == 0) ContentType.MEDIA else ContentType.FOLDER
+                contentType = if (it % 2 == 0) ContentType.MEDIA else ContentType.FOLDER,
+                direction = SyncDirection.UPLOAD
             )
         }.toList()
 
@@ -307,7 +309,7 @@ fun DefaultPreview() {
             if (remotes.isEmpty()) {
                 GetStarted(innerPadding)
             }
-            RemoteList(innerPadding, remotes, numSelected, { }, { })
+            RemoteList(innerPadding, remotes, numSelected, { }, { _, _ -> })
         }
     }
 }
@@ -317,5 +319,6 @@ data class RemoteView(
     val name: String,
     val url: String,
     val contentType: ContentType,
+    val direction: SyncDirection,
     val selected: Boolean = false
 )
