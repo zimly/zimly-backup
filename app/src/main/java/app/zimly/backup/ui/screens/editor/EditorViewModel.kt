@@ -15,6 +15,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
@@ -137,6 +138,7 @@ class EditorViewModel(
                 bucketConfiguration.region,
                 sourceType,
                 sourceUri,
+                SyncDirection.UPLOAD
             )
             if (remote.uid == null) {
                 dao.insert(remote)

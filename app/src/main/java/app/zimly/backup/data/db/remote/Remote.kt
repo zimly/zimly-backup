@@ -16,4 +16,5 @@ data class Remote(
     @ColumnInfo(name = "region") val region: String?,
     @ColumnInfo(name = "content_type", defaultValue = "MEDIA") val contentType: ContentType,
     @ColumnInfo(name = "content_uri") val contentUri: String,
+    @ColumnInfo(name = "direction", defaultValue = "UPLOAD") val direction: SyncDirection,
 )

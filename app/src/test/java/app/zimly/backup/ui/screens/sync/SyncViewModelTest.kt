@@ -6,6 +6,7 @@ import androidx.work.WorkManager
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.permission.PermissionService
 import io.mockk.coEvery
 import io.mockk.every
@@ -71,7 +72,8 @@ class SyncViewModelTest {
             "bucket",
             null,
             ContentType.MEDIA,
-            "Images"
+            "Images",
+            SyncDirection.UPLOAD
         )
         val workManager = mockk<WorkManager>()
         every { workManager.getWorkInfosFlow(any()) } returns emptyFlow()
