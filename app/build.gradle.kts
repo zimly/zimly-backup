@@ -101,8 +101,8 @@ dependencies {
     androidTestImplementation(composeBom)
     debugImplementation(platform(composeBom))
 
-    val workManagerVersion = "2.10.0"
-    val roomVersion = "2.7.0"
+    val workManagerVersion = "2.10.1"
+    val roomVersion = "2.7.1"
     val lifecycleVersion = "2.8.7"
 
     // minio / S3
