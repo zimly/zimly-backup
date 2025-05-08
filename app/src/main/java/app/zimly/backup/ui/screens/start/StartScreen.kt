@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -238,9 +239,13 @@ private fun RemoteList(
                     }
                     Column(modifier = Modifier.wrapContentWidth()) {
                         Box(contentAlignment = Alignment.TopEnd) {
-                            val icon = when (remote.contentType) {
-                                ContentType.MEDIA -> Icons.Outlined.Image
-                                ContentType.FOLDER -> Icons.Outlined.Folder
+                            val icon = when (remote.direction) {
+                                SyncDirection.UPLOAD -> when (remote.contentType) {
+                                    ContentType.MEDIA -> Icons.Outlined.Image
+                                    ContentType.FOLDER -> Icons.Outlined.Folder
+                                }
+
+                                SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
                             }
                             Icon(icon, "Remote Configuration")
                         }
@@ -303,8 +308,8 @@ fun DefaultPreview() {
             addRemote = { },
             numSelected,
             back = { },
-            copy = {  },
-            delete = {  },
+            copy = { },
+            delete = { },
         ) { innerPadding ->
             if (remotes.isEmpty()) {
                 GetStarted(innerPadding)

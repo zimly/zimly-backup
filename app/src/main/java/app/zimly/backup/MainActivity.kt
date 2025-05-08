@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,12 +15,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.room.util.TableInfo
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
-import app.zimly.backup.ui.screens.start.StartScreen
+import app.zimly.backup.ui.screens.editor.Wizard
 import app.zimly.backup.ui.screens.permission.PermissionRequestScreen
+import app.zimly.backup.ui.screens.start.StartScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
@@ -58,7 +59,6 @@ class MainActivity : ComponentActivity() {
 
         NavHost(navController, startDestination = REMOTES_LIST) {
 
-
             composable(REMOTES_LIST) {
                 if (permissionRequest) {
                     PermissionRequestScreen({ permissionRequest = false })
@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
                         }
                     },
 
-                    addRemote = { navController.navigate("remote-editor/create") })
+                    addRemote = { navController.navigate("wizard/create") })
             }
 
             composable(
@@ -116,6 +116,21 @@ class MainActivity : ComponentActivity() {
             }
 
             composable(
+                "wizard/create",
+                arguments = listOf(navArgument("remoteId") { nullable = true })
+            ) {
+                Wizard(
+                    { direction ->
+                        when (direction) {
+                            SyncDirection.UPLOAD -> navController.navigate("upload-editor/create")
+                            SyncDirection.DOWNLOAD -> navController.navigate("download-editor/create")
+                        }
+                    }
+
+                )
+            }
+
+            composable(
                 "upload-sync?remoteId={remoteId}",
                 arguments = listOf(navArgument("remoteId") { nullable = false })
             ) { backStackEntry ->
@@ -140,14 +155,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-
         }
     }
-
-    @Composable
-    fun Column(content: @Composable () -> Unit) {
-        TODO("Not yet implemented")
-    }
-
-
 }
