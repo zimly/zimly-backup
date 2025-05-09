@@ -120,13 +120,13 @@ class MainActivity : ComponentActivity() {
                 arguments = listOf(navArgument("remoteId") { nullable = true })
             ) {
                 Wizard(
-                    { direction ->
+                    create = { direction ->
                         when (direction) {
                             SyncDirection.UPLOAD -> navController.navigate("upload-editor/create")
                             SyncDirection.DOWNLOAD -> navController.navigate("download-editor/create")
                         }
-                    }
-
+                    },
+                    back = { navController.popBackStack() }
                 )
             }
 
