@@ -124,7 +124,7 @@ private fun BackupSourceError(backupSource: BackupSourceField) {
 }
 
 @Composable
-private fun DocumentsFolderSelector(
+fun DocumentsFolderSelector(
     folderField: UriField
 ) {
     val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(it) else folderField.update(Uri.EMPTY) }

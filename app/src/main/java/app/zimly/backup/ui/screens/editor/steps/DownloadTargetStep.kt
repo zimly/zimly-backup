@@ -14,38 +14,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.ContentType
-import app.zimly.backup.ui.screens.editor.BackupSourceConfiguration
+import app.zimly.backup.ui.screens.editor.DocumentsFolderSelector
 import app.zimly.backup.ui.screens.editor.EditorViewModel
 import app.zimly.backup.ui.screens.editor.WizardStep
-import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.form.field.UriField
 import kotlinx.coroutines.flow.Flow
 
-class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, String>>) : ViewModel() {
+class DownloadTargetViewModel(private val store: ValueStore<Pair<ContentType, String>>) : ViewModel() {
 
-    val backupSource = BackupSourceField()
+    val folderField = UriField("Select a folder for your data")
 
     init {
-        val value = store.load()
-        if (value != null) {
-            backupSource.update(value.first)
-            when (value.first) {
-                ContentType.MEDIA -> backupSource.mediaField.update(value.second)
-                ContentType.FOLDER -> backupSource.folderField.update(value.second.toUri())
-            }
-        }
+        store.load()?.let { folderField.update(it.second.toUri()) }
     }
 
     fun persist() {
-        val sourceType = backupSource.state.value.type
-        val sourceUri = when (sourceType) {
-            ContentType.MEDIA -> backupSource.mediaField.state.value.value
-            ContentType.FOLDER -> backupSource.folderField.state.value.value.toString()
-        }
-        store.persist(Pair(sourceType, sourceUri))
+        val value = folderField.state.value.value.toString()
+        store.persist(Pair(ContentType.FOLDER, value))
     }
 
     fun isValid(): Flow<Boolean> {
-        return backupSource.valid()
+        return folderField.valid()
     }
 
     companion object {
@@ -58,7 +47,7 @@ class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, Stri
 
             initializer {
                 val valueStore = checkNotNull(this[VALUE_STORE_KEY])
-                UploadSourceViewModel(valueStore)
+                DownloadTargetViewModel(valueStore)
             }
         }
     }
@@ -67,14 +56,14 @@ class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, Stri
 }
 
 @Composable
-fun UploadSourceStep(
+fun DownloadTargetStep(
     store: ValueStore<Pair<ContentType, String>>,
     nextStep: () -> Unit,
     previousStep: () -> Unit,
-    viewModel: UploadSourceViewModel = viewModel(
-        factory = UploadSourceViewModel.Factory,
+    viewModel: DownloadTargetViewModel = viewModel(
+        factory = DownloadTargetViewModel.Factory,
         extras = MutableCreationExtras().apply {
-            set(UploadSourceViewModel.VALUE_STORE_KEY, store)
+            set(DownloadTargetViewModel.VALUE_STORE_KEY, store)
         })
 ) {
 
@@ -97,7 +86,7 @@ fun UploadSourceStep(
             }
         }
     ) {
-        BackupSourceConfiguration(viewModel.backupSource)
+        DocumentsFolderSelector(viewModel.folderField)
     }
 
 }

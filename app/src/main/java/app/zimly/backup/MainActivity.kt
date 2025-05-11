@@ -20,6 +20,7 @@ import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.editor.steps.BucketConfigurationStep
+import app.zimly.backup.ui.screens.editor.steps.DownloadTargetStep
 import app.zimly.backup.ui.screens.editor.steps.SyncDirectionStep
 import app.zimly.backup.ui.screens.editor.steps.UploadSourceStep
 import app.zimly.backup.ui.screens.editor.wizardViewModel
@@ -120,7 +121,7 @@ class MainActivity : ComponentActivity() {
 
                     val vm = navController.wizardViewModel()
                     SyncDirectionStep(
-                        vm.directionStore,
+                        store = vm.directionStore,
                         nextStep = { direction ->
                             when (direction) {
                                 SyncDirection.UPLOAD -> navController.navigate("wizard/upload")
@@ -134,13 +135,18 @@ class MainActivity : ComponentActivity() {
                     val vm = navController.wizardViewModel()
 
                     UploadSourceStep(
-                        contentStore = vm.contentStore,
+                        store = vm.contentStore,
                         nextStep = { navController.navigate("wizard/bucket") },
                         previousStep = { navController.popBackStack() }
                     )
                 }
                 composable("wizard/download") {
-                    Column { Text("DOWNLOAD") }
+                    val vm = navController.wizardViewModel()
+                    DownloadTargetStep(
+                        store = vm.contentStore,
+                        nextStep = { navController.navigate("wizard/bucket") },
+                        previousStep = { navController.popBackStack() }
+                    )
                 }
                 composable("wizard/bucket") {
                     val vm = navController.wizardViewModel()
