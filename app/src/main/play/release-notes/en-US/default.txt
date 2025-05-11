@@ -1,5 +1,5 @@
-2.4.3
-* Show list actions when items selected in overview list #35
+3.0.0
+* Implement download from S3 functionality
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
