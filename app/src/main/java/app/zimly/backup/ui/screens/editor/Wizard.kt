@@ -1,47 +1,145 @@
 package app.zimly.backup.ui.screens.editor
 
-import androidx.compose.foundation.BorderStroke
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Cloud
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
+import app.zimly.backup.data.db.ZimlyDatabase
+import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
-import app.zimly.backup.ui.theme.containerBackground
+import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.ui.screens.editor.form.BucketForm
+import app.zimly.backup.ui.screens.editor.steps.ValueStore
+import kotlinx.coroutines.launch
 
 
+/**
+ * An overarching [ViewModel] that keeps an in-memory [Draft] object of the [Remote] object to be
+ * persisted. The final step maps and persists the draft to the DB. See [bucketStore]s #persist.
+ *
+ * It's scoped to the wizard navigation graph using [NavBackStackEntry].
+ */
+class WizardViewModel(private val remoteDao: RemoteDao) : ViewModel() {
+
+    var draft = Draft()
+
+    val contentStore = object : ValueStore<Pair<ContentType, String>> {
+        override fun persist(value: Pair<ContentType, String>) {
+            draft = draft.copy(
+                contentType = value.first,
+                contentUri = value.second
+            )
+        }
+
+        override fun load(): Pair<ContentType, String>? {
+            if (draft.contentType != null && draft.contentUri != null)
+                return Pair(draft.contentType!!, draft.contentUri!!)
+            return null
+        }
+    }
+
+    val directionStore = object : ValueStore<SyncDirection> {
+        override fun persist(value: SyncDirection) {
+            draft = draft.copy(direction = value)
+        }
+
+        override fun load(): SyncDirection? {
+            return draft.direction
+        }
+    }
+
+    val bucketStore = object : ValueStore<BucketForm.BucketConfiguration> {
+        override fun persist(value: BucketForm.BucketConfiguration) {
+            draft = draft.copy(bucket = value)
+
+            viewModelScope.launch { persist() }
+        }
+
+        override fun load(): BucketForm.BucketConfiguration? {
+            return draft.bucket
+        }
+    }
+
+    /**
+     * Map the [Draft] object to [Remote] and persist it.
+     */
+    suspend fun persist() {
+        val remote = Remote(
+            uid = null,
+            direction = draft.direction!!,
+            url = draft.bucket!!.url,
+            key = draft.bucket!!.key,
+            secret = draft.bucket!!.secret,
+            bucket = draft.bucket!!.bucket,
+            region = draft.bucket!!.region,
+            name = draft.bucket!!.name,
+            contentType = draft.contentType!!,
+            contentUri = draft.contentUri!!
+        )
+        remoteDao.insert(remote)
+    }
+
+    data class Draft(
+        val direction: SyncDirection? = null,
+        val bucket: BucketForm.BucketConfiguration? = null,
+        val contentType: ContentType? = null,
+        val contentUri: String? = null
+    )
+
+    companion object {
+        val TAG: String? = WizardViewModel::class.simpleName
+
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = checkNotNull(this[APPLICATION_KEY])
+                val db = ZimlyDatabase.getInstance(application.applicationContext)
+                val remoteDao = db.remoteDao()
+
+                WizardViewModel(remoteDao)
+            }
+        }
+    }
+
+}
+
+/**
+ * Provides the chrome for the individual wizard steps.
+ *
+ * TODO: Implement error handling
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Wizard(create: (SyncDirection) -> Unit, back: () -> Unit) {
-    val options = listOf(SyncDirection.DOWNLOAD, SyncDirection.UPLOAD)
-    var selectedOption by remember { mutableStateOf<SyncDirection?>(null) }
+fun WizardStep(
+    title: String,
+    navigation: @Composable RowScope.() -> Unit,
+    content: @Composable () -> Unit
+) {
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Select Sync Direction") },
+                title = { Text(title) },
             )
         },
         bottomBar = {
@@ -51,16 +149,7 @@ fun Wizard(create: (SyncDirection) -> Unit, back: () -> Unit) {
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Absolute.SpaceBetween
             ) {
-                TextButton(onClick = { back() }) {
-                    Text("Cancel")
-                }
-
-                TextButton (
-                    enabled = selectedOption != null,
-                    onClick = { create(selectedOption!!) },
-                ) {
-                    Text("Continue")
-                }
+                navigation()
             }
         }
     ) { innerPadding ->
@@ -72,30 +161,26 @@ fun Wizard(create: (SyncDirection) -> Unit, back: () -> Unit) {
                 bottom = innerPadding.calculateBottomPadding()
             ) then Modifier.fillMaxWidth()
         ) {
-            options.forEach { option ->
-                Card(
-                    onClick = { selectedOption = option },
-                    border = if (selectedOption == option) BorderStroke(
-                        2.dp,
-                        MaterialTheme.colorScheme.secondary
-                    ) else null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                ) {
-
-                    val icon = when (option) {
-                        SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
-                        SyncDirection.UPLOAD -> Icons.Outlined.Cloud
-                    }
-                    ListItem(
-                        headlineContent = { Text(option.name) },
-                        supportingContent = { Text("Descriptioof Description of Description of $option") },
-                        trailingContent = { Icon(icon, "Remote Configuration") },
-                        colors = ListItemDefaults.colors(containerColor = containerBackground())
-                    )
-                }
-            }
+            content()
         }
     }
 }
+
+/**
+ * Creates a shareable ViewModel for the individual wizard steps, that's scoped to the parent
+ * [NavBackStackEntry].
+ * The linting error is a false negative it seems.
+ */
+@SuppressLint("UnrememberedGetBackStackEntry")
+@Composable
+fun NavController.wizardViewModel(): WizardViewModel {
+    val parentEntry = remember(this) {
+        getBackStackEntry("wizard")
+    }
+
+    return viewModel(
+        viewModelStoreOwner = parentEntry,
+        factory = WizardViewModel.Factory
+    )
+}
+

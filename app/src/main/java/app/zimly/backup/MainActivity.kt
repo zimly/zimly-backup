@@ -13,12 +13,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.permission.PermissionService
 import app.zimly.backup.ui.screens.editor.EditorScreen
-import app.zimly.backup.ui.screens.editor.Wizard
+import app.zimly.backup.ui.screens.editor.steps.BucketConfigurationStep
+import app.zimly.backup.ui.screens.editor.steps.SyncDirectionStep
+import app.zimly.backup.ui.screens.editor.steps.UploadSourceStep
+import app.zimly.backup.ui.screens.editor.wizardViewModel
 import app.zimly.backup.ui.screens.permission.PermissionRequestScreen
 import app.zimly.backup.ui.screens.start.StartScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
@@ -71,7 +75,7 @@ class MainActivity : ComponentActivity() {
                         }
                     },
 
-                    addRemote = { navController.navigate("wizard/create") })
+                    addRemote = { navController.navigate("wizard") })
             }
 
             composable(
@@ -106,28 +110,46 @@ class MainActivity : ComponentActivity() {
                     back = { navController.popBackStack() }
                 )
             }
-            composable(
-                "download-editor/create",
-                arguments = listOf(navArgument("remoteId") { nullable = true })
-            ) {
-                Column {
-                    Text("Hello")
-                }
-            }
 
-            composable(
-                "wizard/create",
-                arguments = listOf(navArgument("remoteId") { nullable = true })
+            navigation(
+                route = "wizard",
+                startDestination = "wizard/direction"
             ) {
-                Wizard(
-                    create = { direction ->
-                        when (direction) {
-                            SyncDirection.UPLOAD -> navController.navigate("upload-editor/create")
-                            SyncDirection.DOWNLOAD -> navController.navigate("download-editor/create")
-                        }
-                    },
-                    back = { navController.popBackStack() }
-                )
+
+                composable("wizard/direction") {
+
+                    val vm = navController.wizardViewModel()
+                    SyncDirectionStep(
+                        vm.directionStore,
+                        nextStep = { direction ->
+                            when (direction) {
+                                SyncDirection.UPLOAD -> navController.navigate("wizard/upload")
+                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download")
+                            }
+                        },
+                        previousStep = { navController.popBackStack() }
+                    )
+                }
+                composable("wizard/upload") {
+                    val vm = navController.wizardViewModel()
+
+                    UploadSourceStep(
+                        contentStore = vm.contentStore,
+                        nextStep = { navController.navigate("wizard/bucket") },
+                        previousStep = { navController.popBackStack() }
+                    )
+                }
+                composable("wizard/download") {
+                    Column { Text("DOWNLOAD") }
+                }
+                composable("wizard/bucket") {
+                    val vm = navController.wizardViewModel()
+                    BucketConfigurationStep(
+                        store = vm.bucketStore,
+                        nextStep = { navController.popBackStack(REMOTES_LIST, inclusive = false) },
+                        previousStep = { navController.popBackStack() },
+                    )
+                }
             }
 
             composable(
@@ -140,7 +162,8 @@ class MainActivity : ComponentActivity() {
                     SyncScreen(
                         remoteId,
                         edit = { remoteId -> navController.navigate("upload-editor/edit/${remoteId}") },
-                        back = { navController.popBackStack() })
+                        back = { navController.popBackStack() }
+                    )
                 }
             }
             composable(

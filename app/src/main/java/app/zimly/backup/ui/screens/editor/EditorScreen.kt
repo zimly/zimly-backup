@@ -36,13 +36,14 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.form.BucketForm
+import app.zimly.backup.ui.screens.editor.steps.BucketConfiguration
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @Composable
 fun EditorScreen(
-    remoteId: Int?,
+    remoteId: Int? = null,
     back: () -> Unit,
     viewModel: EditorViewModel = viewModel(
         factory = EditorViewModel.Factory,
