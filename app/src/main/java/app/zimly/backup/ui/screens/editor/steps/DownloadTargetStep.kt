@@ -70,7 +70,7 @@ fun DownloadTargetStep(
     val valid by viewModel.isValid().collectAsStateWithLifecycle(false)
 
     WizardStep(
-        title = "Select Upload Source",
+        title = "Select Download target",
         navigation = {
             TextButton(onClick = { previousStep() }) {
                 Text("Back")
