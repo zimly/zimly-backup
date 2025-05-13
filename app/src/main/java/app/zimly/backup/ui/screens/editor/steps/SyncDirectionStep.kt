@@ -1,10 +1,9 @@
 package app.zimly.backup.ui.screens.editor.steps
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -18,7 +17,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.ui.screens.editor.WizardStep
@@ -29,7 +29,6 @@ import app.zimly.backup.ui.theme.containerBackground
 fun SyncDirectionStep(
     store: ValueStore<SyncDirection>, nextStep: (SyncDirection) -> Unit, previousStep: () -> Unit
 ) {
-    val options = listOf(SyncDirection.DOWNLOAD, SyncDirection.UPLOAD)
     var selectedOption by remember { mutableStateOf<SyncDirection?>(store.load()) }
 
     WizardStep(
@@ -50,29 +49,70 @@ fun SyncDirectionStep(
                 Text("Continue")
             }
         }) {
-        options.forEach { option ->
-            Card(
-                onClick = { selectedOption = option },
-                border = if (selectedOption == option) BorderStroke(
-                    2.dp,
-                    MaterialTheme.colorScheme.secondary
-                ) else null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            ) {
 
-                val icon = when (option) {
-                    SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
-                    SyncDirection.UPLOAD -> Icons.Outlined.Cloud
-                }
-                ListItem(
-                    headlineContent = { Text(option.name) },
-                    supportingContent = { Text("Descriptioof Description of Description of $option") },
-                    trailingContent = { Icon(icon, "Remote Configuration") },
-                    colors = ListItemDefaults.colors(containerColor = containerBackground())
-                )
-            }
-        }
+        SyncOption(
+            selected = selectedOption == SyncDirection.UPLOAD,
+            option = SyncDirection.UPLOAD,
+            onSelect = { selectedOption = it },
+            title = "Upload from Device",
+            description = "Synchronize media or documents from your device to a remote S3 bucket",
+            icon = Icons.Outlined.Upload
+        )
+        SyncOption(
+            selected = selectedOption == SyncDirection.DOWNLOAD,
+            option = SyncDirection.DOWNLOAD,
+            onSelect = { selectedOption = it },
+            title = "Download from S3",
+            description = "Synchronize remote data to your mobile device",
+            icon = Icons.Outlined.CloudDownload
+        )
     }
+}
+
+@Composable
+private fun SyncOption(
+    selected: Boolean = false,
+    option: SyncDirection,
+    onSelect: (SyncDirection) -> Unit,
+    title: String,
+    description: String,
+    icon: ImageVector
+) {
+    Card(
+        onClick = { onSelect(option) },
+        border = if (selected) BorderStroke(
+            2.dp,
+            MaterialTheme.colorScheme.secondary
+        ) else null
+    ) {
+        ListItem(
+            headlineContent = { Text(title) },
+            supportingContent = { Text(description) },
+            trailingContent = { Icon(icon, title) },
+            colors = ListItemDefaults.colors(containerColor = containerBackground())
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SyncDirectionStepPreview() {
+
+    val stubStore: ValueStore<SyncDirection> = object : ValueStore<SyncDirection> {
+
+        var direction: SyncDirection? = null
+        override fun persist(value: SyncDirection) {
+            direction = value
+        }
+
+        override fun load(): SyncDirection? {
+            return direction
+        }
+
+    }
+    SyncDirectionStep(
+        stubStore,
+        nextStep = {},
+        previousStep = {}
+    )
 }
