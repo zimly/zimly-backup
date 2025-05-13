@@ -4,8 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +16,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.permission.PermissionService
-import app.zimly.backup.ui.screens.editor.EditorScreen
 import app.zimly.backup.ui.screens.editor.steps.BucketConfigurationStep
 import app.zimly.backup.ui.screens.editor.steps.DownloadTargetStep
 import app.zimly.backup.ui.screens.editor.steps.SyncDirectionStep
@@ -75,41 +72,7 @@ class MainActivity : ComponentActivity() {
                             SyncDirection.DOWNLOAD -> navController.navigate("download-sync?remoteId=$remoteId")
                         }
                     },
-
                     addRemote = { navController.navigate("wizard") })
-            }
-
-            composable(
-                "upload-editor/edit/{remoteId}",
-                arguments = listOf(navArgument("remoteId") { nullable = false })
-            ) { backStackEntry ->
-                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
-                EditorScreen(
-                    remoteId = remoteId,
-                    back = { navController.popBackStack() }
-                )
-            }
-
-            composable(
-                "download-editor/edit/{remoteId}",
-                arguments = listOf(navArgument("remoteId") { nullable = false })
-            ) { backStackEntry ->
-                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
-                remoteId?.let {
-                    Column {
-                        Text("Hello $remoteId")
-                    }
-                }
-            }
-
-            composable(
-                "upload-editor/create",
-                arguments = listOf(navArgument("remoteId") { nullable = true })
-            ) {
-                EditorScreen(
-                    remoteId = null,
-                    back = { navController.popBackStack() }
-                )
             }
 
             navigation(
@@ -184,11 +147,13 @@ class MainActivity : ComponentActivity() {
                 remoteId?.let {
                     SyncScreen(
                         remoteId,
-                        edit = { direction, remoteId -> when(direction) {
-                            SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
-                            SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=$${remoteId}")
-                            null -> {} // Might not have loaded in time
-                        } },
+                        edit = { direction, remoteId ->
+                            when (direction) {
+                                SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
+                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=$${remoteId}")
+                                null -> {} // Might not have loaded in time
+                            }
+                        },
                         back = { navController.popBackStack() }
                     )
                 }
@@ -200,9 +165,17 @@ class MainActivity : ComponentActivity() {
                 val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
                 remoteId?.let {
-                    Column {
-                        Text("Hello $remoteId")
-                    }
+                    SyncScreen(
+                        remoteId,
+                        edit = { direction, remoteId ->
+                            when (direction) {
+                                SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
+                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=$${remoteId}")
+                                null -> {} // Might not have loaded in time
+                            }
+                        },
+                        back = { navController.popBackStack() }
+                    )
                 }
             }
         }
