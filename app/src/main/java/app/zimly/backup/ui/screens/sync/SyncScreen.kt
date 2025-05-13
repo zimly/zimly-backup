@@ -59,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.screens.sync.permission.MediaPermissionContainer
@@ -69,7 +70,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SyncScreen(
     remoteId: Int,
-    edit: (Int) -> Unit,
+    edit: (SyncDirection?, Int) -> Unit,
     back: () -> Unit,
     viewModel: SyncViewModel = viewModel(
         factory = SyncViewModel.Factory,
@@ -105,7 +106,7 @@ fun SyncScreen(
             }
         },
         cancelSync = { viewModel.cancelSync() },
-        edit = { edit(remoteId) },
+        edit = { edit(remote.direction, remoteId) },
         back,
         clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
     ) {

@@ -21,6 +21,7 @@ import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.s3.MinioRepository
@@ -124,7 +125,8 @@ class SyncViewModel(
                 bucket = it.bucket,
                 region = it.region,
                 contentType = it.contentType,
-                sourceUri = it.contentUri
+                sourceUri = it.contentUri,
+                direction = it.direction
             )
         }.flowOn(Dispatchers.IO)
 
@@ -345,6 +347,7 @@ class SyncViewModel(
         var region: String? = null,
         var contentType: ContentType? = null,
         var sourceUri: String = "",
+        val direction: SyncDirection? = null,
     )
 
     data class Progress(

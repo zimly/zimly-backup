@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.editor
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.ContentResolver
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
@@ -16,12 +17,15 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -32,6 +36,7 @@ import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.ui.screens.editor.WizardViewModel.Companion.REMOTE_ID_KEY
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.screens.editor.steps.ValueStore
 import kotlinx.coroutines.launch
@@ -44,9 +49,34 @@ import kotlinx.coroutines.launch
  *
  * It's scoped to the wizard navigation graph using [NavBackStackEntry].
  */
-class WizardViewModel(private val remoteDao: RemoteDao, private val contentResolver: ContentResolver) : ViewModel() {
+class WizardViewModel(
+    private val remoteDao: RemoteDao,
+    private val contentResolver: ContentResolver,
+    private val remoteId: Int? = null
+) : ViewModel() {
 
     var draft = Draft()
+
+    init {
+        remoteId?.let {
+            viewModelScope.launch {
+                val remote = remoteDao.loadById(remoteId)
+                draft = Draft(
+                    bucket = BucketForm.BucketConfiguration(
+                        url = remote.url,
+                        name = remote.name,
+                        key = remote.key,
+                        secret = remote.secret,
+                        bucket = remote.bucket,
+                        region = remote.region,
+                    ),
+                    direction = remote.direction,
+                    contentType = remote.contentType,
+                    contentUri = remote.contentUri
+                )
+            }
+        }
+    }
 
     val contentStore = object : ValueStore<Pair<ContentType, String>> {
         override fun persist(value: Pair<ContentType, String>) {
@@ -90,11 +120,11 @@ class WizardViewModel(private val remoteDao: RemoteDao, private val contentResol
      */
     suspend fun persist() {
 
-        if (draft.contentType== ContentType.FOLDER) {
+        if (draft.contentType == ContentType.FOLDER) {
             persistPermissions(draft.direction!!, draft.contentUri!!)
         }
         val remote = Remote(
-            uid = null,
+            uid = remoteId,
             direction = draft.direction!!,
             url = draft.bucket!!.url,
             key = draft.bucket!!.key,
@@ -105,17 +135,20 @@ class WizardViewModel(private val remoteDao: RemoteDao, private val contentResol
             contentType = draft.contentType!!,
             contentUri = draft.contentUri!!
         )
-        remoteDao.insert(remote)
+        if (remote.uid == null) {
+            remoteDao.insert(remote)
+        } else {
+            remoteDao.update(remote)
+        }
     }
 
     private fun persistPermissions(direction: SyncDirection, uri: String) {
-        val modeFlags = when(direction) {
+        val modeFlags = when (direction) {
             SyncDirection.UPLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION
             SyncDirection.DOWNLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION and Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         }
         contentResolver.takePersistableUriPermission(uri.toUri(), modeFlags)
     }
-
 
     data class Draft(
         val direction: SyncDirection? = null,
@@ -127,13 +160,16 @@ class WizardViewModel(private val remoteDao: RemoteDao, private val contentResol
     companion object {
         val TAG: String? = WizardViewModel::class.simpleName
 
+        val REMOTE_ID_KEY = object : CreationExtras.Key<Int?> {}
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
+                val remoteId = this[REMOTE_ID_KEY]
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
 
-                WizardViewModel(remoteDao, application.contentResolver)
+                WizardViewModel(remoteDao, application.contentResolver, remoteId)
             }
         }
     }
@@ -190,14 +226,19 @@ fun WizardStep(
  */
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
-fun NavController.wizardViewModel(): WizardViewModel {
+fun NavController.wizardViewModel(remoteId: Int?): WizardViewModel {
     val parentEntry = remember(this) {
-        getBackStackEntry("wizard")
+        getBackStackEntry("wizard?id={id}")
     }
+    // Make sure we null out the value. #getInt return 0 by default, which may be a valid ID
 
     return viewModel(
         viewModelStoreOwner = parentEntry,
-        factory = WizardViewModel.Factory
+        factory = WizardViewModel.Factory,
+        extras = MutableCreationExtras().apply {
+            this[APPLICATION_KEY] = LocalContext.current.applicationContext as Application
+            this[REMOTE_ID_KEY] = remoteId
+        }
     )
 }
 

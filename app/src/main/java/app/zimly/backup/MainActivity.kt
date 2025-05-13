@@ -114,12 +114,12 @@ class MainActivity : ComponentActivity() {
 
             navigation(
                 route = "wizard",
-                startDestination = "wizard/direction"
+                startDestination = "wizard/direction",
             ) {
 
                 composable("wizard/direction") {
 
-                    val vm = navController.wizardViewModel()
+                    val vm = navController.wizardViewModel(null)
                     SyncDirectionStep(
                         store = vm.directionStore,
                         nextStep = { direction ->
@@ -131,25 +131,42 @@ class MainActivity : ComponentActivity() {
                         previousStep = { navController.popBackStack() }
                     )
                 }
-                composable("wizard/upload") {
-                    val vm = navController.wizardViewModel()
+                composable(
+                    route = "wizard/upload?id={id}",
+                    arguments = listOf(navArgument("id") { nullable = true })
+                ) { backStackEntry ->
+
+                    val remoteId = backStackEntry.arguments?.getString("id")?.toInt()
+
+                    val vm = navController.wizardViewModel(remoteId)
 
                     UploadSourceStep(
                         store = vm.contentStore,
-                        nextStep = { navController.navigate("wizard/bucket") },
+                        nextStep = { navController.navigate("wizard/bucket?id=${remoteId}") },
                         previousStep = { navController.popBackStack() }
                     )
                 }
-                composable("wizard/download") {
-                    val vm = navController.wizardViewModel()
+                composable(
+                    route = "wizard/download?id{id}",
+                    arguments = listOf(navArgument("id") { nullable = true })
+                ) { backStackEntry ->
+
+                    val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+
+                    val vm = navController.wizardViewModel(remoteId)
                     DownloadTargetStep(
                         store = vm.contentStore,
-                        nextStep = { navController.navigate("wizard/bucket") },
+                        nextStep = { navController.navigate("wizard/bucket?id=${remoteId}") },
                         previousStep = { navController.popBackStack() }
                     )
                 }
-                composable("wizard/bucket") {
-                    val vm = navController.wizardViewModel()
+                composable(
+                    route = "wizard/bucket?id={id}",
+                    arguments = listOf(navArgument("id") { nullable = true })
+                ) { backStackEntry ->
+                    val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+
+                    val vm = navController.wizardViewModel(remoteId)
                     BucketConfigurationStep(
                         store = vm.bucketStore,
                         nextStep = { navController.popBackStack(REMOTES_LIST, inclusive = false) },
@@ -167,7 +184,11 @@ class MainActivity : ComponentActivity() {
                 remoteId?.let {
                     SyncScreen(
                         remoteId,
-                        edit = { remoteId -> navController.navigate("upload-editor/edit/${remoteId}") },
+                        edit = { direction, remoteId -> when(direction) {
+                            SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
+                            SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=$${remoteId}")
+                            null -> {} // Might not have loaded in time
+                        } },
                         back = { navController.popBackStack() }
                     )
                 }

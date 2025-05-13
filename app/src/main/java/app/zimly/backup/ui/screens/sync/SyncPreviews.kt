@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.zimly.backup.data.db.notification.Notification
 import app.zimly.backup.data.db.notification.NotificationDao
 import app.zimly.backup.data.db.notification.NotificationType
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalMediaResolver
@@ -33,10 +34,11 @@ fun InProgressPreview() {
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera"
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(
-        status = SyncViewModel.Status.IN_PROGRESS,
+        status = Status.IN_PROGRESS,
         progressBytesPerSec = 18426334,
         percentage = 0.77F,
         diffCount = 51,
@@ -61,10 +63,11 @@ fun CompletedPreview() {
         url = "https://my-backup.dyndns.com",
         bucket = "zimly-backup",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera"
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(
-        status = SyncViewModel.Status.COMPLETED,
+        status = Status.COMPLETED,
         progressBytesPerSec = 18426334,
         percentage = 1F,
         diffCount = 51,
@@ -88,7 +91,8 @@ fun IdlePreview() {
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera"
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress()
     val snackbarState = remember { SnackbarHostState() }
@@ -108,7 +112,8 @@ fun CalculatingPreview() {
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera"
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(status = Status.CALCULATING)
 
@@ -128,7 +133,8 @@ fun PermissionsMissingPreview() {
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera"
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress()
     val snackbarState = remember { SnackbarHostState() }
