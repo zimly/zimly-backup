@@ -1,7 +1,8 @@
 package app.zimly.backup.ui.screens.editor
 
 import android.annotation.SuppressLint
-import android.net.Uri
+import android.content.ContentResolver
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -37,11 +39,12 @@ import kotlinx.coroutines.launch
 
 /**
  * An overarching [ViewModel] that keeps an in-memory [Draft] object of the [Remote] object to be
- * persisted. The final step maps and persists the draft to the DB. See [bucketStore]s #persist.
+ * persisted. The final step maps and persists the draft to the DB and the if needed persists the
+ * necessary folder permissions. See [bucketStore]s #persist.
  *
  * It's scoped to the wizard navigation graph using [NavBackStackEntry].
  */
-class WizardViewModel(private val remoteDao: RemoteDao) : ViewModel() {
+class WizardViewModel(private val remoteDao: RemoteDao, private val contentResolver: ContentResolver) : ViewModel() {
 
     var draft = Draft()
 
@@ -86,6 +89,10 @@ class WizardViewModel(private val remoteDao: RemoteDao) : ViewModel() {
      * Map the [Draft] object to [Remote] and persist it.
      */
     suspend fun persist() {
+
+        if (draft.contentType== ContentType.FOLDER) {
+            persistPermissions(draft.direction!!, draft.contentUri!!)
+        }
         val remote = Remote(
             uid = null,
             direction = draft.direction!!,
@@ -100,6 +107,15 @@ class WizardViewModel(private val remoteDao: RemoteDao) : ViewModel() {
         )
         remoteDao.insert(remote)
     }
+
+    private fun persistPermissions(direction: SyncDirection, uri: String) {
+        val modeFlags = when(direction) {
+            SyncDirection.UPLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION
+            SyncDirection.DOWNLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION and Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        }
+        contentResolver.takePersistableUriPermission(uri.toUri(), modeFlags)
+    }
+
 
     data class Draft(
         val direction: SyncDirection? = null,
@@ -117,7 +133,7 @@ class WizardViewModel(private val remoteDao: RemoteDao) : ViewModel() {
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
 
-                WizardViewModel(remoteDao)
+                WizardViewModel(remoteDao, application.contentResolver)
             }
         }
     }
