@@ -130,14 +130,14 @@ fun DocumentsFolderSelector(
     val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(it) else folderField.update(Uri.EMPTY) }
     val focus: () -> Unit = { folderField.touch() }
     val folder = folderField.state.collectAsState()
-    val displaySelected = folder.value.value != Uri.EMPTY
+    val folderSelected = folder.value.value != Uri.EMPTY
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             select(uri)
         }
 
-    if (displaySelected) {
+    if (folderSelected) {
         val displayName = UriField.displayName(folder.value.value)
         OutlinedCard {
             Row(
@@ -165,7 +165,7 @@ fun DocumentsFolderSelector(
                 launcher.launch(null)
             },
         ) {
-            Text(text = if (folder == Uri.EMPTY) "Select Directory" else "Change Directory")
+            Text(text = if (folderSelected) "Change Directory" else "Select Directory")
         }
     }
 }
