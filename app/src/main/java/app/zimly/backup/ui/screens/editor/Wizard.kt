@@ -36,6 +36,8 @@ import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.ui.components.NotificationBar
+import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.WizardViewModel.Companion.REMOTE_ID_KEY
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.screens.editor.steps.ValueStore
@@ -185,9 +187,14 @@ class WizardViewModel(
 @Composable
 fun WizardStep(
     title: String,
+    notificationHost: NotificationProvider? = null,
     navigation: @Composable RowScope.() -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
+
+    notificationHost?.let{
+        NotificationBar(it)
+    }
 
     Scaffold(
         topBar = {
@@ -241,4 +248,3 @@ fun NavController.wizardViewModel(remoteId: Int?): WizardViewModel {
         }
     )
 }
-

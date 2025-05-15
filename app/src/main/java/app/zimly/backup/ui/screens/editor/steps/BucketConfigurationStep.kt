@@ -41,6 +41,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.s3.MinioRepository
+import app.zimly.backup.ui.components.Notification
+import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.WizardStep
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.theme.ZimzyncTheme
@@ -53,16 +55,14 @@ import kotlinx.coroutines.launch
 
 class BucketViewModel(
     private val store: ValueStore<BucketForm.BucketConfiguration>,
-) : ViewModel() {
+) : ViewModel(), NotificationProvider {
 
     val bucketForm = BucketForm()
+    val notification: MutableStateFlow<Notification?> = MutableStateFlow(null)
 
     init {
         store.load()?.let { bucketForm.populate(it) }
     }
-
-    private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
-    val state: StateFlow<UiState> = internal.asStateFlow()
 
     fun persist() {
         store.persist(bucketForm.values())
@@ -82,19 +82,24 @@ class BucketViewModel(
             val bucketExists = repo.bucketExists()
             val message =
                 if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
-            internal.update { it.copy(error = message) }
+            notification.update { Notification(message = message, type = Notification.Type.INFO) }
         } catch (e: Exception) {
-            internal.update {
-                it.copy(
-                    error = "Connection failed: $e",
+            notification.update {
+                Notification(
+                    message = "Connection failed: $e",
+                    type = Notification.Type.ERROR
                 )
             }
         }
     }
 
-    data class UiState(
-        var error: String? = null,
-    )
+    override fun reset() {
+        notification.update { null }
+    }
+
+    override fun get(): StateFlow<Notification?> {
+        return notification.asStateFlow()
+    }
 
 }
 
@@ -114,6 +119,7 @@ fun BucketConfigurationStep(
 
     WizardStep(
         title = "Configure Bucket",
+        viewModel,
         navigation = {
             TextButton(onClick = { previousStep() }) {
                 Text("Back")
