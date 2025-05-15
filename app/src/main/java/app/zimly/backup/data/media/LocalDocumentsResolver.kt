@@ -99,9 +99,16 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
     }
 
     override fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream {
+
+        // Get the document ID
+        val treeDocumentId = DocumentsContract.getTreeDocumentId(parentUri)
+
+        // Get the proper parent document URI to use in createDocument
+        val parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(parent, treeDocumentId)
+
         val newFileUri = DocumentsContract.createDocument(
             contentResolver,
-            parentUri,
+            parentDocumentUri,
             mimeType,
             objectName
         )
