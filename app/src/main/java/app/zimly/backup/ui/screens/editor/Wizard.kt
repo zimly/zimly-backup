@@ -145,7 +145,7 @@ class WizardViewModel(
     private fun persistPermissions(direction: SyncDirection, uri: String) {
         val modeFlags = when (direction) {
             SyncDirection.UPLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION
-            SyncDirection.DOWNLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION and Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            SyncDirection.DOWNLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         }
         contentResolver.takePersistableUriPermission(uri.toUri(), modeFlags)
     }
