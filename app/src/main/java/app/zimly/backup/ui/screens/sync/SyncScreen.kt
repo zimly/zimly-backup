@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
@@ -96,7 +97,7 @@ fun SyncScreen(
 
     syncConfigurationState?.let { syncConfiguration ->
         SyncLayout(
-            syncConfiguration.name,
+            syncConfiguration,
             error,
             permissionsGranted,
             syncInProgress,
@@ -149,7 +150,7 @@ fun SyncOverview(
 
         Bucket(remote)
         sourceContainer()
-        DiffDetails(progress, enableActions, createDiff)
+        DiffDetails(progress, enableActions, createDiff, remote.direction)
 
     }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -162,7 +163,7 @@ fun SyncOverview(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyncLayout(
-    remoteName: String,
+    syncConfiguration: SyncViewModel.SyncConfigurationState,
     error: String?,
     enableActions: Boolean,
     syncInProgress: Boolean,
@@ -195,7 +196,7 @@ fun SyncLayout(
             TopAppBar(
                 title = {
                     Text(
-                        remoteName,
+                        syncConfiguration.name,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -233,7 +234,11 @@ fun SyncLayout(
                         contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
                         colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                     ) {
-                        Text(text = "Upload")
+                        val label = when(syncConfiguration.direction) {
+                            SyncDirection.UPLOAD -> "Upload"
+                            SyncDirection.DOWNLOAD -> "Download"
+                        }
+                        Text(text = label)
                     }
 
                 } else {
@@ -276,8 +281,12 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+            val icon = when(remote.direction) {
+                SyncDirection.UPLOAD -> Icons.Outlined.CloudUpload
+                SyncDirection.DOWNLOAD -> Icons.Outlined.CloudDownload
+            }
             Icon(
-                Icons.Outlined.CloudUpload,
+                icon,
                 "Remote",
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
@@ -317,6 +326,7 @@ private fun DiffDetails(
     progress: SyncViewModel.Progress,
     enableDiff: Boolean,
     createDiff: () -> Unit,
+    direction: SyncDirection,
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -336,7 +346,11 @@ private fun DiffDetails(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Uploads")
+                val label = when(direction) {
+                    SyncDirection.UPLOAD -> "Uploads"
+                    SyncDirection.DOWNLOAD -> "Downloads"
+                }
+                Text(text = label)
                 if (progress.diffCount > -1) {
                     Text(text = "${progress.progressCount} / ${progress.diffCount}")
                 } else {
@@ -347,7 +361,11 @@ private fun DiffDetails(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Uploads size")
+                val label = when(direction) {
+                    SyncDirection.UPLOAD -> "Uploads"
+                    SyncDirection.DOWNLOAD -> "Downloads"
+                }
+                Text(text = "$label size")
                 if (progress.diffBytes > -1) {
                     Text(
                         text = "${

@@ -159,7 +159,7 @@ private fun PreviewSync(
 ) {
     ZimzyncTheme(darkTheme = true) {
         SyncLayout(
-            remoteName = remote.name,
+            syncConfiguration = remote,
             error = null,
             enableActions,
             syncInProgress,
