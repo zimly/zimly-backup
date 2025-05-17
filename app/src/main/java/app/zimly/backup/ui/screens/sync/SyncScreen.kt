@@ -80,7 +80,7 @@ fun SyncScreen(
         })
 ) {
 
-    val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
+    val syncConfigurationState by viewModel.syncConfigurationState.collectAsStateWithLifecycle(null)
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
     val permissionsGranted by viewModel.permissionsGranted.collectAsStateWithLifecycle()
@@ -94,44 +94,45 @@ fun SyncScreen(
     val createDiff: () -> Unit =
         { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
 
-    SyncLayout(
-        remote.name,
-        error,
-        permissionsGranted,
-        syncInProgress,
-        snackbarState,
-        sync = {
-            viewModel.viewModelScope.launch {
-                viewModel.sync()
-            }
-        },
-        cancelSync = { viewModel.cancelSync() },
-        edit = { edit(remote.direction, remoteId) },
-        back,
-        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
-    ) {
-        val enableDiffAction = permissionsGranted && !syncInProgress
-
-        SyncOverview(
-            remote,
-            progress,
-            enableDiffAction,
-            createDiff,
-            sourceContainer = {
-                when (remote.contentType) {
-                    ContentType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
-                    ContentType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
-                    null -> {}
+    syncConfigurationState?.let { syncConfiguration ->
+        SyncLayout(
+            syncConfiguration.name,
+            error,
+            permissionsGranted,
+            syncInProgress,
+            snackbarState,
+            sync = {
+                viewModel.viewModelScope.launch {
+                    viewModel.sync()
                 }
             },
-            warningsContainer = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MediaPermissionContainer()
-                    BatterySaverContainer()
-                }
-            }
-        )
+            cancelSync = { viewModel.cancelSync() },
+            edit = { edit(syncConfiguration.direction, remoteId) },
+            back,
+            clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
+        ) {
+            val enableDiffAction = permissionsGranted && !syncInProgress
 
+            SyncOverview(
+                syncConfiguration,
+                progress,
+                enableDiffAction,
+                createDiff,
+                sourceContainer = {
+                    when (syncConfiguration.contentType) {
+                        ContentType.MEDIA -> MediaCollectionContainer(syncConfiguration.sourceUri)
+                        ContentType.FOLDER -> DocumentsFolderContainer(syncConfiguration.sourceUri)
+                    }
+                },
+                warningsContainer = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        MediaPermissionContainer()
+                        BatterySaverContainer()
+                    }
+                }
+            )
+
+        }
     }
 }
 

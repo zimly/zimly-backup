@@ -90,6 +90,7 @@ fun IdlePreview() {
     val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
+        bucket = "bucket",
         contentType = ContentType.MEDIA,
         sourceUri = "Camera",
         direction = SyncDirection.UPLOAD
@@ -132,6 +133,7 @@ fun PermissionsMissingPreview() {
     val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
+        bucket = "bucket",
         contentType = ContentType.MEDIA,
         sourceUri = "Camera",
         direction = SyncDirection.UPLOAD

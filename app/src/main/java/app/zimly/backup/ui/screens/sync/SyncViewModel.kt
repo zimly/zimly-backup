@@ -347,13 +347,13 @@ class SyncViewModel(
     }
 
     data class SyncConfigurationState(
-        var name: String = "",
-        var url: String = "",
-        var bucket: String = "",
+        var name: String,
+        var url: String,
+        var bucket: String,
         var region: String? = null,
-        var contentType: ContentType? = null,
-        var sourceUri: String = "",
-        val direction: SyncDirection? = null,
+        var contentType: ContentType,
+        var sourceUri: String,
+        val direction: SyncDirection,
     )
 
     data class Progress(
