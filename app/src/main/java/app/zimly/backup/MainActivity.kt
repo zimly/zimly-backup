@@ -110,11 +110,11 @@ class MainActivity : ComponentActivity() {
                     )
                 }
                 composable(
-                    route = "wizard/download?id{id}",
+                    route = "wizard/download?id={id}",
                     arguments = listOf(navArgument("id") { nullable = true })
                 ) { backStackEntry ->
 
-                    val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                    val remoteId = backStackEntry.arguments?.getString("id")?.toInt()
 
                     val vm = navController.wizardViewModel(remoteId)
                     DownloadTargetStep(
@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity() {
                         edit = { direction, remoteId ->
                             when (direction) {
                                 SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
-                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=$${remoteId}")
+                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=${remoteId}")
                                 null -> {} // Might not have loaded in time
                             }
                         },
