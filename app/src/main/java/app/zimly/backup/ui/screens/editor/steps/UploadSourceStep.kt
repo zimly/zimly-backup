@@ -8,6 +8,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,19 +20,26 @@ import app.zimly.backup.ui.screens.editor.EditorViewModel
 import app.zimly.backup.ui.screens.editor.WizardStep
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 
-class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, String>>) : ViewModel() {
+class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, String>>) :
+    ViewModel() {
 
     val backupSource = BackupSourceField()
 
     init {
-        val value = store.load()
-        if (value != null) {
-            backupSource.update(value.first)
-            when (value.first) {
-                ContentType.MEDIA -> backupSource.mediaField.update(value.second)
-                ContentType.FOLDER -> backupSource.folderField.update(value.second.toUri())
-            }
+        viewModelScope.launch {
+            store.load()
+                .filterNotNull()
+                .collectLatest {
+                    backupSource.update(it.first)
+                    when (it.first) {
+                        ContentType.MEDIA -> backupSource.mediaField.update(it.second)
+                        ContentType.FOLDER -> backupSource.folderField.update(it.second.toUri())
+                    }
+                }
         }
     }
 

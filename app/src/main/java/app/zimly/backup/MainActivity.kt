@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
                         edit = { direction, remoteId ->
                             when (direction) {
                                 SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
-                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=$${remoteId}")
+                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=${remoteId}")
                                 null -> {} // Might not have loaded in time
                             }
                         },

@@ -8,6 +8,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -19,13 +20,21 @@ import app.zimly.backup.ui.screens.editor.EditorViewModel
 import app.zimly.backup.ui.screens.editor.WizardStep
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 
-class DownloadTargetViewModel(private val store: ValueStore<Pair<ContentType, String>>) : ViewModel() {
+class DownloadTargetViewModel(private val store: ValueStore<Pair<ContentType, String>>) :
+    ViewModel() {
 
     val folderField = UriField("Select a folder for your data")
 
     init {
-        store.load()?.let { folderField.update(it.second.toUri()) }
+        viewModelScope.launch {
+            store.load()
+                .filterNotNull()
+                .collectLatest { folderField.update(it.second.toUri()) }
+        }
     }
 
     fun persist() {

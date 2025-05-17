@@ -50,6 +50,8 @@ import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -61,7 +63,11 @@ class BucketViewModel(
     val notification: MutableStateFlow<Notification?> = MutableStateFlow(null)
 
     init {
-        store.load()?.let { bucketForm.populate(it) }
+        viewModelScope.launch {
+            store.load()
+                .filterNotNull()
+                .collectLatest { bucketForm.populate(it) }
+        }
     }
 
     fun persist() {

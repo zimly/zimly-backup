@@ -41,6 +41,11 @@ import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.WizardViewModel.Companion.REMOTE_ID_KEY
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.screens.editor.steps.ValueStore
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
@@ -57,13 +62,13 @@ class WizardViewModel(
     private val remoteId: Int? = null
 ) : ViewModel() {
 
-    var draft = Draft()
+    var draft = MutableStateFlow(Draft())
 
     init {
         remoteId?.let {
             viewModelScope.launch {
                 val remote = remoteDao.loadById(remoteId)
-                draft = Draft(
+                draft.value = Draft(
                     bucket = BucketForm.BucketConfiguration(
                         url = remote.url,
                         name = remote.name,
@@ -82,38 +87,44 @@ class WizardViewModel(
 
     val contentStore = object : ValueStore<Pair<ContentType, String>> {
         override fun persist(value: Pair<ContentType, String>) {
-            draft = draft.copy(
-                contentType = value.first,
-                contentUri = value.second
-            )
+            draft.update {
+                it.copy(
+                    contentType = value.first,
+                    contentUri = value.second
+                )
+            }
         }
 
-        override fun load(): Pair<ContentType, String>? {
-            if (draft.contentType != null && draft.contentUri != null)
-                return Pair(draft.contentType!!, draft.contentUri!!)
-            return null
+        override fun load(): Flow<Pair<ContentType, String>?> {
+            // TODO Null
+            return draft
+                .filter {it.contentType != null && it.contentUri != null}
+                .map { draft -> Pair(draft.contentType!!, draft.contentUri!!) }
         }
     }
 
     val directionStore = object : ValueStore<SyncDirection> {
         override fun persist(value: SyncDirection) {
-            draft = draft.copy(direction = value)
+            draft.update {
+                it.copy(direction = value)
+            }
         }
 
-        override fun load(): SyncDirection? {
-            return draft.direction
+        override fun load(): Flow<SyncDirection?> {
+            return draft.map { it.direction }
         }
     }
 
     val bucketStore = object : ValueStore<BucketForm.BucketConfiguration> {
         override fun persist(value: BucketForm.BucketConfiguration) {
-            draft = draft.copy(bucket = value)
-
+            draft.update {
+                it.copy(bucket = value)
+            }
             viewModelScope.launch { persist() }
         }
 
-        override fun load(): BucketForm.BucketConfiguration? {
-            return draft.bucket
+        override fun load(): Flow<BucketForm.BucketConfiguration?> {
+            return draft.map { it.bucket }
         }
     }
 
@@ -122,25 +133,34 @@ class WizardViewModel(
      */
     suspend fun persist() {
 
-        if (draft.contentType == ContentType.FOLDER) {
-            persistPermissions(draft.direction!!, draft.contentUri!!)
-        }
-        val remote = Remote(
-            uid = remoteId,
-            direction = draft.direction!!,
-            url = draft.bucket!!.url,
-            key = draft.bucket!!.key,
-            secret = draft.bucket!!.secret,
-            bucket = draft.bucket!!.bucket,
-            region = draft.bucket!!.region,
-            name = draft.bucket!!.name,
-            contentType = draft.contentType!!,
-            contentUri = draft.contentUri!!
-        )
-        if (remote.uid == null) {
-            remoteDao.insert(remote)
+        val draftValue = draft.value
+
+
+        if (draftValue.bucket != null && draftValue.direction != null && draftValue.contentType != null && draftValue.contentUri != null) {
+
+            if (draftValue.contentType == ContentType.FOLDER) {
+                persistPermissions(draftValue.direction, draftValue.contentUri)
+            }
+            val remote = Remote(
+                uid = remoteId,
+                direction = draftValue.direction,
+                url = draftValue.bucket.url,
+                key = draftValue.bucket.key,
+                secret = draftValue.bucket.secret,
+                bucket = draftValue.bucket.bucket,
+                region = draftValue.bucket.region,
+                name = draftValue.bucket.name,
+                contentType = draftValue.contentType,
+                contentUri = draftValue.contentUri
+            )
+            if (remote.uid == null) {
+                remoteDao.insert(remote)
+            } else {
+                remoteDao.update(remote)
+            }
         } else {
-            remoteDao.update(remote)
+            // TODO: Fix error handling
+            throw RuntimeException("TODO: Fix error-handling")
         }
     }
 
@@ -235,7 +255,7 @@ fun WizardStep(
 @Composable
 fun NavController.wizardViewModel(remoteId: Int?): WizardViewModel {
     val parentEntry = remember(this) {
-        getBackStackEntry("wizard?id={id}")
+        getBackStackEntry("wizard")
     }
     // Make sure we null out the value. #getInt return 0 by default, which may be a valid ID
 
