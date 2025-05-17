@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.editor.steps
+package app.zimly.backup.ui.screens.editor.steps.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.editor
+package app.zimly.backup.ui.screens.editor.steps.components
 
 import android.app.Activity
 import android.content.Context

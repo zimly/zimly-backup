@@ -15,8 +15,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.ContentType
-import app.zimly.backup.ui.screens.editor.BackupSourceConfiguration
+import app.zimly.backup.ui.screens.editor.steps.components.BackupSourceConfiguration
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
