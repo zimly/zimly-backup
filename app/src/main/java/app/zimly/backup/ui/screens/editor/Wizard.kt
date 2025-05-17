@@ -38,6 +38,7 @@ import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.ui.components.Notification
 import app.zimly.backup.ui.components.NotificationBar
 import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.WizardViewModel.Companion.REMOTE_ID_KEY
@@ -45,6 +46,8 @@ import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.screens.editor.steps.ValueStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -62,9 +65,10 @@ class WizardViewModel(
     private val remoteDao: RemoteDao,
     private val contentResolver: ContentResolver,
     private val remoteId: Int? = null
-) : ViewModel() {
+) : ViewModel(), NotificationProvider {
 
     var draft = MutableStateFlow(Draft())
+    val notification: MutableStateFlow<Notification?> = MutableStateFlow(null)
 
     init {
         remoteId?.let {
@@ -88,28 +92,29 @@ class WizardViewModel(
     }
 
     val contentStore = object : ValueStore<Pair<ContentType, String>> {
-        override fun persist(value: Pair<ContentType, String>) {
+        override fun persist(value: Pair<ContentType, String>, callback: (Boolean) -> Unit) {
             draft.update {
                 it.copy(
                     contentType = value.first,
                     contentUri = value.second
                 )
             }
+            callback(true)
         }
 
         override fun load(): Flow<Pair<ContentType, String>?> {
-            // TODO Null
             return draft
-                .filter {it.contentType != null && it.contentUri != null}
+                .filter { it.contentType != null && it.contentUri != null }
                 .map { draft -> Pair(draft.contentType!!, draft.contentUri!!) }
         }
     }
 
     val directionStore = object : ValueStore<SyncDirection> {
-        override fun persist(value: SyncDirection) {
+        override fun persist(value: SyncDirection, callback: (Boolean) -> Unit) {
             draft.update {
                 it.copy(direction = value)
             }
+            callback(true)
         }
 
         override fun load(): Flow<SyncDirection?> {
@@ -118,11 +123,12 @@ class WizardViewModel(
     }
 
     val bucketStore = object : ValueStore<BucketForm.BucketConfiguration> {
-        override fun persist(value: BucketForm.BucketConfiguration) {
+        override fun persist(value: BucketForm.BucketConfiguration, callback: (Boolean) -> Unit) {
             draft.update {
                 it.copy(bucket = value)
             }
-            viewModelScope.launch { persist() }
+            viewModelScope.launch { persist(callback) }
+
         }
 
         override fun load(): Flow<BucketForm.BucketConfiguration?> {
@@ -133,10 +139,9 @@ class WizardViewModel(
     /**
      * Map the [Draft] object to [Remote] and persist it.
      */
-    suspend fun persist() {
+    suspend fun persist(success: (Boolean) -> Unit) {
 
         val draftValue = draft.value
-
 
         if (draftValue.bucket != null && draftValue.direction != null && draftValue.contentType != null && draftValue.contentUri != null) {
 
@@ -160,9 +165,15 @@ class WizardViewModel(
             } else {
                 remoteDao.update(remote)
             }
+            success(true)
         } else {
-            // TODO: Fix error handling
-            throw RuntimeException("TODO: Fix error-handling")
+            notification.update {
+                Notification(
+                    message = "Validation failed, cannot save configuration.",
+                    type = Notification.Type.ERROR
+                )
+            }
+            success(false)
         }
     }
 
@@ -172,6 +183,14 @@ class WizardViewModel(
             SyncDirection.DOWNLOAD -> Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         }
         contentResolver.takePersistableUriPermission(uri.toUri(), modeFlags)
+    }
+
+    override fun reset() {
+        notification.update { null }
+    }
+
+    override fun get(): StateFlow<Notification?> {
+        return notification.asStateFlow()
     }
 
     data class Draft(
@@ -202,20 +221,18 @@ class WizardViewModel(
 
 /**
  * Provides the chrome for the individual wizard steps.
- *
- * TODO: Implement error handling
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WizardStep(
     title: String,
-    notificationHost: NotificationProvider? = null,
+    notificationProvider: NotificationProvider? = null,
     navigation: @Composable RowScope.() -> Unit,
     content: @Composable () -> Unit,
 ) {
     val snackbarState = remember { SnackbarHostState() }
 
-    notificationHost?.let {
+    notificationProvider?.let {
         NotificationBar(it, snackbarState)
     }
 

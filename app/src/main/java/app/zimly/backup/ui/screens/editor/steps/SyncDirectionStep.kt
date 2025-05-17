@@ -14,6 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,7 +32,8 @@ import kotlinx.coroutines.flow.flow
 fun SyncDirectionStep(
     store: ValueStore<SyncDirection>, nextStep: (SyncDirection) -> Unit, previousStep: () -> Unit
 ) {
-    val selectedOption by store.load().collectAsStateWithLifecycle(null)
+    val loadedOption by store.load().collectAsStateWithLifecycle(null)
+    var selectedOption by remember { mutableStateOf(loadedOption) }
     WizardStep(
         title = "Select Sync Direction",
         navigation = {
@@ -39,9 +43,8 @@ fun SyncDirectionStep(
             TextButton(
                 enabled = selectedOption != null,
                 onClick = {
-                    selectedOption?.let {
-                        store.persist(it)
-                        nextStep(it)
+                    selectedOption?.let { selected ->
+                        store.persist(selected) { nextStep(selected) }
                     }
                 },
             ) {
@@ -52,7 +55,7 @@ fun SyncDirectionStep(
         SyncOption(
             selected = selectedOption == SyncDirection.UPLOAD,
             option = SyncDirection.UPLOAD,
-            onSelect = { store.persist(it) },
+            onSelect = { selectedOption = it },
             title = "Upload from Device",
             description = "Synchronize media or documents from your device to a remote S3 bucket",
             icon = Icons.Outlined.Upload
@@ -60,7 +63,7 @@ fun SyncDirectionStep(
         SyncOption(
             selected = selectedOption == SyncDirection.DOWNLOAD,
             option = SyncDirection.DOWNLOAD,
-            onSelect = { store.persist(it) },
+            onSelect = { selectedOption = it },
             title = "Download from S3",
             description = "Synchronize remote data to your mobile device",
             icon = Icons.Outlined.CloudDownload
@@ -100,7 +103,7 @@ fun SyncDirectionStepPreview() {
     val stubStore: ValueStore<SyncDirection> = object : ValueStore<SyncDirection> {
 
         var direction: SyncDirection? = null
-        override fun persist(value: SyncDirection) {
+        override fun persist(value: SyncDirection, callback: (Boolean) -> Unit) {
             direction = value
         }
 

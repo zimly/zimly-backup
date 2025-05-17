@@ -7,7 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 @Composable
 fun NotificationBar(
@@ -15,7 +16,7 @@ fun NotificationBar(
     snackbarState: SnackbarHostState
 ) {
 
-    val notification by notificationProvider.get().collectAsStateWithLifecycle()
+    val notification by notificationProvider.get().collectAsStateWithLifecycle(null)
 
     notification?.let {
         LaunchedEffect(snackbarState) {
@@ -43,6 +44,25 @@ data class Notification(val message: String, val type: Type) {
 
 interface NotificationProvider {
     fun reset()
-    fun get(): StateFlow<Notification?>
+    fun get(): Flow<Notification?>
+
+    fun combine(vararg providers: NotificationProvider): NotificationProvider {
+        return CombinedProvider(arrayOf(this, *providers))
+    }
 }
 
+/**
+ * A delegating [NotificationProvider] that combines all [providers] into one.
+ */
+class CombinedProvider(private val providers: Array<NotificationProvider>) : NotificationProvider {
+
+    override fun reset() {
+        providers.forEach { it.reset() }
+    }
+
+    override fun get(): Flow<Notification?> {
+        return combine(providers.map { it.get() }) { notifications: Array<Notification?> ->
+            notifications.firstOrNull { it != null }
+        }
+    }
+}

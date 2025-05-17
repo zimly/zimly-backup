@@ -71,8 +71,8 @@ class BucketViewModel(
         }
     }
 
-    fun persist() {
-        store.persist(bucketForm.values())
+    fun persist(nextStep: () -> Unit) {
+        store.persist(bucketForm.values()) { success -> if (success) nextStep() }
     }
 
     suspend fun verify() {
@@ -122,6 +122,7 @@ class BucketViewModel(
 @Composable
 fun BucketConfigurationStep(
     store: ValueStore<BucketForm.BucketConfiguration>,
+    parentNotificationProvider: NotificationProvider,
     nextStep: () -> Unit,
     previousStep: () -> Unit,
     viewModel: BucketViewModel = viewModel(factory = viewModelFactory {
@@ -133,9 +134,11 @@ fun BucketConfigurationStep(
 
     val isValid by viewModel.bucketForm.valid().collectAsStateWithLifecycle(false)
 
+    val notProv = parentNotificationProvider.combine(viewModel)
+
     WizardStep(
         title = "Configure Bucket",
-        viewModel,
+        notificationProvider = notProv,
         navigation = {
             TextButton(onClick = { previousStep() }) {
                 Text("Back")
@@ -143,8 +146,7 @@ fun BucketConfigurationStep(
             TextButton(
                 enabled = isValid,
                 onClick = {
-                    viewModel.persist()
-                    nextStep()
+                    viewModel.persist(nextStep)
                 },
             ) {
                 Text("Save")

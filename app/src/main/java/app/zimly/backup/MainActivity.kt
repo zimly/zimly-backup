@@ -132,6 +132,7 @@ class MainActivity : ComponentActivity() {
                     val vm = navController.wizardViewModel(remoteId)
                     BucketConfigurationStep(
                         store = vm.bucketStore,
+                        vm,
                         nextStep = { navController.popBackStack(REMOTES_LIST, inclusive = false) },
                         previousStep = { navController.popBackStack() },
                     )

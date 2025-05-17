@@ -43,13 +43,13 @@ class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, Stri
         }
     }
 
-    fun persist() {
+    fun persist(nextStep: () -> Unit) {
         val sourceType = backupSource.state.value.type
         val sourceUri = when (sourceType) {
             ContentType.MEDIA -> backupSource.mediaField.state.value.value
             ContentType.FOLDER -> backupSource.folderField.state.value.value.toString()
         }
-        store.persist(Pair(sourceType, sourceUri))
+        store.persist(Pair(sourceType, sourceUri)) { nextStep() }
     }
 
     fun isValid(): Flow<Boolean> {
@@ -97,8 +97,7 @@ fun UploadSourceStep(
             TextButton(
                 enabled = valid,
                 onClick = {
-                    viewModel.persist()
-                    nextStep()
+                    viewModel.persist(nextStep)
                 },
             ) {
                 Text("Continue")

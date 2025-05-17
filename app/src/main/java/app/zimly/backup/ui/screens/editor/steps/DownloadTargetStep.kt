@@ -37,9 +37,9 @@ class DownloadTargetViewModel(private val store: ValueStore<Pair<ContentType, St
         }
     }
 
-    fun persist() {
+    fun persist(nextStep: () -> Unit) {
         val value = folderField.state.value.value.toString()
-        store.persist(Pair(ContentType.FOLDER, value))
+        store.persist(Pair(ContentType.FOLDER, value)) { nextStep() }
     }
 
     fun isValid(): Flow<Boolean> {
@@ -87,8 +87,7 @@ fun DownloadTargetStep(
             TextButton(
                 enabled = valid,
                 onClick = {
-                    viewModel.persist()
-                    nextStep()
+                    viewModel.persist(nextStep)
                 },
             ) {
                 Text("Continue")
