@@ -4,23 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.ContentResolver
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -39,9 +25,8 @@ import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.components.Notification
-import app.zimly.backup.ui.components.NotificationBar
 import app.zimly.backup.ui.components.NotificationProvider
-import app.zimly.backup.ui.screens.editor.WizardViewModel.Companion.REMOTE_ID_KEY
+import app.zimly.backup.ui.screens.editor.EditorViewModel.Companion.REMOTE_ID_KEY
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.screens.editor.steps.ValueStore
 import kotlinx.coroutines.flow.Flow
@@ -53,15 +38,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-
 /**
- * An overarching [ViewModel] that keeps an in-memory [Draft] object of the [Remote] object to be
+ * An overarching [androidx.lifecycle.ViewModel] that keeps an in-memory [Draft] object of the [app.zimly.backup.data.db.remote.Remote] object to be
  * persisted. The final step maps and persists the draft to the DB and the if needed persists the
  * necessary folder permissions. See [bucketStore]s #persist.
  *
- * It's scoped to the wizard navigation graph using [NavBackStackEntry].
+ * It's scoped to the wizard navigation graph using [androidx.navigation.NavBackStackEntry].
  */
-class WizardViewModel(
+class EditorViewModel(
     private val remoteDao: RemoteDao,
     private val contentResolver: ContentResolver,
     private val remoteId: Int? = null
@@ -137,7 +121,7 @@ class WizardViewModel(
     }
 
     /**
-     * Map the [Draft] object to [Remote] and persist it.
+     * Map the [Draft] object to [app.zimly.backup.data.db.remote.Remote] and persist it.
      */
     suspend fun persist(success: (Boolean) -> Unit) {
 
@@ -201,72 +185,23 @@ class WizardViewModel(
     )
 
     companion object {
-        val TAG: String? = WizardViewModel::class.simpleName
+        val TAG: String? = EditorViewModel::class.simpleName
 
         val REMOTE_ID_KEY = object : CreationExtras.Key<Int?> {}
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val application = checkNotNull(this[APPLICATION_KEY])
+                val application =
+                    checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY])
                 val remoteId = this[REMOTE_ID_KEY]
-                val db = ZimlyDatabase.getInstance(application.applicationContext)
+                val db = ZimlyDatabase.Companion.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
 
-                WizardViewModel(remoteDao, application.contentResolver, remoteId)
+                EditorViewModel(remoteDao, application.contentResolver, remoteId)
             }
         }
     }
 
-}
-
-/**
- * Provides the chrome for the individual wizard steps.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun WizardStep(
-    title: String,
-    notificationProvider: NotificationProvider? = null,
-    navigation: @Composable RowScope.() -> Unit,
-    content: @Composable () -> Unit,
-) {
-    val snackbarState = remember { SnackbarHostState() }
-
-    notificationProvider?.let {
-        NotificationBar(it, snackbarState)
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-            )
-        },
-        bottomBar = {
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp, vertical = 24.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Absolute.SpaceBetween
-            ) {
-                navigation()
-            }
-        },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarState)
-        }
-    ) { innerPadding ->
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
-                top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()
-            ) then Modifier.fillMaxWidth()
-        ) {
-            content()
-        }
-    }
 }
 
 /**
@@ -276,7 +211,7 @@ fun WizardStep(
  */
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
-fun NavController.wizardViewModel(remoteId: Int?): WizardViewModel {
+fun NavController.editorViewModel(remoteId: Int?): EditorViewModel {
     val parentEntry = remember(this) {
         getBackStackEntry("wizard")
     }
@@ -284,7 +219,7 @@ fun NavController.wizardViewModel(remoteId: Int?): WizardViewModel {
 
     return viewModel(
         viewModelStoreOwner = parentEntry,
-        factory = WizardViewModel.Factory,
+        factory = EditorViewModel.Factory,
         extras = MutableCreationExtras().apply {
             this[APPLICATION_KEY] = LocalContext.current.applicationContext as Application
             this[REMOTE_ID_KEY] = remoteId

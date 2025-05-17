@@ -20,7 +20,7 @@ import app.zimly.backup.ui.screens.editor.steps.BucketConfigurationStep
 import app.zimly.backup.ui.screens.editor.steps.DownloadTargetStep
 import app.zimly.backup.ui.screens.editor.steps.SyncDirectionStep
 import app.zimly.backup.ui.screens.editor.steps.UploadSourceStep
-import app.zimly.backup.ui.screens.editor.wizardViewModel
+import app.zimly.backup.ui.screens.editor.editorViewModel
 import app.zimly.backup.ui.screens.permission.PermissionRequestScreen
 import app.zimly.backup.ui.screens.start.StartScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
 
                 composable("wizard/direction") {
 
-                    val vm = navController.wizardViewModel(null)
+                    val vm = navController.editorViewModel(null)
                     SyncDirectionStep(
                         store = vm.directionStore,
                         nextStep = { direction ->
@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
 
                     val remoteId = backStackEntry.arguments?.getString("id")?.toInt()
 
-                    val vm = navController.wizardViewModel(remoteId)
+                    val vm = navController.editorViewModel(remoteId)
 
                     UploadSourceStep(
                         store = vm.contentStore,
@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
 
                     val remoteId = backStackEntry.arguments?.getString("id")?.toInt()
 
-                    val vm = navController.wizardViewModel(remoteId)
+                    val vm = navController.editorViewModel(remoteId)
                     DownloadTargetStep(
                         store = vm.contentStore,
                         nextStep = { navController.navigate("wizard/bucket?id=${remoteId}") },
@@ -129,7 +129,7 @@ class MainActivity : ComponentActivity() {
                 ) { backStackEntry ->
                     val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
 
-                    val vm = navController.wizardViewModel(remoteId)
+                    val vm = navController.editorViewModel(remoteId)
                     BucketConfigurationStep(
                         store = vm.bucketStore,
                         vm,
