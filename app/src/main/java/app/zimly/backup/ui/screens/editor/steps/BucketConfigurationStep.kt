@@ -47,6 +47,7 @@ import app.zimly.backup.ui.screens.editor.WizardStep
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
+import io.minio.errors.ErrorResponseException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -90,9 +91,18 @@ class BucketViewModel(
                 if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
             notification.update { Notification(message = message, type = Notification.Type.INFO) }
         } catch (e: Exception) {
+            val cause = e.cause ?: e
+            var message = cause.message
+            if (cause is ErrorResponseException) {
+                cause.errorResponse().message()
+                val status = cause.response().code
+                val mes = cause.errorResponse().message()
+                val errorCode = cause.errorResponse().code()
+                message = "status: $status, message: $mes, errorCode: $errorCode"
+            }
             notification.update {
                 Notification(
-                    message = "Connection failed: $e",
+                    message = "Connection failed: $message",
                     type = Notification.Type.ERROR
                 )
             }

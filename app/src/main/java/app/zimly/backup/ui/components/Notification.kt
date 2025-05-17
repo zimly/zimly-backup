@@ -6,15 +6,14 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun NotificationBar(
-    notificationProvider: NotificationProvider
+    notificationProvider: NotificationProvider,
+    snackbarState: SnackbarHostState
 ) {
-    val snackbarState = remember { SnackbarHostState() }
 
     val notification by notificationProvider.get().collectAsStateWithLifecycle()
 

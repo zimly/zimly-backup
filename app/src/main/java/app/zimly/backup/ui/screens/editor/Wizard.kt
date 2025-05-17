@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -211,9 +213,10 @@ fun WizardStep(
     navigation: @Composable RowScope.() -> Unit,
     content: @Composable () -> Unit,
 ) {
+    val snackbarState = remember { SnackbarHostState() }
 
-    notificationHost?.let{
-        NotificationBar(it)
+    notificationHost?.let {
+        NotificationBar(it, snackbarState)
     }
 
     Scaffold(
@@ -231,6 +234,9 @@ fun WizardStep(
             ) {
                 navigation()
             }
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarState)
         }
     ) { innerPadding ->
 
