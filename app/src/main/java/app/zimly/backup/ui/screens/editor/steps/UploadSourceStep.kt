@@ -16,7 +16,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.editor.BackupSourceConfiguration
-import app.zimly.backup.ui.screens.editor.EditorViewModel
 import app.zimly.backup.ui.screens.editor.WizardStep
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import kotlinx.coroutines.flow.Flow
@@ -57,7 +56,7 @@ class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, Stri
     }
 
     companion object {
-        val TAG: String? = EditorViewModel::class.simpleName
+        val TAG: String? = UploadSourceViewModel::class.simpleName
 
         // Optional remote ID
         val VALUE_STORE_KEY = object : CreationExtras.Key<ValueStore<Pair<ContentType, String>>> {}
