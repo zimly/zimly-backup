@@ -3,6 +3,7 @@ package app.zimly.backup.ui.screens.sync
 import android.content.ContentResolver
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -26,6 +27,7 @@ import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.sync.DownloadSyncService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
 import app.zimly.backup.sync.UploadSyncService
@@ -196,14 +198,18 @@ class SyncViewModel(
 
             val contentResolver =
                 LocalContentResolver.get(contentResolver, remote.contentType, remote.contentUri)
-            val syncService = UploadSyncService(s3Repo, contentResolver)
+
+            val syncService = when(remote.direction) {
+                SyncDirection.UPLOAD -> UploadSyncService(s3Repo, contentResolver)
+                SyncDirection.DOWNLOAD -> DownloadSyncService(s3Repo, contentResolver, remote.contentUri.toUri())
+            }
 
             val diff = syncService.calculateDiff()
             // Display result of the minio request to the user
             _progress.update {
                 Progress(
-                    diffBytes = diff.size,
-                    diffCount = diff.diff.size,
+                    diffBytes = diff.totalBytes,
+                    diffCount = diff.totalObjects,
                     status = null
                 )
             }

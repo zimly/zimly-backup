@@ -29,15 +29,14 @@ class DownloadSyncService(
         val TAG: String? = DownloadSyncService::class.simpleName
     }
 
-    fun calculateDiff(): DownloadDiff {
+    override fun calculateDiff(): DownloadDiff {
         try {
             val remotes = s3Repository.listObjects()
             val objects = localContentResolver.listObjects()
             val diff =
                 remotes.filter { remote -> objects.none { obj -> obj.name == remote.name } }
             val size = diff.sumOf { it.size }
-
-            return DownloadDiff(remotes, objects, diff, size)
+            return DownloadDiff(diff.size, size, remotes, objects, diff)
         } catch (e: Exception) {
             var message = e.message
             if (e is ErrorResponseException) {
@@ -55,8 +54,8 @@ class DownloadSyncService(
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override fun synchronize(): Flow<SyncProgress> {
         val diff = calculateDiff() // TODO: Error handling!
-        val totalFiles = diff.diff.size
-        val totalBytes = diff.size
+        val totalFiles = diff.totalObjects
+        val totalBytes = diff.totalBytes
         var transferredFiles = 0
         return diff.diff.asFlow()
             // TODO: Really another request for the content-type?
@@ -73,7 +72,7 @@ class DownloadSyncService(
             .runningFold(SyncProgress.EMPTY) { acc, value ->
                 val sumTransferredBytes =
                     acc.transferredBytes + value.readBytes
-                val percentage = sumTransferredBytes.toFloat() / diff.size
+                val percentage = sumTransferredBytes.toFloat() / diff.totalBytes
                 SyncProgress(transferredBytes = sumTransferredBytes, transferredFiles, percentage, value.bytesPerSec, totalFiles, totalBytes)
             }
             .onStart {
@@ -85,9 +84,12 @@ class DownloadSyncService(
 }
 
 data class DownloadDiff(
+
+    override var totalObjects: Int = 0,
+    override var totalBytes: Long = 0,
+
     val remotes: List<S3Object>,
     val locals: List<ContentObject>,
     val diff: List<S3Object>,
-    val size: Long
-)
+) : Diff()
 
