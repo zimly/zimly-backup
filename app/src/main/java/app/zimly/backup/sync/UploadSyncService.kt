@@ -33,7 +33,7 @@ class UploadSyncService(
             val remotes = s3Repository.listObjects()
             val objects = localContentResolver.listObjects()
             val diff =
-                objects.filter { local -> remotes.none { remote -> remote.name == local.name } }
+                objects.filter { local -> remotes.none { remote -> remote.name == local.path } }
             val totalBytes = diff.sumOf { it.size }
 
             return UploadDiff(diff.size, totalBytes, remotes, objects, diff)

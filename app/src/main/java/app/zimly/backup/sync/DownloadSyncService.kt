@@ -34,7 +34,7 @@ class DownloadSyncService(
             val remotes = s3Repository.listObjects()
             val objects = localContentResolver.listObjects()
             val diff =
-                remotes.filter { remote -> objects.none { obj -> obj.name == remote.name } }
+                remotes.filter { remote -> objects.none { obj -> obj.path == remote.name } }
             val size = diff.sumOf { it.size }
             return DownloadDiff(diff.size, size, remotes, objects, diff)
         } catch (e: Exception) {
