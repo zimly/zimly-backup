@@ -89,7 +89,7 @@ class LocalDocumentsResolver(private val context: Context, private val root: Uri
                 } else {
                     val fileUri = DocumentsContract.buildDocumentUriUsingTree(root, documentId)
                     val path = removeStorageIdentifier(documentId)
-                    val relPath = documentId.substringAfter(rootDocumentId)
+                    val relPath = documentId.substringAfter("$rootDocumentId/")
 
                     files.add(ContentObject(path, relPath, size, mimeType, fileUri))
                     // Log or handle the file
