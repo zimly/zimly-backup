@@ -71,46 +71,44 @@ class UploadSyncServiceTest {
     }
 
     @Test
-    fun synchronize() {
+    fun synchronize() = runTest {
+
+        // GIVEN
         val image1 = "test_image.png"
         val image2 = "test_image2.png"
-        runTest {
+        val path1 = "/testdata/$image1"
+        val path2 = "/testdata/$image2"
+        val stream1 =
+            javaClass.getResourceAsStream(path1) ?: throw Error("Could not open test resource.")
+        val stream2 =
+            javaClass.getResourceAsStream(path2) ?: throw Error("Could not open test resource.")
+        val size1 = stream1.available().toLong()
+        val size2 = stream2.available().toLong()
+        val totalSize = size1 + size2
 
-            // GIVEN
-            val path1 = "/testdata/$image1"
-            val path2 = "/testdata/$image2"
-            val stream1 =
-                javaClass.getResourceAsStream(path1) ?: throw Error("Could not open test resource.")
-            val stream2 =
-                javaClass.getResourceAsStream(path2) ?: throw Error("Could not open test resource.")
-            val size1 = stream1.available().toLong()
-            val size2 = stream2.available().toLong()
-            val totalSize = size1 + size2
+        val localMediaUri = mockk<Uri>()
+        val obj1 = ContentObject(path = image1, image1, size1, "image/png", localMediaUri)
+        val obj2 = ContentObject(path = image2, image1, size2, "image/png", localMediaUri)
+        every { localContentResolver.listObjects() } returns listOf(obj1, obj2)
+        every { localContentResolver.getInputStream(any()) } returns stream1 andThen stream2
 
-            val localMediaUri = mockk<Uri>()
-            val obj1 = ContentObject(path = image1, image1, size1, "image/png", localMediaUri)
-            val obj2 = ContentObject(path = image2, image1, size2, "image/png", localMediaUri)
-            every { localContentResolver.listObjects() } returns listOf(obj1, obj2)
-            every { localContentResolver.getInputStream(any()) } returns stream1 andThen stream2
+        val ss = UploadSyncService(minioRepository, localContentResolver)
 
-            val ss = UploadSyncService(minioRepository, localContentResolver)
+        // WHEN
+        val res = ss.synchronize().last()
 
-            // WHEN
-            val res = ss.synchronize().last()
+        // THEN
+        MatcherAssert.assertThat(res.transferredFiles, CoreMatchers.`is`(2))
+        MatcherAssert.assertThat(res.transferredBytes, CoreMatchers.`is`(totalSize))
+        MatcherAssert.assertThat(res.percentage, CoreMatchers.`is`(1f))
 
-            // THEN
-            MatcherAssert.assertThat(res.transferredFiles, CoreMatchers.`is`(2))
-            MatcherAssert.assertThat(res.transferredBytes, CoreMatchers.`is`(totalSize))
-            MatcherAssert.assertThat(res.percentage, CoreMatchers.`is`(1f))
+        //Thread.sleep(3000)
+        val objs = minioRepository.listObjects()
+        MatcherAssert.assertThat(objs.size, CoreMatchers.`is`(2))
+        MatcherAssert.assertThat(objs.map { it.name }, CoreMatchers.hasItems(image1, image2))
 
-            //Thread.sleep(3000)
-            val objs = minioRepository.listObjects()
-            MatcherAssert.assertThat(objs.size, CoreMatchers.`is`(2))
-            MatcherAssert.assertThat(objs.map { it.name }, CoreMatchers.hasItems(image1, image2))
+        val name = minioRepository.get(image1).`object`()
+        MatcherAssert.assertThat(name, CoreMatchers.`is`(image1))
 
-            val name = minioRepository.get(image1).`object`()
-            MatcherAssert.assertThat(name, CoreMatchers.`is`(image1))
-
-        }
     }
 }
