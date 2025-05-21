@@ -2,6 +2,7 @@ package app.zimly.backup.data.media
 
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.MediaStore
@@ -180,8 +181,9 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
  * Wraps the [ContentResolver] for scoped media collection specific queries. The scope is passed as
  * a collection.
  */
-class LocalMediaResolverImpl(private val contentResolver: ContentResolver, private val collection: String): LocalContentResolver, LocalMediaResolver {
+class LocalMediaResolverImpl(context: Context, private val collection: String): LocalContentResolver, LocalMediaResolver {
 
+    private val contentResolver: ContentResolver = context.contentResolver
     private var mediaRepository: MediaRepository = LocalMediaRepository(contentResolver)
 
     override fun listObjects(): List<ContentObject> {
@@ -203,6 +205,11 @@ class LocalMediaResolverImpl(private val contentResolver: ContentResolver, priva
     override fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream {
         TODO("Fix interfaces!")
     }
+
+    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
+        TODO("Not yet implemented")
+    }
+
 }
 
 interface MediaRepository {

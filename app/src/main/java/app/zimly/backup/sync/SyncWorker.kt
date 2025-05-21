@@ -101,7 +101,7 @@ class SyncWorker(
                 MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
             val localContentResolver = LocalContentResolver.get(
-                context.contentResolver,
+                context,
                 remote.contentType,
                 remote.contentUri
             )

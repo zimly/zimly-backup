@@ -1,6 +1,7 @@
 package app.zimly.backup.data.media
 
 import android.content.ContentResolver
+import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
 import java.io.InputStream
@@ -14,16 +15,17 @@ interface LocalContentResolver {
     fun getInputStream(uri: Uri): InputStream
     fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream
     fun listObjects(): List<ContentObject>
+    fun createDirectoryStructure(uri: Uri, path: String): Uri
 
     companion object {
 
         /**
          * Provides the correct [LocalContentResolver] based on [ContentType].
          */
-        fun get(contentResolver: ContentResolver, type: ContentType, scope: String) =
+        fun get(context: Context, type: ContentType, scope: String) =
             when (type) {
-                ContentType.MEDIA -> LocalMediaResolverImpl(contentResolver, scope)
-                ContentType.FOLDER -> LocalDocumentsResolver(contentResolver, scope.toUri())
+                ContentType.MEDIA -> LocalMediaResolverImpl(context, scope)
+                ContentType.FOLDER -> LocalDocumentsResolver(context, scope.toUri())
             }
     }
 }

@@ -4,7 +4,9 @@ import android.net.Uri
 import android.util.Log
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.s3.MinioRepository
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.last
@@ -73,6 +75,7 @@ class DownloadSyncServiceTest {
         every { localContentResolver.listObjects() } returns emptyList()
         val out1 = ByteArrayOutputStream()
         val out2 = ByteArrayOutputStream()
+        every { localContentResolver.createDirectoryStructure(any(), any()) } just Runs
         every {
             localContentResolver.getOutputStream(
                 any(),
@@ -94,5 +97,9 @@ class DownloadSyncServiceTest {
 
         assertEquals(out1.size(), size1.toInt())
         assertEquals(out2.size(), size2.toInt())
+
+        // Cleanup
+        minioRepository.remove(image1)
+        minioRepository.remove(image2)
     }
 }

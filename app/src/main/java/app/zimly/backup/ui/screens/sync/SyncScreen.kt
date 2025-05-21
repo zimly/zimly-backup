@@ -90,10 +90,16 @@ fun SyncScreen(
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     // Use Dispatchers.Default to not block Main thread
     val createDiff: () -> Unit =
-        { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
+        {
+            viewModel.viewModelScope.launch(Dispatchers.Default) {
+                val safeContext = context.applicationContext
+                viewModel.createDiff(safeContext)
+            }
+        }
 
     syncConfigurationState?.let { syncConfiguration ->
         SyncLayout(

@@ -209,7 +209,6 @@ private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
             })
         }
 
-        null -> {}
     }
 
 }
@@ -239,6 +238,10 @@ private class StubContentResolver : LocalContentResolver {
             )
         )
     }
+
+    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
+        TODO("Not yet implemented")
+    }
 }
 
 
@@ -265,6 +268,10 @@ private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
 
     override fun listObjects(): List<ContentObject> {
         return listOf(ContentObject("path/name", "path/name", 124L, "image/png", Uri.EMPTY))
+    }
+
+    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
+        TODO("Not yet implemented")
     }
 }
 

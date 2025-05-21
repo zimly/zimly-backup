@@ -1,9 +1,11 @@
 package app.zimly.backup.data.media
 
 import android.content.ContentResolver
+import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
+import androidx.documentfile.provider.DocumentFile
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -11,9 +13,10 @@ import java.io.OutputStream
  * https://developer.android.com/training/data-storage/shared/documents-files#grant-access-directory
  * https://developer.android.com/training/data-storage/shared/documents-files#persist-permissions
  */
-class LocalDocumentsResolver(private val contentResolver: ContentResolver, private val root: Uri) :
+class LocalDocumentsResolver(private val context: Context, private val root: Uri) :
     LocalContentResolver {
 
+    val contentResolver: ContentResolver = context.contentResolver
     val rootDocumentId: String = DocumentsContract.getTreeDocumentId(root)
 
     companion object {
@@ -107,7 +110,7 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
         val treeDocumentId = DocumentsContract.getTreeDocumentId(parentUri)
 
         // Get the proper parent document URI to use in createDocument
-        val parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(root, treeDocumentId)
+        val parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(parentUri, treeDocumentId)
 
         val newFileUri = DocumentsContract.createDocument(
             contentResolver,
@@ -118,5 +121,27 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
         return newFileUri?.let { contentResolver.openOutputStream(it) }
             ?: throw Exception("Could not open stream for $parentUri/$objectName.")
     }
+
+    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
+        val root = DocumentFile.fromTreeUri(context, uri)
+        checkNotNull(root) {"Could not retrieve Document file for parent uri $uri"}
+
+        val parts = path.trim('/').split('/')
+        val folders = parts.dropLast(1) // Strip filename
+
+        var currentDir: DocumentFile = root
+        for (folder in folders) {
+            val existing = currentDir.findFile(folder)
+            if (existing?.isDirectory == true) {
+                currentDir = existing
+            } else {
+                val newDir = currentDir.createDirectory(folder)
+                checkNotNull(newDir) {"Failed to create new directory '$folder' under ${currentDir.uri} "}
+                currentDir = newDir
+            }
+        }
+        return currentDir.uri
+    }
+
 
 }
