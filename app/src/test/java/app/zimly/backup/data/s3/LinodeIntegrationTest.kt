@@ -72,7 +72,8 @@ class LinodeIntegrationTest {
 
         every { localContentResolver.listObjects() } returns listOf(
             ContentObject(
-                "test_image.png",
+                "Camera/test_image.png",
+                "Camera/test_image.png",
                 123L,
                 "image/png",
                 mockk()

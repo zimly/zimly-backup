@@ -38,6 +38,9 @@ import kotlin.coroutines.suspendCoroutine
 
 
 data class S3Object(
+    /**
+     * S3 object name is the path.
+     */
     var name: String,
     var size: Long,
     var checksum: String,

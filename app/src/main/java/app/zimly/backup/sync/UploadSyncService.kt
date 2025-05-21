@@ -58,12 +58,12 @@ class UploadSyncService(
         val totalBytes = diff.totalBytes
         var transferredFiles = 0
         return diff.diff.asFlow()
-            .map { mediaObj -> Pair(mediaObj, localContentResolver.getInputStream(mediaObj.path)) }
+            .map { mediaObj -> Pair(mediaObj, localContentResolver.getInputStream(mediaObj.uri)) }
             .onEach { transferredFiles++ } // TODO too early, should happen after the upload
             .flatMapConcat { (mediaObj, file) ->
                 s3Repository.put(
                     file,
-                    mediaObj.name,
+                    mediaObj.path,
                     mediaObj.contentType,
                     mediaObj.size
                 )

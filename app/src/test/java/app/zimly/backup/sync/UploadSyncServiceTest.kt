@@ -41,17 +41,7 @@ class UploadSyncServiceTest {
         every { Log.i(any(), any()) } returns 0
         every { Log.e(any(), any()) } returns 0
 
-        val uri = mockk<Uri>()
         this.localContentResolver = mockk()
-
-        every { localContentResolver.listObjects() } returns listOf(
-            ContentObject(
-                "name",
-                1234,
-                "jpeg",
-                uri
-            )
-        )
 
         val bucket = "test-bucket"
         minioRepository = MinioRepository(minioContainer.s3URL, minioUser, minioPwd, bucket)
@@ -61,6 +51,17 @@ class UploadSyncServiceTest {
 
     @Test
     fun localDiff() {
+        val uri = mockk<Uri>()
+        every { localContentResolver.listObjects() } returns listOf(
+            ContentObject(
+                "path/name",
+                "path/name",
+                1234,
+                "jpeg",
+                uri
+            )
+        )
+
         val ss = UploadSyncService(minioRepository, localContentResolver)
 
         val diff = ss.calculateDiff()
@@ -87,8 +88,8 @@ class UploadSyncServiceTest {
             val totalSize = size1 + size2
 
             val localMediaUri = mockk<Uri>()
-            val obj1 = ContentObject(path = image1, size1, "image/png", localMediaUri)
-            val obj2 = ContentObject(path = image2, size2, "image/png", localMediaUri)
+            val obj1 = ContentObject(path = image1, image1, size1, "image/png", localMediaUri)
+            val obj2 = ContentObject(path = image2, image1, size2, "image/png", localMediaUri)
             every { localContentResolver.listObjects() } returns listOf(obj1, obj2)
             every { localContentResolver.getInputStream(any()) } returns stream1 andThen stream2
 

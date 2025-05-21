@@ -231,7 +231,8 @@ private class StubContentResolver : LocalContentResolver {
     override fun listObjects(): List<ContentObject> {
         return listOf(
             ContentObject(
-                "name",
+                "path/name",
+                "path/name",
                 124L,
                 "image/png",
                 Uri.EMPTY
@@ -263,7 +264,7 @@ private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
     }
 
     override fun listObjects(): List<ContentObject> {
-        return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
+        return listOf(ContentObject("path/name", "path/name", 124L, "image/png", Uri.EMPTY))
     }
 }
 

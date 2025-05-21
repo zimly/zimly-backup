@@ -73,7 +73,7 @@ class AwsIntegrationTest {
     fun createDiff() {
         val localContentResolver = mockk<LocalContentResolver>()
 
-        every { localContentResolver.listObjects() } returns listOf(ContentObject("test_image.png", 123L, "image/png", mockk()))
+        every { localContentResolver.listObjects() } returns listOf(ContentObject("Camera/test_image.png", "Camera/test_image.png", 123L, "image/png", mockk()))
 
         val ss = UploadSyncService(s3Repository, localContentResolver)
 

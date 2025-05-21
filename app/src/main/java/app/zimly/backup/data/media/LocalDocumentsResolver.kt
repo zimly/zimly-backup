@@ -11,8 +11,10 @@ import java.io.OutputStream
  * https://developer.android.com/training/data-storage/shared/documents-files#grant-access-directory
  * https://developer.android.com/training/data-storage/shared/documents-files#persist-permissions
  */
-class LocalDocumentsResolver(private val contentResolver: ContentResolver, private val parent: Uri) :
+class LocalDocumentsResolver(private val contentResolver: ContentResolver, private val root: Uri) :
     LocalContentResolver {
+
+    val rootDocumentId: String = DocumentsContract.getTreeDocumentId(root)
 
     companion object {
         private val TAG: String? = LocalDocumentsResolver::class.simpleName
@@ -47,15 +49,14 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
 
     override fun listObjects(): List<ContentObject> {
         val files = mutableListOf<ContentObject>()
-        val treeDocumentId = DocumentsContract.getTreeDocumentId(parent)
 
-        listObjectsRecursive(treeDocumentId, files)
+        listObjectsRecursive(rootDocumentId, files)
         return files
     }
 
     private fun listObjectsRecursive(folderDocumentId: String, files: MutableList<ContentObject>) {
         val childrenUri =
-            DocumentsContract.buildChildDocumentsUriUsingTree(parent, folderDocumentId)
+            DocumentsContract.buildChildDocumentsUriUsingTree(root, folderDocumentId)
 
         val projection = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
@@ -83,9 +84,11 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
                 if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
                     listObjectsRecursive(documentId, files)
                 } else {
-                    val fileUri = DocumentsContract.buildDocumentUriUsingTree(parent, documentId)
+                    val fileUri = DocumentsContract.buildDocumentUriUsingTree(root, documentId)
                     val path = removeStorageIdentifier(documentId)
-                    files.add(ContentObject(path, size, mimeType, fileUri))
+                    val relPath = documentId.substringAfter(rootDocumentId)
+
+                    files.add(ContentObject(path, relPath, size, mimeType, fileUri))
                     // Log or handle the file
                     Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")
                 }
@@ -104,7 +107,7 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
         val treeDocumentId = DocumentsContract.getTreeDocumentId(parentUri)
 
         // Get the proper parent document URI to use in createDocument
-        val parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(parent, treeDocumentId)
+        val parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(root, treeDocumentId)
 
         val newFileUri = DocumentsContract.createDocument(
             contentResolver,
@@ -112,7 +115,8 @@ class LocalDocumentsResolver(private val contentResolver: ContentResolver, priva
             mimeType,
             objectName
         )
-        return newFileUri?.let { contentResolver.openOutputStream(it) } ?: throw Exception("Could not open stream for $parentUri/$objectName.")
+        return newFileUri?.let { contentResolver.openOutputStream(it) }
+            ?: throw Exception("Could not open stream for $parentUri/$objectName.")
     }
 
 }

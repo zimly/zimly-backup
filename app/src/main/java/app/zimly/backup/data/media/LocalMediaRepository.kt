@@ -29,6 +29,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
             MediaStore.MediaColumns.SIZE,
             MediaStore.MediaColumns.BUCKET_ID,
             MediaStore.MediaColumns.BUCKET_DISPLAY_NAME,
+            MediaStore.MediaColumns.RELATIVE_PATH,
         )
 
         // Display videos in alphabetical order based on their display name.
@@ -53,6 +54,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
             val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
             val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+            val relPathColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
 
             Log.d(TAG, "Number of images: ${cursor.count}")
             while (cursor.moveToNext()) {
@@ -61,14 +63,20 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 val mimeType = cursor.getString(mimeTypeColumn)
                 val size = cursor.getLong(sizeColumn)
                 val bucketName = cursor.getString(bucketNameColumn)
+                val relPath = cursor.getString(relPathColumn)
                 // Get location data using the Exifinterface library.
                 // Exception occurs if ACCESS_MEDIA_LOCATION permission isn't granted.
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
                 var photoUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
                 photoUri= MediaStore.setRequireOriginal(photoUri)
 
-                val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                photos.add(ContentObject(objectName, size, mimeType, photoUri))
+                // TODO: This is odd:
+                // 1. Remove the null check? Both bucketName and relPath are nullable
+                // 2. Since later Android versions MediaStore.MediaColumns.RELATIVE_PATH would be
+                // "correcter" according to chatty, but that would potentially mess with existing configurations.
+                val objectPath = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
+                val relObjectPath = if (relPath.isNullOrEmpty()) name else "$relPath/$name"
+                photos.add(ContentObject(objectPath, relObjectPath, size, mimeType, photoUri))
             }
         }
         return photos.toList()
@@ -86,6 +94,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
             MediaStore.MediaColumns.SIZE,
             MediaStore.MediaColumns.BUCKET_ID,
             MediaStore.MediaColumns.BUCKET_DISPLAY_NAME,
+            MediaStore.MediaColumns.RELATIVE_PATH,
         )
 
         // Display videos in order of creation
@@ -107,6 +116,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
             val mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.MIME_TYPE)
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
             val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
+            val relPathColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
 
             Log.d(TAG, "Number of videos: ${cursor.count}")
             while (cursor.moveToNext()) {
@@ -115,12 +125,14 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 val mimeType = cursor.getString(mimeTypeColumn)
                 val size = cursor.getLong(sizeColumn)
                 val bucketName = cursor.getString(bucketNameColumn)
+                val relPath = cursor.getString(relPathColumn)
 
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
                 val videoUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                videos.add(ContentObject(objectName, size, mimeType, videoUri))
+                val relObjectPath = if (relPath.isNullOrEmpty()) name else "$relPath/$name"
+                videos.add(ContentObject(objectName, relObjectPath, size, mimeType, videoUri))
             }
         }
         return videos.toList()
