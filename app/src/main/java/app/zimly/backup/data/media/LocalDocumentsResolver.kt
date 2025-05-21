@@ -5,7 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
-import androidx.documentfile.provider.DocumentFile
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -104,44 +104,70 @@ class LocalDocumentsResolver(private val context: Context, private val root: Uri
             ?: throw Exception("Could not open stream for $uri.")
     }
 
-    override fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream {
-
-        // Get the document ID
-        val treeDocumentId = DocumentsContract.getTreeDocumentId(parentUri)
-
-        // Get the proper parent document URI to use in createDocument
-        val parentDocumentUri = DocumentsContract.buildDocumentUriUsingTree(parentUri, treeDocumentId)
-
-        val newFileUri = DocumentsContract.createDocument(
+    override fun getOutputStream(parentFolderUri: Uri, fileName: String, mimeType: String): OutputStream {
+        val fileUri = DocumentsContract.createDocument(
             contentResolver,
-            parentDocumentUri,
+            parentFolderUri,
             mimeType,
-            objectName
-        )
-        return newFileUri?.let { contentResolver.openOutputStream(it) }
-            ?: throw Exception("Could not open stream for $parentUri/$objectName.")
+            fileName
+        ) ?: throw IOException("Failed to create file in $parentFolderUri")
+
+        return contentResolver.openOutputStream(fileUri)
+            ?: throw IOException("Failed to open stream for $fileUri")
     }
 
-    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
-        val root = DocumentFile.fromTreeUri(context, uri)
-        checkNotNull(root) {"Could not retrieve Document file for parent uri $uri"}
+    override fun createDirectoryStructure(parentTreeUri: Uri, path: String): Uri {
+        val baseDocumentUri = DocumentsContract.buildDocumentUriUsingTree(
+            parentTreeUri,
+            DocumentsContract.getTreeDocumentId(parentTreeUri)
+        )
 
-        val parts = path.trim('/').split('/')
-        val folders = parts.dropLast(1) // Strip filename
-
-        var currentDir: DocumentFile = root
+        val segments = path.trim('/').split('/')
+        var folders = segments.dropLast(1) // drop filename
+        var currentUri = baseDocumentUri
         for (folder in folders) {
-            val existing = currentDir.findFile(folder)
-            if (existing?.isDirectory == true) {
-                currentDir = existing
-            } else {
-                val newDir = currentDir.createDirectory(folder)
-                checkNotNull(newDir) {"Failed to create new directory '$folder' under ${currentDir.uri} "}
-                currentDir = newDir
+            currentUri = findOrCreateFolder(contentResolver, currentUri, folder)
+        }
+        return currentUri
+    }
+
+    fun findOrCreateFolder(
+        contentResolver: ContentResolver,
+        parentDocumentUri: Uri,
+        folderName: String
+    ): Uri {
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+            parentDocumentUri,
+            DocumentsContract.getDocumentId(parentDocumentUri)
+        )
+
+        contentResolver.query(
+            childrenUri,
+            arrayOf(
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                DocumentsContract.Document.COLUMN_MIME_TYPE
+            ),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            while (cursor.moveToNext()) {
+                val docId = cursor.getString(0)
+                val name = cursor.getString(1)
+                val mimeType = cursor.getString(2)
+                if (name == folderName && mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                    return DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
+                }
             }
         }
-        return currentDir.uri
-    }
 
+        return DocumentsContract.createDocument(
+            contentResolver,
+            parentDocumentUri,
+            DocumentsContract.Document.MIME_TYPE_DIR,
+            folderName
+        )!!
+    }
 
 }
