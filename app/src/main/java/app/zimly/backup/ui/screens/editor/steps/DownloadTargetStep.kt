@@ -1,9 +1,22 @@
 package app.zimly.backup.ui.screens.editor.steps
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Photo
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -18,6 +31,7 @@ import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.screens.editor.steps.components.DocumentsFolderSelector
 import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
+import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
@@ -93,7 +107,26 @@ fun DownloadTargetStep(
             }
         }
     ) {
-        DocumentsFolderSelector(viewModel.folderField)
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = containerBackground(),
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+                Icon(
+                    Icons.Outlined.Folder,
+                    "Folder",
+                    modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                DocumentsFolderSelector(viewModel.folderField)
+            }
+        }
     }
 
 }
