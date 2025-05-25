@@ -1,8 +1,10 @@
 package app.zimly.backup.ui.screens.sync
 
 import android.content.ContentResolver
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -21,15 +23,18 @@ import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.media.LocalContentResolver
-import app.zimly.backup.data.media.SourceType
 import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.sync.DownloadSyncService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
-import app.zimly.backup.sync.SyncServiceImpl
 import app.zimly.backup.sync.SyncWorker
+import app.zimly.backup.sync.UploadSyncService
 import app.zimly.backup.sync.getNullable
+import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -123,8 +128,9 @@ class SyncViewModel(
                 url = it.url,
                 bucket = it.bucket,
                 region = it.region,
-                sourceType = it.sourceType,
-                sourceUri = it.sourceUri
+                contentType = it.contentType,
+                sourceUri = it.contentUri,
+                direction = it.direction
             )
         }.flowOn(Dispatchers.IO)
 
@@ -180,7 +186,7 @@ class SyncViewModel(
      * Ref:
      * https://proandroiddev.com/mutablestate-or-mutablestateflow-a-perspective-on-what-to-use-in-jetpack-compose-ccec0af7abbf
      */
-    suspend fun createDiff() {
+    suspend fun createDiff(context: Context) {
 
         _progress.update {
             Progress(
@@ -193,15 +199,19 @@ class SyncViewModel(
                 MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
             val contentResolver =
-                LocalContentResolver.get(contentResolver, remote.sourceType, remote.sourceUri)
-            val syncService = SyncServiceImpl(s3Repo, contentResolver)
+                LocalContentResolver.get(context, remote.contentType, remote.contentUri)
 
-            val diff = syncService.diff()
+            val syncService = when(remote.direction) {
+                SyncDirection.UPLOAD -> UploadSyncService(s3Repo, contentResolver)
+                SyncDirection.DOWNLOAD -> DownloadSyncService(s3Repo, contentResolver, remote.contentUri.toUri())
+            }
+
+            val diff = syncService.calculateDiff()
             // Display result of the minio request to the user
             _progress.update {
                 Progress(
-                    diffBytes = diff.size,
-                    diffCount = diff.diff.size,
+                    diffBytes = diff.totalBytes,
+                    diffCount = diff.totalObjects,
                     status = null
                 )
             }
@@ -339,12 +349,13 @@ class SyncViewModel(
     }
 
     data class SyncConfigurationState(
-        var name: String = "",
-        var url: String = "",
-        var bucket: String = "",
+        var name: String,
+        var url: String,
+        var bucket: String,
         var region: String? = null,
-        var sourceType: SourceType? = null,
-        var sourceUri: String = "",
+        var contentType: ContentType,
+        var sourceUri: String,
+        val direction: SyncDirection,
     )
 
     data class Progress(

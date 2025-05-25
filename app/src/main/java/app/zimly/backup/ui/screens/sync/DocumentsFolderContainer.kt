@@ -105,7 +105,7 @@ class DocumentsFolderViewModel(
                     val application = checkNotNull(this[APPLICATION_KEY])
 
                     val folderUri = folderPath.toUri()
-                    val contentResolver = LocalDocumentsResolver(application.contentResolver, folderUri)
+                    val contentResolver = LocalDocumentsResolver(application.applicationContext, folderUri)
 
                     DocumentsFolderViewModel(contentResolver, folderUri)
                 }

@@ -10,14 +10,26 @@ import io.minio.MinioAsyncClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
 import io.minio.RemoveObjectsArgs
+import io.minio.StatObjectArgs
+import io.minio.StatObjectResponse
 import io.minio.messages.DeleteObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okio.Buffer
+import okio.ForwardingSource
+import okio.Source
+import okio.buffer
+import okio.sink
+import okio.source
 import java.io.InputStream
+import java.io.OutputStream
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
@@ -26,6 +38,9 @@ import kotlin.coroutines.suspendCoroutine
 
 
 data class S3Object(
+    /**
+     * S3 object name is the path.
+     */
     var name: String,
     var size: Long,
     var checksum: String,
@@ -40,9 +55,9 @@ class MinioRepository(
     private val region: String? = null
 ) : S3Repository {
 
-    private fun mc(progressTracker: ProgressTracker? = null): MinioAsyncClient = try {
+    private fun mc(uploadProgressTracker: ProgressTracker? = null, ): MinioAsyncClient = try {
         MinioAsyncClient.builder()
-            .httpClient(client(progressTracker))
+            .httpClient(client(uploadProgressTracker))
             .endpoint(url)
             .region(region) // This might override some AWS stuff happening inside #endpoint()
             .credentials(key, secret)
@@ -56,11 +71,11 @@ class MinioRepository(
         private val TAG: String? = MinioRepository::class.simpleName
 
         /**
-         * Creates a http client with optional [ProgressInterceptor].
+         * Creates a http client with optional [UploadProgressInterceptor].
          *
          * Partly taken from [io.minio.http.HttpUtils.newDefaultHttpClient]
          */
-        fun client(progressTracker: ProgressTracker?): OkHttpClient {
+        fun client(uploadProgressTracker: ProgressTracker? = null): OkHttpClient {
             val timeout = TimeUnit.MINUTES.toMillis(5)
 
             val builder = OkHttpClient()
@@ -71,7 +86,7 @@ class MinioRepository(
                 .protocols(listOf(Protocol.HTTP_1_1))
 
             // attach interceptor if given
-            progressTracker?.let { builder.addInterceptor(ProgressInterceptor(it)) }
+            uploadProgressTracker?.let { builder.addInterceptor(UploadProgressInterceptor(it)) } // TODO networkInterceptor?
             // Alternatively attach a builder#eventListenerFactory and listen to requestBodyEnd, but same problems
             // with request body returning too early. Might still be slicker than the interceptor
 
@@ -118,6 +133,21 @@ class MinioRepository(
         }
     }
 
+    override suspend fun stat(name: String): StatObjectResponse {
+        return suspendCancellableCoroutine { continuation ->
+
+            val params = StatObjectArgs.builder().bucket(bucket).`object`(name).build()
+
+            mc().statObject(params).whenComplete { result, exception ->
+                if (exception == null) {
+                    continuation.resume(result)
+                } else {
+                    continuation.resumeWithException(exception)
+                }
+            }
+        }
+    }
+
     override suspend fun get(name: String): GetObjectResponse {
         return suspendCancellableCoroutine { continuation ->
 
@@ -130,8 +160,65 @@ class MinioRepository(
                     continuation.resumeWithException(exception)
                 }
             }
-
         }
+    }
+
+    /**
+     * Downloads a file from S3 and tracks the [Progress].
+     *
+     * Important: It tracks the progress when writing to the [OutputStream] instead of intercepting
+     * it on network traffic. Otherwise the actual bytes read and expected are off, possibly due
+     * to gzip or similar.
+     * It's also important to note that in this case, network latency is already accounted for, which
+     * is not the case for [put], hence we have to use the okio interceptor there.
+     *
+     * It's also important to close the passed stream here.
+     */
+    override suspend fun get(name: String, size: Long, stream: OutputStream): Flow<Progress> = channelFlow {
+        val progressTracker = ProgressTracker(size)
+
+        // Launch progress observer
+        val progressJob = launch {
+            progressTracker.observe().collect { send(it) }
+        }
+
+        // Suspend until the Minio getObject call completes or fails
+        val response = suspendCancellableCoroutine<GetObjectResponse> { continuation ->
+            val params = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
+            val future = mc().getObject(params)
+
+            future.whenComplete { result, exception ->
+                if (exception != null) {
+                    continuation.resumeWithException(exception)
+                } else {
+                    continuation.resume(result)
+                }
+            }
+
+            continuation.invokeOnCancellation {
+                future.cancel(true)
+            }
+        }
+
+        // Now perform the actual download on IO dispatcher
+        withContext(Dispatchers.IO) {
+            try {
+                // use { } closes the sink and stream
+                response.source().use { rawSource ->
+                    val countedSource = rawSource.counted(progressTracker)
+                    stream.use { os ->
+                        os.sink().buffer().use { sink ->
+                            sink.writeAll(countedSource)
+                            sink.flush()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                cancel("Download failed", e)
+            }
+        }
+
+        progressJob.join()
     }
 
     override suspend fun remove(name: String) {
@@ -184,14 +271,15 @@ class MinioRepository(
                 .stream(stream, size, -1)
                 .build()
 
-            mc(progressTracker).putObject(param).whenComplete { _, exception ->
-                with(stream) { close() } // Instead of stream.close()
-                if (exception == null) {
-                    continuation.resume(Unit)
-                } else {
-                    continuation.resumeWithException(exception)
+            mc(uploadProgressTracker = progressTracker).putObject(param)
+                .whenComplete { _, exception ->
+                    with(stream) { close() } // Instead of stream.close()
+                    if (exception == null) {
+                        continuation.resume(Unit)
+                    } else {
+                        continuation.resumeWithException(exception)
+                    }
                 }
-            }
         }
     }
 }
@@ -208,6 +296,22 @@ interface S3Repository {
     suspend fun createBucket(bucket: String)
     suspend fun bucketExists(): Boolean
     suspend fun get(name: String): GetObjectResponse
+    suspend fun stat(name: String): StatObjectResponse
+    suspend fun get(name: String, size: Long, outputStream: OutputStream): Flow<Progress>
     suspend fun remove(name: String)
 }
 
+/**
+ * Wraps the [Source] in a [ForwardingSource] that emits the bytes read to the passed [ProgressTracker].
+ */
+fun Source.counted(tracker: ProgressTracker): Source {
+    return object : ForwardingSource(this) {
+        override fun read(sink: Buffer, byteCount: Long): Long {
+            val bytesRead = super.read(sink, byteCount)
+            if (bytesRead > 0) {
+                tracker.stepBy(bytesRead)
+            }
+            return bytesRead
+        }
+    }.buffer()
+}

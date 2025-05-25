@@ -1,5 +1,5 @@
-2.4.3
-* Show list actions when items selected in overview list #35
+3.0.0
+* Added S3 download support - Enables syncing data from S3 to your device.
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases

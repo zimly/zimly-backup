@@ -110,7 +110,7 @@ class MediaCollectionViewModel(
                 initializer {
                     val application = checkNotNull(this[APPLICATION_KEY])
 
-                    val contentResolver = LocalMediaResolverImpl(application.contentResolver, collection)
+                    val contentResolver = LocalMediaResolverImpl(application.applicationContext, collection)
                     MediaCollectionViewModel(contentResolver, collection)
                 }
             }

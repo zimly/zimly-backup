@@ -1,6 +1,6 @@
 package app.zimly.backup.ui.screens.editor.form.field
 
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,18 +11,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /**
- * Composite field for the backup [SourceType] and value that delegates it's logic to the
+ * Composite field for the backup [ContentType] and value that delegates it's logic to the
  * corresponding fields [mediaField] and [folderField].
  *
  * This is borderline a form, similar to [BucketForm]. But with more complex logic and as it represents
  * _one_ value in the model a composite field is better.
  */
-class BackupSourceField : Field<SourceType> {
+class BackupSourceField : Field<ContentType> {
     val mediaField = TextField("Select a collection for backup")
     val folderField = UriField("Select a folder for backup")
 
     private val internal: MutableStateFlow<FieldState> =
-        MutableStateFlow(FieldState(SourceType.MEDIA))
+        MutableStateFlow(FieldState(ContentType.MEDIA))
 
     val state: StateFlow<FieldState> = internal.asStateFlow()
 
@@ -31,13 +31,13 @@ class BackupSourceField : Field<SourceType> {
         .map { it.type }
         .flatMapLatest { type ->
             when (type) {
-                SourceType.MEDIA -> mediaField.error()
-                SourceType.FOLDER -> folderField.error()
+                ContentType.MEDIA -> mediaField.error()
+                ContentType.FOLDER -> folderField.error()
             }
         }
 
 
-    override fun update(value: SourceType) {
+    override fun update(value: ContentType) {
         internal.update { it.copy(type = value) }
     }
 
@@ -46,8 +46,8 @@ class BackupSourceField : Field<SourceType> {
         .map { it.type }
         .flatMapLatest { type ->
             when (type) {
-                SourceType.MEDIA -> mediaField.valid()
-                SourceType.FOLDER -> folderField.valid()
+                ContentType.MEDIA -> mediaField.valid()
+                ContentType.FOLDER -> folderField.valid()
             }
         }
 
@@ -62,6 +62,6 @@ class BackupSourceField : Field<SourceType> {
         folderField.touch()
     }
 
-    data class FieldState(val type: SourceType, val error: String? = null)
+    data class FieldState(val type: ContentType, val error: String? = null)
 
 }

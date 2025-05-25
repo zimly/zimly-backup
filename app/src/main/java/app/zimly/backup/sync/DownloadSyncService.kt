@@ -1,0 +1,110 @@
+package app.zimly.backup.sync
+
+import android.net.Uri
+import android.util.Log
+import app.zimly.backup.data.media.ContentObject
+import app.zimly.backup.data.media.LocalContentResolver
+import app.zimly.backup.data.s3.S3Object
+import app.zimly.backup.data.s3.S3Repository
+import io.minio.errors.ErrorResponseException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.runningFold
+
+class DownloadSyncService(
+    private val s3Repository: S3Repository,
+    private val localContentResolver: LocalContentResolver,
+    private val target: Uri,
+    private val debounce: Long = 0L
+) : SyncService {
+
+    companion object {
+        val TAG: String? = DownloadSyncService::class.simpleName
+    }
+
+    override fun calculateDiff(): DownloadDiff {
+        try {
+            val remotes = s3Repository.listObjects()
+            val objects = localContentResolver.listObjects()
+            val diff =
+                remotes.filter { remote -> objects.none { obj -> obj.relPath == remote.name } }
+            val size = diff.sumOf { it.size }
+            return DownloadDiff(diff.size, size, remotes, objects, diff)
+        } catch (e: Exception) {
+            var message = e.message
+            if (e is ErrorResponseException) {
+                val status = e.response().code
+                val mes = e.response().message
+                val errorCode = e.errorResponse().code()
+                message = "status: $status, message: $mes, errorCode: $errorCode"
+            }
+            Log.e(TAG, "Failed to create remote diff: $message", e)
+            throw Exception("Failed to create remote diff: $message", e)
+
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    override fun synchronize(): Flow<SyncProgress> {
+        val diff = calculateDiff() // TODO: Error handling!
+        val totalFiles = diff.totalObjects
+        val totalBytes = diff.totalBytes
+        var transferredFiles = 0
+        return diff.diff.asFlow()
+            // TODO: Really another request for the content-type?
+            .map { s3Obj -> s3Repository.stat(s3Obj.name) }
+            .map { s3StatObj ->
+
+                // TODO Unfuglify this
+                val parentUri =
+                    localContentResolver.createDirectoryStructure(target, s3StatObj.`object`())
+                val parts = s3StatObj.`object`().trim('/').split('/')
+                val fileName = parts.last()
+                Pair(
+                    s3StatObj,
+                    localContentResolver.getOutputStream(
+                        parentUri,
+                        fileName,
+                        s3StatObj.contentType()
+                    )
+                )
+            }
+            .onEach { transferredFiles++ } // TODO too early, should happen after the upload
+            .flatMapConcat { (s3Obj, outputStream) ->
+                s3Repository.get(
+                    s3Obj.`object`(),
+                    s3Obj.size(),
+                    outputStream
+                )
+            }
+            .runningFold(SyncProgress.EMPTY) { acc, value ->
+                val sumTransferredBytes =
+                    acc.transferredBytes + value.readBytes
+                val percentage = sumTransferredBytes.toFloat() / diff.totalBytes
+                SyncProgress(transferredBytes = sumTransferredBytes, transferredFiles, percentage, value.bytesPerSec, totalFiles, totalBytes)
+            }
+            .onStart {
+                emit(SyncProgress.EMPTY.copy(totalFiles = totalFiles, totalBytes = totalBytes))
+            }
+            .debounce(debounce)
+    }
+
+}
+
+data class DownloadDiff(
+
+    override var totalObjects: Int = 0,
+    override var totalBytes: Long = 0,
+
+    val remotes: List<S3Object>,
+    val locals: List<ContentObject>,
+    val diff: List<S3Object>,
+) : Diff()
+

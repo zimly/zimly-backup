@@ -19,7 +19,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,7 +61,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.screens.sync.permission.MediaPermissionContainer
 import app.zimly.backup.ui.theme.containerBackground
@@ -69,7 +72,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SyncScreen(
     remoteId: Int,
-    edit: (Int) -> Unit,
+    edit: (SyncDirection?, Int) -> Unit,
     back: () -> Unit,
     viewModel: SyncViewModel = viewModel(
         factory = SyncViewModel.Factory,
@@ -79,7 +82,7 @@ fun SyncScreen(
         })
 ) {
 
-    val remote by viewModel.syncConfigurationState.collectAsStateWithLifecycle(SyncViewModel.SyncConfigurationState())
+    val syncConfigurationState by viewModel.syncConfigurationState.collectAsStateWithLifecycle(null)
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
     val permissionsGranted by viewModel.permissionsGranted.collectAsStateWithLifecycle()
@@ -88,49 +91,56 @@ fun SyncScreen(
     // want to go nuts?
     // https://afigaliyev.medium.com/snackbar-state-management-best-practices-for-jetpack-compose-1a5963d86d98
     val snackbarState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     // Use Dispatchers.Default to not block Main thread
     val createDiff: () -> Unit =
-        { viewModel.viewModelScope.launch(Dispatchers.Default) { viewModel.createDiff() } }
-
-    SyncLayout(
-        remote.name,
-        error,
-        permissionsGranted,
-        syncInProgress,
-        snackbarState,
-        sync = {
-            viewModel.viewModelScope.launch {
-                viewModel.sync()
+        {
+            viewModel.viewModelScope.launch(Dispatchers.Default) {
+                val safeContext = context.applicationContext
+                viewModel.createDiff(safeContext)
             }
-        },
-        cancelSync = { viewModel.cancelSync() },
-        edit = { edit(remoteId) },
-        back,
-        clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
-    ) {
-        val enableDiffAction = permissionsGranted && !syncInProgress
+        }
 
-        SyncOverview(
-            remote,
-            progress,
-            enableDiffAction,
-            createDiff,
-            sourceContainer = {
-                when (remote.sourceType) {
-                    SourceType.MEDIA -> MediaCollectionContainer(remote.sourceUri)
-                    SourceType.FOLDER -> DocumentsFolderContainer(remote.sourceUri)
-                    null -> {}
+    syncConfigurationState?.let { syncConfiguration ->
+        SyncLayout(
+            syncConfiguration,
+            error,
+            permissionsGranted,
+            syncInProgress,
+            snackbarState,
+            sync = {
+                viewModel.viewModelScope.launch {
+                    viewModel.sync()
                 }
             },
-            warningsContainer = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    MediaPermissionContainer()
-                    BatterySaverContainer()
-                }
-            }
-        )
+            cancelSync = { viewModel.cancelSync() },
+            edit = { edit(syncConfiguration.direction, remoteId) },
+            back,
+            clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
+        ) {
+            val enableDiffAction = permissionsGranted && !syncInProgress
 
+            SyncOverview(
+                syncConfiguration,
+                progress,
+                enableDiffAction,
+                createDiff,
+                sourceContainer = {
+                    when (syncConfiguration.contentType) {
+                        ContentType.MEDIA -> MediaCollectionContainer(syncConfiguration.sourceUri)
+                        ContentType.FOLDER -> DocumentsFolderContainer(syncConfiguration.sourceUri)
+                    }
+                },
+                warningsContainer = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        MediaPermissionContainer()
+                        BatterySaverContainer()
+                    }
+                }
+            )
+
+        }
     }
 }
 
@@ -147,7 +157,7 @@ fun SyncOverview(
 
         Bucket(remote)
         sourceContainer()
-        DiffDetails(progress, enableActions, createDiff)
+        DiffDetails(progress, enableActions, createDiff, remote.direction)
 
     }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -160,7 +170,7 @@ fun SyncOverview(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyncLayout(
-    remoteName: String,
+    syncConfiguration: SyncViewModel.SyncConfigurationState,
     error: String?,
     enableActions: Boolean,
     syncInProgress: Boolean,
@@ -193,7 +203,7 @@ fun SyncLayout(
             TopAppBar(
                 title = {
                     Text(
-                        remoteName,
+                        syncConfiguration.name,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -231,7 +241,11 @@ fun SyncLayout(
                         contentPadding = PaddingValues(horizontal = 74.dp, vertical = 12.dp),
                         colors = ButtonDefaults.buttonColors(disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                     ) {
-                        Text(text = "Upload")
+                        val label = when(syncConfiguration.direction) {
+                            SyncDirection.UPLOAD -> "Upload"
+                            SyncDirection.DOWNLOAD -> "Download"
+                        }
+                        Text(text = label)
                     }
 
                 } else {
@@ -274,8 +288,12 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+            val icon = when(remote.direction) {
+                SyncDirection.UPLOAD -> Icons.Outlined.CloudUpload
+                SyncDirection.DOWNLOAD -> Icons.Outlined.CloudDownload
+            }
             Icon(
-                Icons.Outlined.CloudUpload,
+                icon,
                 "Remote",
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
@@ -315,6 +333,7 @@ private fun DiffDetails(
     progress: SyncViewModel.Progress,
     enableDiff: Boolean,
     createDiff: () -> Unit,
+    direction: SyncDirection,
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -323,8 +342,12 @@ private fun DiffDetails(
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+            val icon = when(direction) {
+                SyncDirection.UPLOAD -> Icons.Outlined.Upload
+                SyncDirection.DOWNLOAD -> Icons.Outlined.Download
+            }
             Icon(
-                Icons.Outlined.Upload,
+                icon,
                 "Progress",
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
@@ -334,7 +357,11 @@ private fun DiffDetails(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Uploads")
+                val label = when(direction) {
+                    SyncDirection.UPLOAD -> "Uploads"
+                    SyncDirection.DOWNLOAD -> "Downloads"
+                }
+                Text(text = label)
                 if (progress.diffCount > -1) {
                     Text(text = "${progress.progressCount} / ${progress.diffCount}")
                 } else {
@@ -345,7 +372,11 @@ private fun DiffDetails(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "Uploads size")
+                val label = when(direction) {
+                    SyncDirection.UPLOAD -> "Uploads"
+                    SyncDirection.DOWNLOAD -> "Downloads"
+                }
+                Text(text = "$label size")
                 if (progress.diffBytes > -1) {
                     Text(
                         text = "${

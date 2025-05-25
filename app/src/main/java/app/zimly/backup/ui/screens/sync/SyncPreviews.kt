@@ -10,10 +10,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.zimly.backup.data.db.notification.Notification
 import app.zimly.backup.data.db.notification.NotificationDao
 import app.zimly.backup.data.db.notification.NotificationType
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalMediaResolver
-import app.zimly.backup.data.media.SourceType
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Status
@@ -22,6 +23,7 @@ import app.zimly.backup.ui.screens.sync.battery.BatterySaverViewModel
 import app.zimly.backup.ui.screens.sync.battery.PowerStatusProvider
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import java.io.InputStream
+import java.io.OutputStream
 
 @Preview(showBackground = true)
 @Composable
@@ -31,11 +33,12 @@ fun InProgressPreview() {
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
+        contentType = ContentType.MEDIA,
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(
-        status = SyncViewModel.Status.IN_PROGRESS,
+        status = Status.IN_PROGRESS,
         progressBytesPerSec = 18426334,
         percentage = 0.77F,
         diffCount = 51,
@@ -59,11 +62,12 @@ fun CompletedPreview() {
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         bucket = "zimly-backup",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
+        contentType = ContentType.MEDIA,
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(
-        status = SyncViewModel.Status.COMPLETED,
+        status = Status.COMPLETED,
         progressBytesPerSec = 18426334,
         percentage = 1F,
         diffCount = 51,
@@ -86,8 +90,10 @@ fun IdlePreview() {
     val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
+        bucket = "bucket",
+        contentType = ContentType.MEDIA,
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress()
     val snackbarState = remember { SnackbarHostState() }
@@ -106,8 +112,9 @@ fun CalculatingPreview() {
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
+        contentType = ContentType.MEDIA,
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(status = Status.CALCULATING)
 
@@ -126,8 +133,10 @@ fun PermissionsMissingPreview() {
     val remote = SyncViewModel.SyncConfigurationState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
-        sourceType = SourceType.MEDIA,
-        sourceUri = "Camera"
+        bucket = "bucket",
+        contentType = ContentType.MEDIA,
+        sourceUri = "Camera",
+        direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress()
     val snackbarState = remember { SnackbarHostState() }
@@ -150,7 +159,7 @@ private fun PreviewSync(
 ) {
     ZimzyncTheme(darkTheme = true) {
         SyncLayout(
-            remoteName = remote.name,
+            syncConfiguration = remote,
             error = null,
             enableActions,
             syncInProgress,
@@ -184,14 +193,14 @@ private fun PreviewSync(
 
 @Composable
 private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
-    when (remote.sourceType) {
-        SourceType.MEDIA -> {
+    when (remote.contentType) {
+        ContentType.MEDIA -> {
             MediaCollectionContainer(remote.sourceUri, viewModel = viewModel {
                 MediaCollectionViewModel(StubMediaResolver(), remote.sourceUri)
             })
         }
 
-        SourceType.FOLDER -> {
+        ContentType.FOLDER -> {
             DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
                 DocumentsFolderViewModel(
                     StubContentResolver(),
@@ -200,26 +209,38 @@ private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
             })
         }
 
-        null -> {}
     }
 
 }
 
 private class StubContentResolver : LocalContentResolver {
 
-    override fun getStream(uri: Uri): InputStream {
+    override fun getInputStream(uri: Uri): InputStream {
+        TODO("Not yet implemented")
+    }
+
+    override fun getOutputStream(
+        parentUri: Uri,
+        objectName: String,
+        mimeType: String
+    ): OutputStream {
         TODO("Not yet implemented")
     }
 
     override fun listObjects(): List<ContentObject> {
         return listOf(
             ContentObject(
-                "name",
+                "path/name",
+                "path/name",
                 124L,
                 "image/png",
                 Uri.EMPTY
             )
         )
+    }
+
+    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
+        TODO("Not yet implemented")
     }
 }
 
@@ -233,12 +254,24 @@ private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
         return 12
     }
 
-    override fun getStream(uri: Uri): InputStream {
+    override fun getInputStream(uri: Uri): InputStream {
+        TODO("Not yet implemented")
+    }
+
+    override fun getOutputStream(
+        parentUri: Uri,
+        objectName: String,
+        mimeType: String
+    ): OutputStream {
         TODO("Not yet implemented")
     }
 
     override fun listObjects(): List<ContentObject> {
-        return listOf(ContentObject("name", 124L, "image/png", Uri.EMPTY))
+        return listOf(ContentObject("path/name", "path/name", 124L, "image/png", Uri.EMPTY))
+    }
+
+    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
+        TODO("Not yet implemented")
     }
 }
 

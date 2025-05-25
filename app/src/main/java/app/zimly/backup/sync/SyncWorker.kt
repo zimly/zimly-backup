@@ -2,10 +2,12 @@ package app.zimly.backup.sync
 
 import android.content.Context
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import app.zimly.backup.data.db.ZimlyDatabase
+import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
@@ -33,49 +35,28 @@ class SyncWorker(
 
         Log.i(TAG, "Launching sync...")
 
-        val diff = try {
-            syncService.diff()
-        } catch (e: Exception) {
-            return Result.failure(
-                Data.Builder()
-                    .putString(SyncOutputs.ERROR, e.message)
-                    .build()
-            )
-        }
-
-        val diffCount = diff.diff.size
-        val diffBytes = diff.size
-
-        // Set initial diff numbers
-        setProgress(
-            Data.Builder()
-                .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
-                .build()
-        )
-
-        return syncService.sync(diff)
+        return syncService.synchronize()
             .onEach {
                 setProgressAsync(
                     Data.Builder()
-                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
-                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putInt(SyncOutputs.PROGRESS_COUNT, it.transferredFiles)
+                        .putLong(SyncOutputs.PROGRESS_BYTES, it.transferredBytes)
                         .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
-                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                        .putInt(SyncOutputs.DIFF_COUNT, it.totalFiles)
+                        .putLong(SyncOutputs.DIFF_BYTES, it.totalBytes)
                         .build()
                 )
             }
             .map {
                 Result.success(
                     Data.Builder()
-                        .putInt(SyncOutputs.PROGRESS_COUNT, it.uploadedFiles)
-                        .putLong(SyncOutputs.PROGRESS_BYTES, it.readBytes)
+                        .putInt(SyncOutputs.PROGRESS_COUNT, it.transferredFiles)
+                        .putLong(SyncOutputs.PROGRESS_BYTES, it.transferredBytes)
                         .putIfNotNull(SyncOutputs.PROGRESS_BYTES_PER_SEC, it.bytesPerSecond)
                         .putFloat(SyncOutputs.PROGRESS_PERCENTAGE, it.percentage)
-                        .putInt(SyncOutputs.DIFF_COUNT, diffCount)
-                        .putLong(SyncOutputs.DIFF_BYTES, diffBytes)
+                        .putInt(SyncOutputs.DIFF_COUNT, it.totalFiles)
+                        .putLong(SyncOutputs.DIFF_BYTES, it.totalBytes)
                         .build()
                 )
             }
@@ -105,6 +86,7 @@ class SyncWorker(
     companion object {
         val TAG: String? = SyncWorker::class.simpleName
 
+        // TODO: provider passed through constructor?
         suspend fun initSyncService(context: Context, inputData: Data): SyncService {
 
             val db = ZimlyDatabase.getInstance(context.applicationContext)
@@ -119,12 +101,15 @@ class SyncWorker(
                 MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
             val localContentResolver = LocalContentResolver.get(
-                context.contentResolver,
-                remote.sourceType,
-                remote.sourceUri
+                context,
+                remote.contentType,
+                remote.contentUri
             )
 
-            return SyncServiceImpl(s3Repository, localContentResolver)
+            return when(remote.direction) {
+                SyncDirection.UPLOAD -> UploadSyncService(s3Repository, localContentResolver)
+                SyncDirection.DOWNLOAD -> DownloadSyncService(s3Repository, localContentResolver, remote.contentUri.toUri())
+            }
         }
     }
 }

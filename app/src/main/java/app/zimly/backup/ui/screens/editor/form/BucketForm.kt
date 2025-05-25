@@ -39,7 +39,15 @@ class BucketForm : Form {
         }
     }
 
-    // TODO Use BucketConfiguration?
+    fun populate(bucketConfiguration: BucketConfiguration) {
+        name.update(bucketConfiguration.name)
+        url.update(bucketConfiguration.url)
+        key.update(bucketConfiguration.key)
+        secret.update(bucketConfiguration.secret)
+        bucket.update(bucketConfiguration.bucket)
+        region.update(bucketConfiguration.region)
+    }
+
     fun populate(remote: Remote) {
         name.update(remote.name)
         url.update(remote.url)

@@ -1,4 +1,4 @@
-package app.zimly.backup.ui.screens.editor
+package app.zimly.backup.ui.screens.editor.steps
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,10 +34,130 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.data.s3.MinioRepository
+import app.zimly.backup.ui.components.Notification
+import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.form.BucketForm
+import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
+import io.minio.errors.ErrorResponseException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+class BucketViewModel(
+    private val store: ValueStore<BucketForm.BucketConfiguration>,
+) : ViewModel(), NotificationProvider {
+
+    val bucketForm = BucketForm()
+    val notification: MutableStateFlow<Notification?> = MutableStateFlow(null)
+
+    init {
+        viewModelScope.launch {
+            store.load()
+                .filterNotNull()
+                .collectLatest { bucketForm.populate(it) }
+        }
+    }
+
+    fun persist(nextStep: () -> Unit) {
+        store.persist(bucketForm.values()) { success -> if (success) nextStep() }
+    }
+
+    suspend fun verify() {
+        val bucketConfiguration = bucketForm.values()
+        val repo = MinioRepository(
+            bucketConfiguration.url,
+            bucketConfiguration.key,
+            bucketConfiguration.secret,
+            bucketConfiguration.bucket,
+            bucketConfiguration.region
+        )
+
+        try {
+            val bucketExists = repo.bucketExists()
+            val message =
+                if (bucketExists) "Connection successful, bucket exists!" else "Bucket does not exist!"
+            notification.update { Notification(message = message, type = Notification.Type.INFO) }
+        } catch (e: Exception) {
+            val cause = e.cause ?: e
+            var message = cause.message
+            if (cause is ErrorResponseException) {
+                cause.errorResponse().message()
+                val status = cause.response().code
+                val mes = cause.errorResponse().message()
+                val errorCode = cause.errorResponse().code()
+                message = "status: $status, message: $mes, errorCode: $errorCode"
+            }
+            notification.update {
+                Notification(
+                    message = "Connection failed: $message",
+                    type = Notification.Type.ERROR
+                )
+            }
+        }
+    }
+
+    override fun reset() {
+        notification.update { null }
+    }
+
+    override fun get(): StateFlow<Notification?> {
+        return notification.asStateFlow()
+    }
+
+}
+
+@Composable
+fun BucketConfigurationStep(
+    store: ValueStore<BucketForm.BucketConfiguration>,
+    parentNotificationProvider: NotificationProvider,
+    nextStep: () -> Unit,
+    previousStep: () -> Unit,
+    viewModel: BucketViewModel = viewModel(factory = viewModelFactory {
+        initializer {
+            BucketViewModel(store)
+        }
+    })
+) {
+
+    val isValid by viewModel.bucketForm.valid().collectAsStateWithLifecycle(false)
+
+    val notProv = parentNotificationProvider.combine(viewModel)
+
+    WizardStep(
+        title = "Bucket Configuration",
+        notificationProvider = notProv,
+        navigation = {
+            TextButton(onClick = { previousStep() }) {
+                Text("Back")
+            }
+            TextButton(
+                enabled = isValid,
+                onClick = {
+                    viewModel.persist(nextStep)
+                },
+            ) {
+                Text("Save")
+            }
+        }) {
+        BucketConfiguration(
+            bucketForm = viewModel.bucketForm,
+            verify = { viewModel.viewModelScope.launch { viewModel.verify() } }
+        )
+    }
+}
 
 @Composable
 fun BucketConfiguration(
@@ -99,7 +219,11 @@ fun BucketConfiguration(
                     label = { Text("Region (optional)") },
                     // Handle null case, should this go into field instead? value vs state representation.
                     value = regionState.value.value ?: "",
-                    onValueChange = { if (it.isEmpty()) bucketForm.region.update(null) else bucketForm.region.update(it) },
+                    onValueChange = {
+                        if (it.isEmpty()) bucketForm.region.update(null) else bucketForm.region.update(
+                            it
+                        )
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     isError = regionState.value.error != null,
                     supportingText = { regionState.value.error?.let { Text(it) } }

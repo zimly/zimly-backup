@@ -11,6 +11,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * Remember: A test for [LocalDocumentsResolver] would be awesome, but SAF makes it a huge PITA.
+ */
 class LocalMediaRepositoryTest {
     private var testUris: MutableSet<Uri> = mutableSetOf()
 
