@@ -15,8 +15,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.ContentType
-import app.zimly.backup.ui.screens.editor.steps.components.DocumentsFolderSelector
 import app.zimly.backup.ui.screens.editor.form.field.UriField
+import app.zimly.backup.ui.screens.editor.steps.components.DocumentsFolderSelector
 import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -78,7 +78,7 @@ fun DownloadTargetStep(
     val valid by viewModel.isValid().collectAsStateWithLifecycle(false)
 
     WizardStep(
-        title = "Select Download target",
+        title = "Select Download Location",
         navigation = {
             TextButton(onClick = { previousStep() }) {
                 Text("Back")

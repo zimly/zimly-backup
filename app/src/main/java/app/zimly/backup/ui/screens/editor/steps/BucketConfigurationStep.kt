@@ -137,7 +137,7 @@ fun BucketConfigurationStep(
     val notProv = parentNotificationProvider.combine(viewModel)
 
     WizardStep(
-        title = "Configure Bucket",
+        title = "Bucket Configuration",
         notificationProvider = notProv,
         navigation = {
             TextButton(onClick = { previousStep() }) {

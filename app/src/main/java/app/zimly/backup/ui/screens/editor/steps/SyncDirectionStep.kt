@@ -3,7 +3,7 @@ package app.zimly.backup.ui.screens.editor.steps
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudDownload
-import androidx.compose.material.icons.outlined.Upload
+import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,7 +35,7 @@ fun SyncDirectionStep(
     val loadedOption by store.load().collectAsStateWithLifecycle(null)
     var selectedOption by remember { mutableStateOf(loadedOption) }
     WizardStep(
-        title = "Select Sync Direction",
+        title = "Choose Sync Direction",
         navigation = {
             TextButton(onClick = { previousStep() }) {
                 Text("Cancel")
@@ -56,16 +56,16 @@ fun SyncDirectionStep(
             selected = selectedOption == SyncDirection.UPLOAD,
             option = SyncDirection.UPLOAD,
             onSelect = { selectedOption = it },
-            title = "Upload from Device",
-            description = "Synchronize media or documents from your device to a remote S3 bucket",
-            icon = Icons.Outlined.Upload
+            title = "Upload to Cloud",
+            description = "Sync documents or media from your device to an S3 bucket.",
+            icon = Icons.Outlined.CloudUpload
         )
         SyncOption(
             selected = selectedOption == SyncDirection.DOWNLOAD,
             option = SyncDirection.DOWNLOAD,
             onSelect = { selectedOption = it },
-            title = "Download from S3",
-            description = "Synchronize remote data to your mobile device",
+            title = "Download to Device",
+            description = "Sync files from an S3 bucket to your mobile device.",
             icon = Icons.Outlined.CloudDownload
         )
     }

@@ -88,7 +88,7 @@ fun UploadSourceStep(
     val valid by viewModel.isValid().collectAsStateWithLifecycle(false)
 
     WizardStep(
-        title = "Select Upload Source",
+        title = "Select Content to Upload",
         navigation = {
             TextButton(onClick = { previousStep() }) {
                 Text("Back")
