@@ -75,12 +75,10 @@ class DownloadSyncServiceTest {
         every { localContentResolver.listObjects() } returns emptyList()
         val out1 = ByteArrayOutputStream()
         val out2 = ByteArrayOutputStream()
-        every { localContentResolver.createDirectoryStructure(any(), any()) } returns mockk<Uri>()
         every {
-            localContentResolver.getOutputStream(
+            localContentResolver.createOutputStream(
                 any(),
                 any(),
-                any()
             )
         } returns out1 andThen out2
 
