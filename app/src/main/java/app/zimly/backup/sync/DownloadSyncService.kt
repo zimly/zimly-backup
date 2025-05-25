@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
@@ -52,12 +53,12 @@ class DownloadSyncService(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    override fun synchronize(): Flow<SyncProgress> {
-        val diff = calculateDiff() // TODO: Error handling!
+    override fun synchronize(): Flow<SyncProgress> = flow {
+        val diff = calculateDiff()
         val totalFiles = diff.totalObjects
         val totalBytes = diff.totalBytes
         var transferredFiles = 0
-        return diff.diff.asFlow()
+        diff.diff.asFlow()
             // TODO: Really another request for the content-type?
             .map { s3Obj -> s3Repository.stat(s3Obj.name) }
             .map { s3StatObj ->
@@ -94,6 +95,7 @@ class DownloadSyncService(
                 emit(SyncProgress.EMPTY.copy(totalFiles = totalFiles, totalBytes = totalBytes))
             }
             .debounce(debounce)
+            .collect { emit(it) }
     }
 
 }

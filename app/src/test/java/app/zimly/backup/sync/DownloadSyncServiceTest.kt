@@ -20,6 +20,7 @@ import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
 import java.io.ByteArrayOutputStream
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class DownloadSyncServiceTest {
     private val minioUser = "test"
@@ -43,6 +44,7 @@ class DownloadSyncServiceTest {
         every { Log.d(any(), any()) } returns 0
         every { Log.i(any(), any()) } returns 0
         every { Log.e(any(), any()) } returns 0
+        every { Log.e(any(), any(), any()) } returns 0
 
         this.localContentResolver = mockk()
 
@@ -102,4 +104,28 @@ class DownloadSyncServiceTest {
         minioRepository.remove(image1)
         minioRepository.remove(image2)
     }
+
+    @Test
+    fun fail() = runTest {
+
+        // GIVEN
+        minioRepository = mockk()
+        every { localContentResolver.listObjects() } returns emptyList()
+        every { minioRepository.listObjects() } throws Exception("Boom")
+
+        val target = mockk<Uri>()
+        val ss = DownloadSyncService(minioRepository, localContentResolver, target)
+
+        // WHEN
+
+        // Act & Assert
+        val flow = ss.synchronize()
+
+        // THEN
+        val thrown = assertFailsWith<Exception> {
+            flow.collect {} // will throw
+        }
+        assertEquals("Failed to create remote diff: Boom", thrown.message)
+    }
+
 }
