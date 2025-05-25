@@ -29,8 +29,8 @@ interface LocalContentResolver {
 }
 
 interface WriteableContentResolver : LocalContentResolver {
-    fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream
-    fun createDirectoryStructure(uri: Uri, path: String): Uri
+    fun createOutputStream(objectPath: String, mimeType: String): OutputStream
+    fun createDirectoryStructure(path: String): Uri
 }
 
 

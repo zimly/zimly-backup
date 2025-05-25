@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
+import androidx.compose.ui.util.fastJoinToString
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -104,7 +105,28 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             ?: throw Exception("Could not open stream for $uri.")
     }
 
-    override fun getOutputStream(parentFolderUri: Uri, fileName: String, mimeType: String): OutputStream {
+    /**
+     * Takes a complete [objectPath], e.g. Pictures/2025/picture.png, and creates the directory path
+     * if it's missing and an empty Document with the trailing objectName and returns the [OutputStream].
+     */
+    override fun createOutputStream(
+        objectPath: String,
+        mimeType: String
+    ): OutputStream {
+
+        val pathSegments = objectPath.trim('/').split('/')
+        val objectName = pathSegments.last()
+        var directoryPath = pathSegments.dropLast(1).fastJoinToString("/") // drop filename, join to path
+
+        val parentUri = createDirectoryStructure(directoryPath)
+        return getOutputStream(
+            parentUri,
+            objectName,
+            mimeType
+        )
+    }
+
+    private fun getOutputStream(parentFolderUri: Uri, fileName: String, mimeType: String): OutputStream {
         val fileUri = DocumentsContract.createDocument(
             contentResolver,
             parentFolderUri,
@@ -116,14 +138,13 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             ?: throw IOException("Failed to open stream for $fileUri")
     }
 
-    override fun createDirectoryStructure(parentTreeUri: Uri, path: String): Uri {
+    override fun createDirectoryStructure(path: String): Uri {
         val baseDocumentUri = DocumentsContract.buildDocumentUriUsingTree(
-            parentTreeUri,
-            DocumentsContract.getTreeDocumentId(parentTreeUri)
+            root,
+            DocumentsContract.getTreeDocumentId(root)
         )
 
-        val segments = path.trim('/').split('/')
-        var folders = segments.dropLast(1) // drop filename
+        val folders = path.trim('/').split('/')
         var currentUri = baseDocumentUri
         for (folder in folders) {
             currentUri = findOrCreateFolder(contentResolver, currentUri, folder)

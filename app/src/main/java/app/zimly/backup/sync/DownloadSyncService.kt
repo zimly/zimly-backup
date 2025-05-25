@@ -3,7 +3,6 @@ package app.zimly.backup.sync
 import android.net.Uri
 import android.util.Log
 import app.zimly.backup.data.media.ContentObject
-import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.WriteableContentResolver
 import app.zimly.backup.data.s3.S3Object
 import app.zimly.backup.data.s3.S3Repository
@@ -63,19 +62,9 @@ class DownloadSyncService(
             // TODO: Really another request for the content-type?
             .map { s3Obj -> s3Repository.stat(s3Obj.name) }
             .map { s3StatObj ->
-
-                // TODO Unfuglify this
-                val parentUri =
-                    localContentResolver.createDirectoryStructure(target, s3StatObj.`object`())
-                val parts = s3StatObj.`object`().trim('/').split('/')
-                val fileName = parts.last()
-                Pair(
-                    s3StatObj,
-                    localContentResolver.getOutputStream(
-                        parentUri,
-                        fileName,
-                        s3StatObj.contentType()
-                    )
+                s3StatObj to localContentResolver.createOutputStream(
+                    s3StatObj.`object`(),
+                    s3StatObj.contentType()
                 )
             }
             .onEach { transferredFiles++ } // TODO too early, should happen after the upload
@@ -90,7 +79,14 @@ class DownloadSyncService(
                 val sumTransferredBytes =
                     acc.transferredBytes + value.readBytes
                 val percentage = sumTransferredBytes.toFloat() / diff.totalBytes
-                SyncProgress(transferredBytes = sumTransferredBytes, transferredFiles, percentage, value.bytesPerSec, totalFiles, totalBytes)
+                SyncProgress(
+                    transferredBytes = sumTransferredBytes,
+                    transferredFiles,
+                    percentage,
+                    value.bytesPerSec,
+                    totalFiles,
+                    totalBytes
+                )
             }
             .onStart {
                 emit(SyncProgress.EMPTY.copy(totalFiles = totalFiles, totalBytes = totalBytes))
