@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -341,8 +342,12 @@ private fun DiffDetails(
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
+            val icon = when(direction) {
+                SyncDirection.UPLOAD -> Icons.Outlined.Upload
+                SyncDirection.DOWNLOAD -> Icons.Outlined.Download
+            }
             Icon(
-                Icons.Outlined.Upload,
+                icon,
                 "Progress",
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
