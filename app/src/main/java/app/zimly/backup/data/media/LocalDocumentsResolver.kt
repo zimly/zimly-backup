@@ -13,8 +13,8 @@ import java.io.OutputStream
  * https://developer.android.com/training/data-storage/shared/documents-files#grant-access-directory
  * https://developer.android.com/training/data-storage/shared/documents-files#persist-permissions
  */
-class LocalDocumentsResolver(private val context: Context, private val root: Uri) :
-    LocalContentResolver {
+class LocalDocumentsResolver(context: Context, private val root: Uri) :
+    LocalContentResolver, WriteableContentResolver {
 
     val contentResolver: ContentResolver = context.contentResolver
     val rootDocumentId: String = DocumentsContract.getTreeDocumentId(root)

@@ -2,11 +2,9 @@ package app.zimly.backup.sync
 
 import android.net.Uri
 import android.util.Log
-import app.zimly.backup.data.media.LocalContentResolver
+import app.zimly.backup.data.media.WriteableContentResolver
 import app.zimly.backup.data.s3.MinioRepository
-import io.mockk.Runs
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.last
@@ -26,7 +24,7 @@ class DownloadSyncServiceTest {
     private val minioUser = "test"
     private val minioPwd = "testtest"
 
-    private lateinit var localContentResolver: LocalContentResolver
+    private lateinit var localContentResolver: WriteableContentResolver
     private lateinit var minioRepository: MinioRepository
 
     private val containerName = "minio/minio:latest"

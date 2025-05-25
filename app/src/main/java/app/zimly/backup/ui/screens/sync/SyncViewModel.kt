@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -25,14 +24,11 @@ import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
-import app.zimly.backup.data.media.LocalContentResolver
-import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.permission.PermissionService
-import app.zimly.backup.sync.DownloadSyncService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
+import app.zimly.backup.sync.SyncService
 import app.zimly.backup.sync.SyncWorker
-import app.zimly.backup.sync.UploadSyncService
 import app.zimly.backup.sync.getNullable
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import kotlinx.coroutines.Dispatchers
@@ -195,16 +191,8 @@ class SyncViewModel(
         }
         try {
             val remote = dao.loadById(remoteId)
-            val s3Repo =
-                MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
-            val contentResolver =
-                LocalContentResolver.get(context, remote.contentType, remote.contentUri)
-
-            val syncService = when(remote.direction) {
-                SyncDirection.UPLOAD -> UploadSyncService(s3Repo, contentResolver)
-                SyncDirection.DOWNLOAD -> DownloadSyncService(s3Repo, contentResolver, remote.contentUri.toUri())
-            }
+            val syncService = SyncService.get(context, remote)
 
             val diff = syncService.calculateDiff()
             // Display result of the minio request to the user

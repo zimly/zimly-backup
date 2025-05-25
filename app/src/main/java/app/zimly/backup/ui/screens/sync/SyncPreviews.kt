@@ -12,9 +12,9 @@ import app.zimly.backup.data.db.notification.NotificationDao
 import app.zimly.backup.data.db.notification.NotificationType
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentObject
+import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.media.LocalMediaResolver
-import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.IN_PROGRESS_STATES
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Companion.mapState
 import app.zimly.backup.ui.screens.sync.SyncViewModel.Status
@@ -23,7 +23,6 @@ import app.zimly.backup.ui.screens.sync.battery.BatterySaverViewModel
 import app.zimly.backup.ui.screens.sync.battery.PowerStatusProvider
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import java.io.InputStream
-import java.io.OutputStream
 
 @Preview(showBackground = true)
 @Composable
@@ -219,14 +218,6 @@ private class StubContentResolver : LocalContentResolver {
         TODO("Not yet implemented")
     }
 
-    override fun getOutputStream(
-        parentUri: Uri,
-        objectName: String,
-        mimeType: String
-    ): OutputStream {
-        TODO("Not yet implemented")
-    }
-
     override fun listObjects(): List<ContentObject> {
         return listOf(
             ContentObject(
@@ -237,10 +228,6 @@ private class StubContentResolver : LocalContentResolver {
                 Uri.EMPTY
             )
         )
-    }
-
-    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
-        TODO("Not yet implemented")
     }
 }
 
@@ -258,20 +245,8 @@ private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
         TODO("Not yet implemented")
     }
 
-    override fun getOutputStream(
-        parentUri: Uri,
-        objectName: String,
-        mimeType: String
-    ): OutputStream {
-        TODO("Not yet implemented")
-    }
-
     override fun listObjects(): List<ContentObject> {
         return listOf(ContentObject("path/name", "path/name", 124L, "image/png", Uri.EMPTY))
-    }
-
-    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
-        TODO("Not yet implemented")
     }
 }
 

@@ -201,15 +201,6 @@ class LocalMediaResolverImpl(context: Context, private val collection: String): 
     override fun videoCount(): Int {
         return mediaRepository.getVideos(setOf(collection)).count()
     }
-
-    override fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream {
-        TODO("Fix interfaces!")
-    }
-
-    override fun createDirectoryStructure(uri: Uri, path: String): Uri {
-        TODO("Not yet implemented")
-    }
-
 }
 
 interface MediaRepository {

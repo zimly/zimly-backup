@@ -2,14 +2,10 @@ package app.zimly.backup.sync
 
 import android.content.Context
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import app.zimly.backup.data.db.ZimlyDatabase
-import app.zimly.backup.data.db.remote.SyncDirection
-import app.zimly.backup.data.media.LocalContentResolver
-import app.zimly.backup.data.s3.MinioRepository
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
@@ -97,19 +93,8 @@ class SyncWorker(
                 throw IllegalArgumentException("Remote configuration cannot be loaded, no ID passed.")
             }
             val remote = dao.loadById(remoteId)
-            val s3Repository =
-                MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
 
-            val localContentResolver = LocalContentResolver.get(
-                context,
-                remote.contentType,
-                remote.contentUri
-            )
-
-            return when(remote.direction) {
-                SyncDirection.UPLOAD -> UploadSyncService(s3Repository, localContentResolver)
-                SyncDirection.DOWNLOAD -> DownloadSyncService(s3Repository, localContentResolver, remote.contentUri.toUri())
-            }
+            return SyncService.get(context, remote)
         }
     }
 }

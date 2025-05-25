@@ -13,9 +13,7 @@ import java.io.OutputStream
  */
 interface LocalContentResolver {
     fun getInputStream(uri: Uri): InputStream
-    fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream
     fun listObjects(): List<ContentObject>
-    fun createDirectoryStructure(uri: Uri, path: String): Uri
 
     companion object {
 
@@ -29,4 +27,10 @@ interface LocalContentResolver {
             }
     }
 }
+
+interface WriteableContentResolver : LocalContentResolver {
+    fun getOutputStream(parentUri: Uri, objectName: String, mimeType: String): OutputStream
+    fun createDirectoryStructure(uri: Uri, path: String): Uri
+}
+
 

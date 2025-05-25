@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
+import app.zimly.backup.data.media.WriteableContentResolver
 import app.zimly.backup.data.s3.S3Object
 import app.zimly.backup.data.s3.S3Repository
 import io.minio.errors.ErrorResponseException
@@ -21,7 +22,7 @@ import kotlinx.coroutines.flow.runningFold
 
 class DownloadSyncService(
     private val s3Repository: S3Repository,
-    private val localContentResolver: LocalContentResolver,
+    private val localContentResolver: WriteableContentResolver,
     private val target: Uri,
     private val debounce: Long = 0L
 ) : SyncService {
