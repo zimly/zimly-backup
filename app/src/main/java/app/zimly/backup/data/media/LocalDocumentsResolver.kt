@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
 import androidx.compose.ui.util.fastJoinToString
+import androidx.documentfile.provider.DocumentFile
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -115,10 +116,21 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
     ): OutputStream {
 
         val pathSegments = objectPath.trim('/').split('/')
-        val objectName = pathSegments.last()
-        var directoryPath = pathSegments.dropLast(1).fastJoinToString("/") // drop filename, join to path
 
-        val parentUri = createDirectoryStructure(directoryPath)
+        val parentUri = if (pathSegments.size > 1) {
+            var directoryPath =
+                pathSegments.dropLast(1).fastJoinToString("/") // drop filename, join to path
+
+            createDirectoryStructure(directoryPath)
+
+        } else {
+            DocumentsContract.buildDocumentUriUsingTree(
+                root,
+                DocumentsContract.getTreeDocumentId(root)
+            )
+        }
+        val objectName = pathSegments.last()
+
         return getOutputStream(
             parentUri,
             objectName,
@@ -126,7 +138,11 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         )
     }
 
-    private fun getOutputStream(parentFolderUri: Uri, fileName: String, mimeType: String): OutputStream {
+    private fun getOutputStream(
+        parentFolderUri: Uri,
+        fileName: String,
+        mimeType: String
+    ): OutputStream {
         val fileUri = DocumentsContract.createDocument(
             contentResolver,
             parentFolderUri,
@@ -157,6 +173,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         parentDocumentUri: Uri,
         folderName: String
     ): Uri {
+
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
             parentDocumentUri,
             DocumentsContract.getDocumentId(parentDocumentUri)
