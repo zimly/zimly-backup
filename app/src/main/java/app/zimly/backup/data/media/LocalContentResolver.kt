@@ -30,7 +30,6 @@ interface LocalContentResolver {
 
 interface WriteableContentResolver : LocalContentResolver {
     fun createOutputStream(objectPath: String, mimeType: String): OutputStream
-    fun createDirectoryStructure(path: String): Uri
 }
 
 

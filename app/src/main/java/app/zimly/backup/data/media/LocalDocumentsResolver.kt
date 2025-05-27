@@ -5,8 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
-import androidx.compose.ui.util.fastJoinToString
-import androidx.documentfile.provider.DocumentFile
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -110,26 +108,19 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
      * Takes a complete [objectPath], e.g. Pictures/2025/picture.png, and creates the directory path
      * if it's missing and an empty Document with the trailing objectName and returns the [OutputStream].
      */
-    override fun createOutputStream(
-        objectPath: String,
-        mimeType: String
-    ): OutputStream {
+    override fun createOutputStream(objectPath: String, mimeType: String): OutputStream {
 
-        val pathSegments = objectPath.trim('/').split('/')
+        val (directories, objectName) = extractPath(objectPath)
+        val rootDocUri = DocumentsContract.buildDocumentUriUsingTree(
+            root,
+            DocumentsContract.getTreeDocumentId(root)
+        )
 
-        val parentUri = if (pathSegments.size > 1) {
-            var directoryPath =
-                pathSegments.dropLast(1).fastJoinToString("/") // drop filename, join to path
-
-            createDirectoryStructure(directoryPath)
-
+        val parentUri = if (directories.isNotEmpty()) {
+            createOrFindDirectory(rootDocUri, directories)
         } else {
-            DocumentsContract.buildDocumentUriUsingTree(
-                root,
-                DocumentsContract.getTreeDocumentId(root)
-            )
+            rootDocUri
         }
-        val objectName = pathSegments.last()
 
         return getOutputStream(
             parentUri,
@@ -139,73 +130,92 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
     }
 
     private fun getOutputStream(
-        parentFolderUri: Uri,
+        parentDirectory: Uri,
         fileName: String,
         mimeType: String
     ): OutputStream {
         val fileUri = DocumentsContract.createDocument(
             contentResolver,
-            parentFolderUri,
+            parentDirectory,
             mimeType,
             fileName
-        ) ?: throw IOException("Failed to create file in $parentFolderUri")
+        ) ?: throw IOException("Failed to create file in $parentDirectory")
 
         return contentResolver.openOutputStream(fileUri)
             ?: throw IOException("Failed to open stream for $fileUri")
     }
 
-    override fun createDirectoryStructure(path: String): Uri {
-        val baseDocumentUri = DocumentsContract.buildDocumentUriUsingTree(
-            root,
-            DocumentsContract.getTreeDocumentId(root)
-        )
+    /**
+     * Resolves or creates the [pathSegments] recursively from the [rootDocument].
+     */
+    private fun createOrFindDirectory(rootDocument: Uri, pathSegments: List<String>): Uri {
 
-        val folders = path.trim('/').split('/')
-        var currentUri = baseDocumentUri
-        for (folder in folders) {
-            currentUri = findOrCreateFolder(contentResolver, currentUri, folder)
+        var currentUri = rootDocument
+        for (directory in pathSegments) {
+            var uri = findDirectory(currentUri, directory)
+            if (uri == null) {
+                uri = DocumentsContract.createDocument(
+                    contentResolver,
+                    currentUri,
+                    DocumentsContract.Document.MIME_TYPE_DIR,
+                    directory
+                ) ?: throw Exception("Failed to create directory '$directory' under '$currentUri'.")
+
+                currentUri = uri
+            }
         }
         return currentUri
     }
 
-    fun findOrCreateFolder(
-        contentResolver: ContentResolver,
-        parentDocumentUri: Uri,
-        folderName: String
-    ): Uri {
+    private fun findDirectory(parentDocumentUri: Uri, directoryName: String): Uri? {
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
             parentDocumentUri,
             DocumentsContract.getDocumentId(parentDocumentUri)
         )
 
-        contentResolver.query(
-            childrenUri,
-            arrayOf(
-                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                DocumentsContract.Document.COLUMN_MIME_TYPE
-            ),
-            null,
-            null,
-            null
-        )?.use { cursor ->
+        val projection = arrayOf(
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+            DocumentsContract.Document.COLUMN_MIME_TYPE
+        )
+
+        var folderUri: Uri? = null
+
+        contentResolver.query(childrenUri, projection, null, null, null)?.use query@{ cursor ->
+
+            val idIndex =
+                cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+            val nameIndex =
+                cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+            val mimeTypeIndex =
+                cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
+
             while (cursor.moveToNext()) {
-                val docId = cursor.getString(0)
-                val name = cursor.getString(1)
-                val mimeType = cursor.getString(2)
-                if (name == folderName && mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                    return DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
+                val docId = cursor.getString(idIndex)
+                val name = cursor.getString(nameIndex)
+                val mimeType = cursor.getString(mimeTypeIndex)
+                if (name == directoryName && mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                    folderUri =
+                        DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
+                    return@query // exits the lambda immediately
                 }
             }
         }
+        return folderUri
+    }
 
-        return DocumentsContract.createDocument(
-            contentResolver,
-            parentDocumentUri,
-            DocumentsContract.Document.MIME_TYPE_DIR,
-            folderName
-        )!!
+    /**
+     * Splits the passed [objectPath] into parent directories and the objectName.
+     * TODO: Not sure, whether this should be sanitizing the path as the diff algorithm relies on the raw [objectPath]
+     */
+    fun extractPath(objectPath: String): Pair<List<String>, String> {
+        val segments = objectPath
+            .trim('/')
+            .split('/')
+            .filter { it.isNotBlank() && it != "." && it != ".." }
+
+        return Pair(segments.dropLast(1), segments.last())
     }
 
 }
