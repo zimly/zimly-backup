@@ -87,7 +87,10 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
                 if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
                     listObjectsRecursive(documentId, files)
                 } else {
+
                     val fileUri = DocumentsContract.buildDocumentUriUsingTree(root, documentId)
+                    if (!isDocumentAccessible(fileUri)) continue
+
                     val path = removeStorageIdentifier(documentId)
                     val relPath = documentId.substringAfter("$rootDocumentId/")
 
@@ -96,6 +99,18 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
                     Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")
                 }
             }
+        }
+    }
+
+    /**
+     * Desperate way to filter out trashed documents.
+     */
+    fun isDocumentAccessible(uri: Uri): Boolean {
+        return try {
+            contentResolver.openInputStream(uri)?.close()
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
