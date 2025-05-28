@@ -1,6 +1,5 @@
 package app.zimly.backup.sync
 
-import android.net.Uri
 import android.util.Log
 import app.zimly.backup.data.media.WriteableContentResolver
 import app.zimly.backup.data.s3.MinioRepository
@@ -82,8 +81,7 @@ class DownloadSyncServiceTest {
             )
         } returns out1 andThen out2
 
-        val target = mockk<Uri>()
-        val ss = DownloadSyncService(minioRepository, localContentResolver, target)
+        val ss = DownloadSyncService(minioRepository, localContentResolver)
 
         // WHEN
         val res = ss.synchronize().last()
@@ -109,8 +107,7 @@ class DownloadSyncServiceTest {
         every { localContentResolver.listObjects() } returns emptyList()
         every { minioRepository.listObjects() } throws Exception("Boom")
 
-        val target = mockk<Uri>()
-        val ss = DownloadSyncService(minioRepository, localContentResolver, target)
+        val ss = DownloadSyncService(minioRepository, localContentResolver)
 
         // WHEN
 

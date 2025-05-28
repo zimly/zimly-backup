@@ -36,7 +36,6 @@ interface SyncService {
                         SyncDirection.DOWNLOAD -> DownloadSyncService(
                             s3Repository,
                             contentResolver,
-                            remote.contentUri.toUri()
                         )
                     }
                 }

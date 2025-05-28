@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.runningFold
 class DownloadSyncService(
     private val s3Repository: S3Repository,
     private val localContentResolver: WriteableContentResolver,
-    private val target: Uri,
     private val debounce: Long = 0L
 ) : SyncService {
 
