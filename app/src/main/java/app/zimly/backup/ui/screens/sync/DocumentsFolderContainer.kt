@@ -59,7 +59,7 @@ private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 Icons.Outlined.Folder,
-                "Media",
+                "Folder",
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
         }
