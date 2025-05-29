@@ -1,6 +1,5 @@
 package app.zimly.backup.sync
 
-import android.net.Uri
 import android.util.Log
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.WriteableContentResolver
@@ -11,18 +10,18 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.sample
 
 class DownloadSyncService(
     private val s3Repository: S3Repository,
     private val localContentResolver: WriteableContentResolver,
-    private val debounce: Long = 0L
+    private val samplePeriod: Long = 500L
 ) : SyncService {
 
     companion object {
@@ -53,6 +52,7 @@ class DownloadSyncService(
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override fun synchronize(): Flow<SyncProgress> = flow {
+
         val diff = calculateDiff()
         val totalFiles = diff.totalObjects
         val totalBytes = diff.totalBytes
@@ -90,7 +90,7 @@ class DownloadSyncService(
             .onStart {
                 emit(SyncProgress.EMPTY.copy(totalFiles = totalFiles, totalBytes = totalBytes))
             }
-            .debounce(debounce)
+            .sample(samplePeriod)
             .collect { emit(it) }
     }
 
