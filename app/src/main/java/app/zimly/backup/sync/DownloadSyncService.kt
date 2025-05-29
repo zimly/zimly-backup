@@ -90,7 +90,7 @@ class DownloadSyncService(
             .onStart {
                 emit(SyncProgress.EMPTY.copy(totalFiles = totalFiles, totalBytes = totalBytes))
             }
-            .sample(samplePeriod)
+            .sampleWithLast(samplePeriod)
             .collect { emit(it) }
     }
 
@@ -106,3 +106,24 @@ data class DownloadDiff(
     val diff: List<S3Object>,
 ) : Diff()
 
+/**
+ * Extension function that uses [Flow.sample] but ensures the last value is emitted.
+ */
+@OptIn(FlowPreview::class)
+fun <T> Flow<T>.sampleWithLast(periodMillis: Long): Flow<T> = flow {
+    require(periodMillis > 0) { "Sample period should be positive" }
+    var last: T? = null
+    var emitted: T? = null
+
+    this@sampleWithLast
+        .onEach { last = it }
+        .sample(periodMillis)
+        .collect {
+            emitted = it
+            emit(it)
+        }
+
+    if (last != null && last != emitted) {
+        emit(last!!)
+    }
+}
