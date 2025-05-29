@@ -15,11 +15,11 @@ import io.minio.StatObjectResponse
 import io.minio.messages.DeleteObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okio.Buffer
@@ -55,7 +55,7 @@ class MinioRepository(
     private val region: String? = null
 ) : S3Repository {
 
-    private fun mc(uploadProgressTracker: ProgressTracker? = null, ): MinioAsyncClient = try {
+    private fun mc(uploadProgressTracker: ProgressTracker? = null): MinioAsyncClient = try {
         MinioAsyncClient.builder()
             .httpClient(client(uploadProgressTracker))
             .endpoint(url)
@@ -174,52 +174,59 @@ class MinioRepository(
      *
      * It's also important to close the passed stream here.
      */
-    override suspend fun get(name: String, size: Long, stream: OutputStream): Flow<Progress> = channelFlow {
-        val progressTracker = ProgressTracker(size)
+    override suspend fun get(name: String, size: Long, stream: OutputStream): Flow<Progress> =
+        channelFlow {
+            val progressTracker = ProgressTracker(size)
 
-        // Launch progress observer
-        val progressJob = launch {
-            progressTracker.observe().collect { send(it) }
-        }
-
-        // Suspend until the Minio getObject call completes or fails
-        val response = suspendCancellableCoroutine<GetObjectResponse> { continuation ->
-            val params = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
-            val future = mc().getObject(params)
-
-            future.whenComplete { result, exception ->
-                if (exception != null) {
-                    continuation.resumeWithException(exception)
-                } else {
-                    continuation.resume(result)
-                }
+            // Launch progress observer
+            val progressJob = launch {
+                progressTracker.observe().collect { send(it) }
             }
 
-            continuation.invokeOnCancellation {
-                future.cancel(true)
-            }
-        }
+            // Suspend until the Minio getObject call completes or fails
+            val response = suspendCancellableCoroutine<GetObjectResponse> { continuation ->
+                val params = GetObjectArgs.builder().bucket(bucket).`object`(name).build()
+                val future = mc().getObject(params)
 
-        // Now perform the actual download on IO dispatcher
-        withContext(Dispatchers.IO) {
-            try {
-                // use { } closes the sink and stream
-                response.source().use { rawSource ->
-                    val countedSource = rawSource.counted(progressTracker)
-                    stream.use { os ->
-                        os.sink().buffer().use { sink ->
-                            sink.writeAll(countedSource)
-                            sink.flush()
-                        }
+                future.whenComplete { result, exception ->
+                    if (exception != null) {
+                        continuation.resumeWithException(exception)
+                    } else {
+                        continuation.resume(result)
                     }
                 }
-            } catch (e: Exception) {
-                cancel("Download failed", e)
-            }
-        }
 
-        progressJob.join()
-    }
+                continuation.invokeOnCancellation {
+                    future.cancel(true)
+                }
+            }
+
+            // Now perform the actual download on IO dispatcher
+            val downloadJob = launch(Dispatchers.IO) {
+                try {
+                    // use { } closes the sink and stream
+                    response.source().use { rawSource ->
+                        val countedSource = rawSource.counted(progressTracker)
+                        stream.use { os ->
+                            os.sink().buffer().use { sink ->
+                                // do not wasting I/O resources on cancelled work
+                                ensureActive()
+                                sink.writeAll(countedSource)
+                                sink.flush()
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    cancel("Download failed", e)
+                }
+            }
+
+            // Wait for download to finish
+            downloadJob.join()
+
+            // Wait for progress to finish naturally (progressTracker.observe completes on 100%)
+            progressJob.join()
+        }
 
     override suspend fun remove(name: String) {
         return suspendCancellableCoroutine { continuation ->
