@@ -18,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -82,7 +83,8 @@ class BucketViewModel(
             bucketConfiguration.key,
             bucketConfiguration.secret,
             bucketConfiguration.bucket,
-            bucketConfiguration.region
+            bucketConfiguration.region,
+            bucketConfiguration.virtualHostedStyle
         )
 
         try {
@@ -189,6 +191,8 @@ fun BucketConfiguration(
                 val secretState = bucketForm.secret.state.collectAsState()
                 val bucketState = bucketForm.bucket.state.collectAsState()
                 val regionState = bucketForm.region.state.collectAsState()
+                val virtualHostedStyleState =
+                    bucketForm.virtualHostedStyle.state.collectAsState()
 
                 OutlinedTextField(
                     modifier = Modifier
@@ -228,6 +232,21 @@ fun BucketConfiguration(
                     isError = regionState.value.error != null,
                     supportingText = { regionState.value.error?.let { Text(it) } }
                 )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                {
+                    Text("Virtual Hosted Style")
+                    Switch(
+                        checked = virtualHostedStyleState.value.value,
+                        onCheckedChange = { bucketForm.virtualHostedStyle.update(it) },
+                        modifier = Modifier
+                            .onFocusChanged { bucketForm.virtualHostedStyle.focus(it) }
+                    )
+                }
+
                 OutlinedTextField(
                     modifier = Modifier
                         .onFocusChanged { bucketForm.key.focus(it) }

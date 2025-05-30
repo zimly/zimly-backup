@@ -73,7 +73,7 @@ class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
     suspend fun copy() {
         selected.forEach {
             val sel = dataStore.loadById(it)
-            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, sel.contentType, sel.contentUri, sel.direction)
+            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, sel.virtualHostedStyle, sel.contentType, sel.contentUri, sel.direction)
 
             dataStore.insert(copy)
         }

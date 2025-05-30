@@ -61,6 +61,7 @@ class StartScreenKtTest {
                     "secret",
                     "bucket",
                     null,
+                    false,
                     ContentType.MEDIA,
                     "Pictures",
                     SyncDirection.UPLOAD
@@ -96,6 +97,7 @@ class StartScreenKtTest {
                     "secret",
                     "bucket",
                     null,
+                    false,
                     ContentType.MEDIA,
                     "Pictures",
                     SyncDirection.UPLOAD

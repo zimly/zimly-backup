@@ -28,7 +28,7 @@ class LinodeIntegrationTest {
             bucket.s3Endpoint,
             accessKey.accessKey,
             accessKey.secretKey,
-            bucket.label
+            bucket.label,
         )
     }
 

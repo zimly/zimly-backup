@@ -55,7 +55,7 @@ class GarageIntegrationTest {
         bootstrapGarage()
 
         val endpoint = "http://${garageContainer.host}:${garageContainer.firstMappedPort}"
-        minioRepository = MinioRepository(endpoint, apiKey, apiSecret, bucket, region)
+        minioRepository = MinioRepository(endpoint, apiKey, apiSecret, bucket, region, false)
     }
 
     @Test

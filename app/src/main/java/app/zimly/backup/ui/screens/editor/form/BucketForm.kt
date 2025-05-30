@@ -2,6 +2,7 @@ package app.zimly.backup.ui.screens.editor.form
 
 import android.webkit.URLUtil
 import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.ui.screens.editor.form.field.BooleanField
 import app.zimly.backup.ui.screens.editor.form.field.Field
 import app.zimly.backup.ui.screens.editor.form.field.RegionField
 import app.zimly.backup.ui.screens.editor.form.field.TextField
@@ -18,10 +19,11 @@ class BucketForm : Form {
     val secret = TextField()
     val bucket = TextField()
     val region = RegionField()
+    val virtualHostedStyle = BooleanField()
 
     // Collect all fields into a list
     private val fields: List<Field<*>> by lazy {
-        listOf(name, url, key, secret, bucket, region)
+        listOf(name, url, key, secret, bucket, region, virtualHostedStyle)
     }
 
     override fun valid(): Flow<Boolean> = combine(fields.map { it.valid() }) { values ->
@@ -46,6 +48,7 @@ class BucketForm : Form {
         secret.update(bucketConfiguration.secret)
         bucket.update(bucketConfiguration.bucket)
         region.update(bucketConfiguration.region)
+        virtualHostedStyle.update(bucketConfiguration.virtualHostedStyle)
     }
 
     fun populate(remote: Remote) {
@@ -55,6 +58,7 @@ class BucketForm : Form {
         secret.update(remote.secret)
         bucket.update(remote.bucket)
         region.update(remote.region)
+        virtualHostedStyle.update(remote.virtualHostedStyle)
     }
 
     fun values(): BucketConfiguration {
@@ -65,6 +69,7 @@ class BucketForm : Form {
             secret.state.value.value,
             bucket.state.value.value,
             region.state.value.value,
+            virtualHostedStyle.state.value.value,
         )
     }
 
@@ -74,6 +79,7 @@ class BucketForm : Form {
         val key: String,
         val secret: String,
         val bucket: String,
-        val region: String?
+        val region: String?,
+        val virtualHostedStyle: Boolean
     )
 }

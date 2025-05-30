@@ -21,7 +21,7 @@ interface SyncService {
         fun get(context: Context, remote: Remote): SyncService {
 
             val s3Repository =
-                MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region)
+                MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region, remote.virtualHostedStyle)
 
             return when (remote.contentType) {
                 ContentType.MEDIA -> {

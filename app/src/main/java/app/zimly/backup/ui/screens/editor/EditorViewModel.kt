@@ -66,6 +66,7 @@ class EditorViewModel(
                         secret = remote.secret,
                         bucket = remote.bucket,
                         region = remote.region,
+                        virtualHostedStyle = remote.virtualHostedStyle
                     ),
                     direction = remote.direction,
                     contentType = remote.contentType,
@@ -140,6 +141,7 @@ class EditorViewModel(
                 secret = draftValue.bucket.secret,
                 bucket = draftValue.bucket.bucket,
                 region = draftValue.bucket.region,
+                virtualHostedStyle = draftValue.bucket.virtualHostedStyle,
                 name = draftValue.bucket.name,
                 contentType = draftValue.contentType,
                 contentUri = draftValue.contentUri

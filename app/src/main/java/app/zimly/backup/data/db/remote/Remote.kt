@@ -14,6 +14,7 @@ data class Remote(
     @ColumnInfo(name = "secret") val secret: String,
     @ColumnInfo(name = "bucket") val bucket: String,
     @ColumnInfo(name = "region") val region: String?,
+    @ColumnInfo(name = "virtual_hosted_style", defaultValue = "0") val virtualHostedStyle: Boolean,
     @ColumnInfo(name = "content_type", defaultValue = "MEDIA") val contentType: ContentType,
     @ColumnInfo(name = "content_uri") val contentUri: String,
     @ColumnInfo(name = "direction", defaultValue = "UPLOAD") val direction: SyncDirection,
