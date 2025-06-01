@@ -8,6 +8,8 @@ import app.zimly.backup.ui.screens.editor.form.field.RegionField
 import app.zimly.backup.ui.screens.editor.form.field.TextField
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class BucketForm : Form {
 
@@ -19,7 +21,27 @@ class BucketForm : Form {
     val secret = TextField()
     val bucket = TextField()
     val region = RegionField()
-    val virtualHostedStyle = BooleanField()
+    val virtualHostedStyle = BooleanField(
+        errorMessage = "",
+        validate = { true })
+
+    /**
+     * Emits a warning in case virtual hosted style is enabled and the URL starts
+     * with the bucket name.
+     * This is not an error, because there might be cases where this is legit and the underlying
+     * Minio SDK is messy, so this should not prohibit experimenting with the configuration.
+     */
+    fun warning(): Flow<String?> = virtualHostedStyle.state.map {
+        if (it.value) {
+            val bucketName = bucket.state.value.value
+            val url = url.state.value.value
+            val host = url.toHttpUrlOrNull()?.host
+            if (host != null && host.startsWith(bucketName)) {
+                return@map "Virtual Hosted Style prefixes the URL with the bucket name. Please remove the duplicated bucket name from the URL."
+            }
+        }
+        return@map null
+    }
 
     // Collect all fields into a list
     private val fields: List<Field<*>> by lazy {
