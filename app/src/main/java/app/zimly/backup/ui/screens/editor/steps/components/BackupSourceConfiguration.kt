@@ -117,7 +117,7 @@ private fun BackupSourceError(backupSource: BackupSourceField) {
             Text(
                 text = it,
                 color = MaterialTheme.colorScheme.error,
-                fontSize = MaterialTheme.typography.bodySmall.fontSize
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }
