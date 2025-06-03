@@ -31,16 +31,16 @@ class BucketForm : Form {
      * This is not an error, because there might be cases where this is legit and the underlying
      * Minio SDK is messy, so this should not prohibit experimenting with the configuration.
      */
-    fun warning(): Flow<String?> = virtualHostedStyle.state.map {
+    fun warning(): Flow<Boolean> = virtualHostedStyle.state.map {
         if (it.value) {
             val bucketName = bucket.state.value.value
             val url = url.state.value.value
             val host = url.toHttpUrlOrNull()?.host
             if (host != null && host.startsWith(bucketName)) {
-                return@map "Virtual Hosted Style prefixes the URL with the bucket name. Please remove the duplicated bucket name from the URL."
+                return@map true
             }
         }
-        return@map null
+        return@map false
     }
 
     // Collect all fields into a list

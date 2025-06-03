@@ -5,14 +5,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -169,7 +172,7 @@ fun BucketConfiguration(
 ) {
     val valid by bucketForm.valid().collectAsStateWithLifecycle(false)
     var passwordVisible by remember { mutableStateOf(false) }
-    val warning by bucketForm.warning().collectAsStateWithLifecycle(null)
+    val warning by bucketForm.warning().collectAsStateWithLifecycle(false)
 
 
     Card(
@@ -278,7 +281,6 @@ fun BucketConfiguration(
                     supportingText = { bucketState.value.error?.let { Text(it) } }
                 )
                 Column {
-                    //HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -289,7 +291,7 @@ fun BucketConfiguration(
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Virtual Hosted Style")
                             Text(
-                                text = "Enable virtual-hosted style URLs instead of path-style. Remove the bucket name from the URL.",
+                                text = "Enable Virtual Hosted Style URLs instead of path-style.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp, end = 4.dp)
@@ -304,15 +306,27 @@ fun BucketConfiguration(
                             }
                         )
                     }
-                    warning?.let {
-                        Text(
-                            text = it,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
+                    if (warning) {
+                        Row(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 12.dp)
-                        )
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Virtual Hosted Style adds the bucket name to the start of the URL. If the URL already includes it, this may result in a duplicate.",
+                                color = MaterialTheme.colorScheme.tertiary,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp)
+                            )
+                        }
                     }
                 }
             }
