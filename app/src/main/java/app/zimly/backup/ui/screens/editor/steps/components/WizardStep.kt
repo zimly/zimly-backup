@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -46,7 +48,7 @@ fun WizardStep(
         bottomBar = {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 24.dp, vertical = 24.dp)
+                    .padding(start = 24.dp, end = 24.dp, bottom = 24.dp)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Absolute.SpaceBetween
             ) {
@@ -63,7 +65,9 @@ fun WizardStep(
             modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
                 top = innerPadding.calculateTopPadding(),
                 bottom = innerPadding.calculateBottomPadding()
-            ) then Modifier.fillMaxWidth()
+            ) then Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
         ) {
             content()
         }

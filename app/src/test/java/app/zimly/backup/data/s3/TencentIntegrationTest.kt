@@ -12,28 +12,38 @@ import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
-import org.junit.AfterClass
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 import kotlin.time.TimeSource
 
-class LinodeIntegrationTest {
+class TencentIntegrationTest {
 
     private lateinit var s3Repository: MinioRepository
 
     @Before
     fun setUp() {
+
+        val url = "https://cos.eu-frankfurt.myqcloud.com"
+        val bucket = "zimly-test-1361781432"
+        val region = "eu-frankfurt"
+
+        val key = System.getenv("TENCENT_KEY")
+        checkNotNull(key) { "Missing ENV key: TENCENT_KEY" }
+        val secret = System.getenv("TENCENT_SECRET")
+        checkNotNull(secret) { "Missing ENV key: TENCENT_SECRET" }
+
         this.s3Repository = MinioRepository(
-            bucket.s3Endpoint,
-            accessKey.accessKey,
-            accessKey.secretKey,
-            bucket.label,
+            url,
+            key,
+            secret,
+            bucket,
+            region,
+            true
         )
     }
 
     @Test
-    fun putLinode() = runTest {
+    fun put() = runTest {
         val timeSource = TimeSource.Monotonic
 
         // GIVEN
@@ -92,36 +102,4 @@ class LinodeIntegrationTest {
         s3Repository.removeAll()
     }
 
-    companion object {
-        private lateinit var bucket: LinodeApi.BucketResponse
-        private lateinit var accessKey: LinodeApi.KeyResponse
-
-        private val token = System.getenv("LINODE_API_TOKEN")
-            ?: throw Exception("LINODE_API_TOKEN anv variable missing")
-
-        private val api = LinodeApi(token)
-
-        @JvmStatic
-        @BeforeClass
-        fun bootstrap() {
-
-            val bucketName = "zimly-test"
-            val key = "zimly-test"
-
-            this.bucket = api.createBucket(bucketName)
-            this.accessKey = api.createKey(key, bucket.label)
-
-            requireNotNull(accessKey.accessKey) { "Test case needs valid AWS key for zimly-test bucket" }
-            requireNotNull(accessKey.secretKey) { "Test case needs valid AWS secret for zimly-test bucket" }
-
-        }
-
-        @JvmStatic
-        @AfterClass
-        fun cleanup() {
-            api.deleteKey(accessKey.id)
-            api.deleteBucket(bucket.region, bucket.label)
-            api.cancelSubscription()
-        }
-    }
 }

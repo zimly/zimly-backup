@@ -32,7 +32,7 @@ class AwsIntegrationTest {
         requireNotNull(key) { "Test case needs valid AWS key for zimly-test bucket" }
         requireNotNull(secret) { "Test case needs valid AWS secret for zimly-test bucket" }
 
-        this.s3Repository = MinioRepository(url, key, secret, bucket, region)
+        this.s3Repository = MinioRepository(url, key, secret, bucket, region, false)
     }
 
     @Test

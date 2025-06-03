@@ -17,8 +17,8 @@ android {
         namespace = "app.zimly.backup"
         minSdk = 29
         targetSdk = 35
-        versionCode = 81
-        versionName = "3.0.0"
+        versionCode = 82
+        versionName = "3.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -179,6 +179,7 @@ tasks.withType<Test> {
                 "aws" -> includeTestsMatching("AwsIntegrationTest")
                 "minio" -> includeTestsMatching("MinioIntegrationTest")
                 "garage" -> includeTestsMatching("GarageIntegrationTest")
+                "tencent" -> includeTestsMatching("TencentIntegrationTest")
                 else -> includeTestsMatching("*IntegrationTest")
             }
         } else {

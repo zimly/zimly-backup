@@ -14,13 +14,14 @@ import app.zimly.backup.data.db.remote.RemoteDao
 
 @Database(
     entities = [Remote::class, Notification::class],
-    version = 6,
+    version = 7,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = ZimlyDatabase.V3Migration::class),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6, spec = ZimlyDatabase.V6Migration::class),
+        AutoMigration(from = 6, to = 7),
     ]
 )
 abstract class ZimlyDatabase : RoomDatabase() {

@@ -1,5 +1,5 @@
-3.0.0
-* Added S3 download support - Enables syncing data from S3 to your device.
+3.1.0
+* Add support for virtual-hosted-style S3 configurations
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases

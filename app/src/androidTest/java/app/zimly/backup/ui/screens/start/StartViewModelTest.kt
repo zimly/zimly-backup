@@ -45,6 +45,7 @@ class StartViewModelTest {
                     "secret",
                     "bucket",
                     null,
+                    false,
                     ContentType.MEDIA,
                     "Pictures",
                     SyncDirection.UPLOAD
@@ -59,6 +60,7 @@ class StartViewModelTest {
                     "secret",
                     "bucket",
                     null,
+                    false,
                     ContentType.MEDIA,
                     "Pictures",
                     SyncDirection.UPLOAD

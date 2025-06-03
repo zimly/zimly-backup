@@ -52,18 +52,40 @@ class MinioRepository(
     private val key: String,
     private val secret: String,
     private val bucket: String,
-    private val region: String? = null
+    private val region: String? = null,
+    private val virtualHostedStyle: Boolean = false
 ) : S3Repository {
 
-    private fun mc(uploadProgressTracker: ProgressTracker? = null): MinioAsyncClient = try {
-        MinioAsyncClient.builder()
-            .httpClient(client(uploadProgressTracker))
-            .endpoint(url)
-            .region(region) // This might override some AWS stuff happening inside #endpoint()
-            .credentials(key, secret)
-            .build()
-    } catch (e: Exception) {
-        throw Exception("Failed to initialize S3 client: ${e.message}", e)
+    /**
+     * [virtualHostedStyle] is a huge mess in the underlying SDK, see
+     * [io.minio.S3Base.buildUrl] and [io.minio.MinioAsyncClient.Builder.endpoint].
+     *
+     * Gist is (I think):
+     *   * AWS and aliyuncs.com endpoints are automagically set to use virtualHostedStyle
+     *   * Tencent and other providers need to set this explicitly if needed, but it's not exposed
+     *     through the builder.
+     *   * The bucket name needs to be stripped of the URL, and the region configured explicitly:
+     *     It automagically prefixes the bucket in the URL. If a vendor does not prefix the bucket name, but
+     *     relies on virtual host style, things won't work.
+     *   * Minio Java SDK is .. bad :(
+     *
+     */
+    private fun mc(uploadProgressTracker: ProgressTracker? = null): MinioAsyncClient {
+        return try {
+            val client = MinioAsyncClient.builder()
+                .httpClient(client(uploadProgressTracker))
+                .endpoint(url)
+                .region(region) // This might override some AWS stuff happening inside #endpoint()
+                .credentials(key, secret)
+                .build()
+
+            if (virtualHostedStyle) {
+                client.enableVirtualStyleEndpoint()
+            }
+            return client
+        } catch (e: Exception) {
+            throw Exception("Failed to initialize S3 client: ${e.message}", e)
+        }
     }
 
     companion object {
@@ -136,7 +158,7 @@ class MinioRepository(
     override suspend fun stat(name: String): StatObjectResponse {
         return suspendCancellableCoroutine { continuation ->
 
-            val params = StatObjectArgs.builder().bucket(bucket).`object`(name).build()
+            val params = StatObjectArgs.builder().`object`(name).bucket(bucket).build()
 
             mc().statObject(params).whenComplete { result, exception ->
                 if (exception == null) {

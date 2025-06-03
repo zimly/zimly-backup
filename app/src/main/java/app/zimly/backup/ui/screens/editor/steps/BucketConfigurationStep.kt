@@ -5,19 +5,24 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -82,7 +87,8 @@ class BucketViewModel(
             bucketConfiguration.key,
             bucketConfiguration.secret,
             bucketConfiguration.bucket,
-            bucketConfiguration.region
+            bucketConfiguration.region,
+            bucketConfiguration.virtualHostedStyle
         )
 
         try {
@@ -166,6 +172,8 @@ fun BucketConfiguration(
 ) {
     val valid by bucketForm.valid().collectAsStateWithLifecycle(false)
     var passwordVisible by remember { mutableStateOf(false) }
+    val warning by bucketForm.warning().collectAsStateWithLifecycle(false)
+
 
     Card(
         colors = CardDefaults.cardColors(
@@ -189,6 +197,8 @@ fun BucketConfiguration(
                 val secretState = bucketForm.secret.state.collectAsState()
                 val bucketState = bucketForm.bucket.state.collectAsState()
                 val regionState = bucketForm.region.state.collectAsState()
+                val virtualHostedStyleState =
+                    bucketForm.virtualHostedStyle.state.collectAsState()
 
                 OutlinedTextField(
                     modifier = Modifier
@@ -270,6 +280,55 @@ fun BucketConfiguration(
                     isError = bucketState.value.error != null,
                     supportingText = { bucketState.value.error?.let { Text(it) } }
                 )
+                Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Virtual Hosted Style")
+                            Text(
+                                text = "Enable Virtual Hosted Style URLs instead of path-style.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp, end = 4.dp)
+                            )
+
+                        }
+                        Switch(
+                            checked = virtualHostedStyleState.value.value,
+                            onCheckedChange = {
+                                bucketForm.virtualHostedStyle.touch()
+                                bucketForm.virtualHostedStyle.update(it)
+                            }
+                        )
+                    }
+                    if (warning) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Virtual Hosted Style adds the bucket name to the start of the URL. If the URL already includes it, this may result in a duplicate.",
+                                color = MaterialTheme.colorScheme.tertiary,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 12.dp)
+                            )
+                        }
+                    }
+                }
             }
             Row(
                 modifier = Modifier
