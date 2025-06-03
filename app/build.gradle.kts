@@ -179,6 +179,7 @@ tasks.withType<Test> {
                 "aws" -> includeTestsMatching("AwsIntegrationTest")
                 "minio" -> includeTestsMatching("MinioIntegrationTest")
                 "garage" -> includeTestsMatching("GarageIntegrationTest")
+                "tencent" -> includeTestsMatching("TencentIntegrationTest")
                 else -> includeTestsMatching("*IntegrationTest")
             }
         } else {
