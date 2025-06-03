@@ -16,6 +16,8 @@ jobs:
           LINODE_API_TOKEN: ${{ secrets.LINODE_API_TOKEN }}
           S3_AWS_TEST_KEY: ${{ secrets.S3_AWS_TEST_KEY }}
           S3_AWS_TEST_SECRET: ${{ secrets.S3_AWS_TEST_SECRET }}
+          TENCENT_KEY: ${{ secrets.TENCENT_KEY }}
+          TENCENT_SECRET: ${{ secrets.TENCENT_SECRET }}
         run: ./gradlew -PintegrationTests check
       - name: Test and build the app
         run: ./gradlew build

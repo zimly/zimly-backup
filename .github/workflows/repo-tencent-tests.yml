@@ -15,6 +15,6 @@ jobs:
           java-version: 17
       - name: Run AWS Repository tests
         env:
-          S3_AWS_TEST_KEY: ${{ secrets.TENCENT_KEY }}
-          S3_AWS_TEST_SECRET: ${{ secrets.TENCENT_SECRET }}
+          TENCENT_KEY: ${{ secrets.TENCENT_KEY }}
+          TENCENT_SECRET: ${{ secrets.TENCENT_SECRET }}
         run: ./gradlew -PintegrationTests=tencent check --rerun-tasks
