@@ -17,6 +17,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
+import java.time.Instant
 
 class UploadSyncServiceTest {
     private val minioUser = "test"
@@ -58,7 +59,8 @@ class UploadSyncServiceTest {
                 "path/name",
                 1234,
                 "jpeg",
-                uri
+                uri,
+                Instant.now().toEpochMilli(),
             )
         )
 
@@ -87,8 +89,8 @@ class UploadSyncServiceTest {
         val totalSize = size1 + size2
 
         val localMediaUri = mockk<Uri>()
-        val obj1 = ContentObject(path = image1, image1, size1, "image/png", localMediaUri)
-        val obj2 = ContentObject(path = image2, image1, size2, "image/png", localMediaUri)
+        val obj1 = ContentObject(path = image1, image1, size1, "image/png", localMediaUri, Instant.now().toEpochMilli(),)
+        val obj2 = ContentObject(path = image2, image1, size2, "image/png", localMediaUri, Instant.now().toEpochMilli(),)
         every { localContentResolver.listObjects() } returns listOf(obj1, obj2)
         every { localContentResolver.getInputStream(any()) } returns stream1 andThen stream2
 

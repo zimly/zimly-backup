@@ -14,6 +14,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
 import kotlin.time.TimeSource
 
 class TencentIntegrationTest {
@@ -86,7 +87,8 @@ class TencentIntegrationTest {
                 "Camera/test_image.png",
                 123L,
                 "image/png",
-                mockk()
+                mockk(),
+                Instant.now().toEpochMilli(),
             )
         )
 

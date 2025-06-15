@@ -14,6 +14,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
 import kotlin.time.TimeSource
 
 class AwsIntegrationTest {
@@ -73,7 +74,7 @@ class AwsIntegrationTest {
     fun createDiff() {
         val localContentResolver = mockk<LocalContentResolver>()
 
-        every { localContentResolver.listObjects() } returns listOf(ContentObject("Camera/test_image.png", "Camera/test_image.png", 123L, "image/png", mockk()))
+        every { localContentResolver.listObjects() } returns listOf(ContentObject("Camera/test_image.png", "Camera/test_image.png", 123L, "image/png", mockk(), Instant.now().toEpochMilli()))
 
         val ss = UploadSyncService(s3Repository, localContentResolver)
 
