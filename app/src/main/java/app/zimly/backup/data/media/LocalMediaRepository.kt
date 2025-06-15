@@ -55,6 +55,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
             val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
             val relPathColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED)
 
             Log.d(TAG, "Number of images: ${cursor.count}")
             while (cursor.moveToNext()) {
@@ -64,6 +65,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 val size = cursor.getLong(sizeColumn)
                 val bucketName = cursor.getString(bucketNameColumn)
                 val relPath = cursor.getString(relPathColumn)
+                val dateModified = cursor.getLong(dateModifiedColumn)
                 // Get location data using the Exifinterface library.
                 // Exception occurs if ACCESS_MEDIA_LOCATION permission isn't granted.
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
@@ -76,7 +78,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 // "correcter" according to chatty, but that would potentially mess with existing configurations.
                 val objectPath = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
                 val relObjectPath = if (relPath.isNullOrEmpty()) name else "$relPath/$name"
-                photos.add(ContentObject(objectPath, relObjectPath, size, mimeType, photoUri))
+                photos.add(ContentObject(objectPath, relObjectPath, size, mimeType, photoUri, dateModified))
             }
         }
         return photos.toList()
@@ -117,6 +119,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
             val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
             val bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
             val relPathColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
+            val dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED)
 
             Log.d(TAG, "Number of videos: ${cursor.count}")
             while (cursor.moveToNext()) {
@@ -126,13 +129,14 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 val size = cursor.getLong(sizeColumn)
                 val bucketName = cursor.getString(bucketNameColumn)
                 val relPath = cursor.getString(relPathColumn)
+                val dateModified = cursor.getLong(dateModifiedColumn)
 
                 // https://developer.android.com/training/data-storage/shared/media#location-media-captured
                 val videoUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
                 val relObjectPath = if (relPath.isNullOrEmpty()) name else "$relPath/$name"
-                videos.add(ContentObject(objectName, relObjectPath, size, mimeType, videoUri))
+                videos.add(ContentObject(objectName, relObjectPath, size, mimeType, videoUri, dateModified))
             }
         }
         return videos.toList()

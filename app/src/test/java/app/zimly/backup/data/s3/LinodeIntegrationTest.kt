@@ -16,6 +16,7 @@ import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
+import java.time.Instant
 import kotlin.time.TimeSource
 
 class LinodeIntegrationTest {
@@ -76,7 +77,8 @@ class LinodeIntegrationTest {
                 "Camera/test_image.png",
                 123L,
                 "image/png",
-                mockk()
+                mockk(),
+                Instant.now().toEpochMilli(),
             )
         )
 

@@ -23,6 +23,7 @@ import app.zimly.backup.ui.screens.sync.battery.BatterySaverViewModel
 import app.zimly.backup.ui.screens.sync.battery.PowerStatusProvider
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import java.io.InputStream
+import java.time.Instant
 
 @Preview(showBackground = true)
 @Composable
@@ -225,7 +226,8 @@ private class StubContentResolver : LocalContentResolver {
                 "path/name",
                 124L,
                 "image/png",
-                Uri.EMPTY
+                Uri.EMPTY,
+                Instant.now().toEpochMilli()
             )
         )
     }
@@ -246,7 +248,7 @@ private class StubMediaResolver : LocalMediaResolver, LocalContentResolver {
     }
 
     override fun listObjects(): List<ContentObject> {
-        return listOf(ContentObject("path/name", "path/name", 124L, "image/png", Uri.EMPTY))
+        return listOf(ContentObject("path/name", "path/name", 124L, "image/png", Uri.EMPTY, Instant.now().toEpochMilli()))
     }
 }
 

@@ -65,7 +65,8 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
             DocumentsContract.Document.COLUMN_DISPLAY_NAME,
             DocumentsContract.Document.COLUMN_MIME_TYPE,
-            DocumentsContract.Document.COLUMN_SIZE
+            DocumentsContract.Document.COLUMN_SIZE,
+            DocumentsContract.Document.COLUMN_LAST_MODIFIED,
         )
 
         contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
@@ -76,12 +77,14 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             val mimeTypeIndex =
                 cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
             val sizeIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE)
+            val lastModifiedIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
 
             while (cursor.moveToNext()) {
                 val documentId = cursor.getString(idIndex)
                 val displayName = cursor.getString(nameIndex)
                 val mimeType = cursor.getString(mimeTypeIndex)
                 val size = cursor.getLong(sizeIndex)
+                val lastModified = cursor.getLong(lastModifiedIndex)
 
                 // Resolve directories recursively
                 if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
@@ -91,7 +94,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
                     val path = removeStorageIdentifier(documentId)
                     val relPath = documentId.substringAfter("$rootDocumentId/")
 
-                    files.add(ContentObject(path, relPath, size, mimeType, fileUri))
+                    files.add(ContentObject(path, relPath, size, mimeType, fileUri, lastModified))
                     // Log or handle the file
                     Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")
                 }
