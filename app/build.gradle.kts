@@ -95,7 +95,7 @@ dependencies {
 
     // https://developer.android.com/develop/ui/compose/bom
     // Not very happy with this, feels like it's not fully thought through, e.g. androidx dependencies.
-    val composeBom = platform("androidx.compose:compose-bom:2025.05.01")
+    val composeBom = platform("androidx.compose:compose-bom:2025.06.00")
     implementation(composeBom)
     testImplementation(composeBom)
     androidTestImplementation(composeBom)
@@ -103,7 +103,7 @@ dependencies {
 
     val workManagerVersion = "2.10.1"
     val roomVersion = "2.7.1"
-    val lifecycleVersion = "2.9.0"
+    val lifecycleVersion = "2.9.1"
 
     // minio / S3
     implementation("io.minio:minio:8.5.17")
@@ -147,7 +147,7 @@ dependencies {
 
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.testcontainers:minio:1.21.0")
+    testImplementation("org.testcontainers:minio:1.21.1")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("io.mockk:mockk:1.14.2")
     testImplementation("androidx.test:core-ktx:1.6.1")
