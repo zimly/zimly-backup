@@ -1,8 +1,11 @@
 package app.zimly.backup.sync
 
+import android.net.Uri
 import android.util.Log
+import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.WriteableContentResolver
 import app.zimly.backup.data.s3.MinioRepository
+import app.zimly.backup.data.s3.S3Object
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -16,6 +19,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
 import java.io.ByteArrayOutputStream
+import java.time.Duration
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -110,8 +117,6 @@ class DownloadSyncServiceTest {
         val ss = DownloadSyncService(minioRepository, localContentResolver)
 
         // WHEN
-
-        // Act & Assert
         val flow = ss.synchronize()
 
         // THEN
@@ -119,6 +124,84 @@ class DownloadSyncServiceTest {
             flow.collect {} // will throw
         }
         assertEquals("Failed to create remote diff: Boom", thrown.message)
+    }
+
+    @Test
+    fun onlyRemote() {
+        val remotes = listOf(
+            S3Object(
+                name = "test/test_image.png",
+                size = 123,
+                checksum = "awd",
+                modified = ZonedDateTime.now(),
+            )
+        )
+        val locales = emptyList<ContentObject>()
+        val downloads = DownloadSyncService.calculateDownloads(remotes, locales)
+
+        assertEquals(1, downloads.size)
+    }
+
+    @Test
+    fun remoteOlder() {
+        val earlier = ZonedDateTime.of(
+            LocalDateTime.of(2025, 6, 18, 15, 0),
+            ZoneId.of("Europe/Paris")
+        )
+        val later = earlier.plus(Duration.ofHours(2))
+        val remotes = listOf(
+            S3Object(
+                name = "test/test_image.png",
+                size = 123,
+                checksum = "awd",
+                modified = earlier,
+            )
+        )
+        val locales = listOf(
+            ContentObject(
+                "/absolute/test/test_image.png",
+                "test/test_image.png",
+                123,
+                "image/png",
+                mockk<Uri>(),
+                later.toInstant().toEpochMilli()
+            )
+
+        )
+        val downloads = DownloadSyncService.calculateDownloads(remotes, locales)
+
+        assertEquals(0, downloads.size)
+    }
+
+    @Test
+    fun remoteNewer() {
+        val earlier = ZonedDateTime.of(
+            LocalDateTime.of(2025, 6, 18, 15, 0),
+            ZoneId.of("Europe/Paris")
+        )
+        val later = earlier.plus(Duration.ofHours(2))
+        val remotes = listOf(
+            S3Object(
+                name = "test/test_image.png",
+                size = 123,
+                checksum = "awd",
+                modified = later,
+            )
+        )
+        val locales = listOf(
+            ContentObject(
+                "/absolute/test/test_image.png",
+                "test/test_image.png",
+                123,
+                "image/png",
+                mockk<Uri>(),
+                earlier.toInstant().toEpochMilli()
+            )
+
+        )
+        val downloads = DownloadSyncService.calculateDownloads(remotes, locales)
+
+        assertEquals(1, downloads.size)
     }
 
 }
