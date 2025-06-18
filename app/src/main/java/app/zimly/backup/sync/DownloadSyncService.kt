@@ -32,10 +32,11 @@ class DownloadSyncService(
         try {
             val remotes = s3Repository.listObjects()
             val objects = localContentResolver.listObjects()
-            val diff =
-                remotes.filter { remote -> objects.none { obj -> obj.relPath == remote.name } }
-            val size = diff.sumOf { it.size }
-            return DownloadDiff(diff.size, size, remotes, objects, diff)
+
+            val downloads = calculateDownloads(remotes, objects)
+            val size = downloads.sumOf { it.size }
+
+            return DownloadDiff(downloads.size, size, remotes, objects, downloads)
         } catch (e: Exception) {
             var message = e.message
             if (e is ErrorResponseException) {
@@ -47,6 +48,30 @@ class DownloadSyncService(
             Log.e(TAG, "Failed to create remote diff: $message", e)
             throw Exception("Failed to create remote diff: $message", e)
 
+        }
+    }
+
+    /**
+     * Determines which remote [S3Object]s should be downloaded based on local presence and modification time.
+     *
+     * A remote object is selected if:
+     * * It does not exist locally (by matching [S3Object.name] to [ContentObject.relPath]), or
+     * * Its [S3Object.modified] is more recent than the corresponding local [ContentObject.lastModified].
+     *
+     * @param remotes The list of remote [S3Object]s available.
+     * @param locales The list of local [ContentObject]s currently stored.
+     * @return A list of remote [S3Object]s that need to be downloaded.
+     */
+    private fun calculateDownloads(
+        remotes: List<S3Object>,
+        locales: List<ContentObject>
+    ): List<S3Object> {
+
+        val localsByPath = locales.associateBy { it.relPath }
+
+        return remotes.filter { remote ->
+            val local = localsByPath[remote.name]
+            local == null || local.lastModified < remote.modified.toInstant().toEpochMilli()
         }
     }
 
