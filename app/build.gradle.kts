@@ -95,14 +95,14 @@ dependencies {
 
     // https://developer.android.com/develop/ui/compose/bom
     // Not very happy with this, feels like it's not fully thought through, e.g. androidx dependencies.
-    val composeBom = platform("androidx.compose:compose-bom:2025.06.00")
+    val composeBom = platform("androidx.compose:compose-bom:2025.06.01")
     implementation(composeBom)
     testImplementation(composeBom)
     androidTestImplementation(composeBom)
     debugImplementation(platform(composeBom))
 
-    val workManagerVersion = "2.10.1"
-    val roomVersion = "2.7.1"
+    val workManagerVersion = "2.10.2"
+    val roomVersion = "2.7.2"
     val lifecycleVersion = "2.9.1"
 
     // minio / S3
