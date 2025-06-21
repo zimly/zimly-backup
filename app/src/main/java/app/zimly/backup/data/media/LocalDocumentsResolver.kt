@@ -160,9 +160,8 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
                     DocumentsContract.Document.MIME_TYPE_DIR,
                     directory
                 ) ?: throw Exception("Failed to create directory '$directory' under '$currentUri'.")
-
-                currentUri = uri
             }
+            currentUri = uri
         }
         return currentUri
     }
