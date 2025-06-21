@@ -1,5 +1,5 @@
-3.1.0
-* Add support for virtual-hosted-style S3 configurations
+3.1.1
+* Download s3 objects into the correct sub-directories #44
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
