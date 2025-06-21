@@ -47,8 +47,11 @@ class DownloadSyncService(
 
             return remotes.filter { remote ->
                 val local = localsByPath[remote.name]
-                local == null || local.lastModified < remote.modified.toInstant().toEpochMilli()
+                val onlyRemote = local == null
+                val newerRemote = local != null && local.lastModified < remote.modified.toInstant().toEpochMilli()
+                onlyRemote || newerRemote
             }
+            // local 1742218276089 vs remote: 1750510588208
         }
 
     }
