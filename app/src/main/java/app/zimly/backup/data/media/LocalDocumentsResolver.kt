@@ -125,28 +125,21 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             rootDocUri
         }
 
-        // TODO file exist -> update
-        return getOutputStream(
+        // Get existing or create new document
+        // Should we filter by mimeType here? Strictly speaking this is correct.
+        val document = getDocumentUri(parentUri, objectName, mimeType) ?: DocumentsContract.createDocument(
+            contentResolver,
             parentUri,
-            objectName,
-            mimeType
-        )
+            mimeType,
+            objectName
+        ) ?: throw IOException("Failed to create file in $parentUri")
+
+        return getOutputStream(document)
     }
 
-    private fun getOutputStream(
-        parentDirectory: Uri,
-        fileName: String,
-        mimeType: String
-    ): OutputStream {
-        val fileUri = DocumentsContract.createDocument(
-            contentResolver,
-            parentDirectory,
-            mimeType,
-            fileName
-        ) ?: throw IOException("Failed to create file in $parentDirectory")
-
-        return contentResolver.openOutputStream(fileUri)
-            ?: throw IOException("Failed to open stream for $fileUri")
+    private fun getOutputStream(document: Uri): OutputStream {
+        return contentResolver.openOutputStream(document)
+            ?: throw IOException("Failed to open stream for $document")
     }
 
     /**
@@ -156,7 +149,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
 
         var currentUri = rootDocument
         for (directory in pathSegments) {
-            var uri = getDocumentUriByName(currentUri, directory, DocumentsContract.Document.MIME_TYPE_DIR)
+            var uri = getDocumentUri(currentUri, directory, DocumentsContract.Document.MIME_TYPE_DIR)
             if (uri == null) {
                 uri = DocumentsContract.createDocument(
                     contentResolver,
@@ -170,7 +163,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         return currentUri
     }
 
-    private fun getDocumentUriByName(parentDocumentUri: Uri, documentName: String, mimeType: String): Uri? {
+    private fun getDocumentUri(parentDocumentUri: Uri, documentName: String, mimeType: String): Uri? {
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
             root,
@@ -198,6 +191,8 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
                 val docId = cursor.getString(idIndex)
                 val name = cursor.getString(nameIndex)
                 val mType = cursor.getString(mimeTypeIndex)
+                // DocumentsContract does not support server-side filtering via selection/selectionArgs
+                // for COLUMN_DISPLAY_NAME or COLUMN_MIME_TYPE it seems. :sad_panda:
                 if (name == documentName && mType == mimeType) {
                     documentUri =
                         DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
