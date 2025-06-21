@@ -125,6 +125,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             rootDocUri
         }
 
+        // TODO file exist -> update
         return getOutputStream(
             parentUri,
             objectName,
@@ -155,7 +156,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
 
         var currentUri = rootDocument
         for (directory in pathSegments) {
-            var uri = findDirectory(currentUri, directory)
+            var uri = getDocumentUriByName(currentUri, directory, DocumentsContract.Document.MIME_TYPE_DIR)
             if (uri == null) {
                 uri = DocumentsContract.createDocument(
                     contentResolver,
@@ -169,7 +170,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         return currentUri
     }
 
-    private fun findDirectory(parentDocumentUri: Uri, directoryName: String): Uri? {
+    private fun getDocumentUriByName(parentDocumentUri: Uri, documentName: String, mimeType: String): Uri? {
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
             root,
@@ -182,7 +183,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             DocumentsContract.Document.COLUMN_MIME_TYPE
         )
 
-        var folderUri: Uri? = null
+        var documentUri: Uri? = null
 
         contentResolver.query(childrenUri, projection, null, null, null)?.use query@{ cursor ->
 
@@ -196,15 +197,15 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             while (cursor.moveToNext()) {
                 val docId = cursor.getString(idIndex)
                 val name = cursor.getString(nameIndex)
-                val mimeType = cursor.getString(mimeTypeIndex)
-                if (name == directoryName && mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                    folderUri =
+                val mType = cursor.getString(mimeTypeIndex)
+                if (name == documentName && mType == mimeType) {
+                    documentUri =
                         DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
                     return@query // exits the lambda immediately
                 }
             }
         }
-        return folderUri
+        return documentUri
     }
 
     /**
