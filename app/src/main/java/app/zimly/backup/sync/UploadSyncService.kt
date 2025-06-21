@@ -27,17 +27,43 @@ class UploadSyncService(
 
     companion object {
         val TAG: String? = UploadSyncService::class.simpleName
+
+        /**
+         * Determines which local [ContentObject]s should be uploaded based on remote presence and modification time.
+         *
+         * A local object is selected if:
+         * * It does not exist remotely (by matching [ContentObject.relPath] to [S3Object.name]), or
+         * * Its local [ContentObject.lastModified] is more recent than the corresponding remote [S3Object.modified].
+         *
+         * @param locals The list of local [ContentObject]s.
+         * @param remotes The list of remote [S3Object]s.
+         * @return A list of local [ContentObject]s to upload.
+         */
+        fun calculateUploads(
+            locals: List<ContentObject>,
+            remotes: List<S3Object>
+        ): List<ContentObject> {
+
+            val remotesByName = remotes.associateBy { it.name }
+
+            return locals.filter { local ->
+                val remote = remotesByName[local.relPath]
+                val onlyLocal = remote == null
+                val newerLocal = remote != null && local.lastModified > remote.modified.toInstant().toEpochMilli()
+                onlyLocal || newerLocal
+            }
+        }
     }
 
     override fun calculateDiff(): UploadDiff {
         try {
             val remotes = s3Repository.listObjects()
             val objects = localContentResolver.listObjects()
-            val diff =
-                objects.filter { local -> remotes.none { remote -> remote.name == local.path } }
-            val totalBytes = diff.sumOf { it.size }
 
-            return UploadDiff(diff.size, totalBytes, remotes, objects, diff)
+            val uploads = calculateUploads(objects, remotes)
+            val totalBytes = uploads.sumOf { it.size }
+
+            return UploadDiff(uploads.size, totalBytes, remotes, objects, uploads)
         } catch (e: Exception) {
             var message = e.message
             if (e is ErrorResponseException) {

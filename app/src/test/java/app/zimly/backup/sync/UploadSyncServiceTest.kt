@@ -5,6 +5,7 @@ import android.util.Log
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.data.s3.MinioRepository
+import app.zimly.backup.data.s3.S3Object
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -17,7 +18,12 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.MinIOContainer
+import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import kotlin.test.assertEquals
 
 class UploadSyncServiceTest {
     private val minioUser = "test"
@@ -89,8 +95,22 @@ class UploadSyncServiceTest {
         val totalSize = size1 + size2
 
         val localMediaUri = mockk<Uri>()
-        val obj1 = ContentObject(path = image1, image1, size1, "image/png", localMediaUri, Instant.now().toEpochMilli(),)
-        val obj2 = ContentObject(path = image2, image1, size2, "image/png", localMediaUri, Instant.now().toEpochMilli(),)
+        val obj1 = ContentObject(
+            path = image1,
+            image1,
+            size1,
+            "image/png",
+            localMediaUri,
+            Instant.now().toEpochMilli(),
+        )
+        val obj2 = ContentObject(
+            path = image2,
+            image1,
+            size2,
+            "image/png",
+            localMediaUri,
+            Instant.now().toEpochMilli(),
+        )
         every { localContentResolver.listObjects() } returns listOf(obj1, obj2)
         every { localContentResolver.getInputStream(any()) } returns stream1 andThen stream2
 
@@ -112,5 +132,85 @@ class UploadSyncServiceTest {
         val name = minioRepository.get(image1).`object`()
         MatcherAssert.assertThat(name, CoreMatchers.`is`(image1))
 
+    }
+
+    @Test
+    fun onlyLocal() {
+        val locales = listOf(
+            ContentObject(
+                "/absolute/test/test_image.png",
+                "test/test_image.png",
+                123,
+                "image/png",
+                mockk<Uri>(),
+                Instant.now().toEpochMilli()
+            )
+        )
+        val remotes = emptyList<S3Object>()
+        val uploads = UploadSyncService.calculateUploads(locales, remotes)
+
+        assertEquals(1, uploads.size)
+    }
+
+    @Test
+    fun localNotNewer() {
+        val earlier = ZonedDateTime.of(
+            LocalDateTime.of(2025, 6, 18, 15, 0),
+            ZoneId.of("Europe/Paris")
+        )
+        val later = earlier.plus(Duration.ofHours(2))
+        val locales = listOf(
+            ContentObject(
+                "/absolute/test/test_image.png",
+                "test/test_image.png",
+                123,
+                "image/png",
+                mockk<Uri>(),
+                earlier.toInstant().toEpochMilli()
+            )
+
+        )
+        val remotes = listOf(
+            S3Object(
+                name = "test/test_image.png",
+                size = 123,
+                checksum = "awd",
+                modified = later,
+            )
+        )
+        val uploads = UploadSyncService.calculateUploads(locales, remotes)
+
+        assertEquals(0, uploads.size)
+    }
+
+    @Test
+    fun localNewer() {
+        val earlier = ZonedDateTime.of(
+            LocalDateTime.of(2025, 6, 18, 15, 0),
+            ZoneId.of("Europe/Paris")
+        )
+        val later = earlier.plus(Duration.ofHours(2))
+        val locals = listOf(
+            ContentObject(
+                "/absolute/test/test_image.png",
+                "test/test_image.png",
+                123,
+                "image/png",
+                mockk<Uri>(),
+                later.toInstant().toEpochMilli()
+            )
+
+        )
+        val remotes = listOf(
+            S3Object(
+                name = "test/test_image.png",
+                size = 123,
+                checksum = "awd",
+                modified = earlier,
+            )
+        )
+        val uploads = UploadSyncService.calculateUploads(locals, remotes)
+
+        assertEquals(1, uploads.size)
     }
 }
