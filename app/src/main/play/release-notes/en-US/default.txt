@@ -1,5 +1,6 @@
-3.1.1
-* Download s3 objects into the correct sub-directories #44
+3.1.2
+* Optimize for edge-to-edge on Android 15 #45
+* Update to Android SDK 36
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
