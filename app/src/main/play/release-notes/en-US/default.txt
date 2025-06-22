@@ -1,5 +1,6 @@
-3.1.1
-* Download s3 objects into the correct sub-directories #44
+3.2.0
+* Detect changes in documents and media and update remote respectively local copies #38
+* Optimize for edge-to-edge on Android 15 #45
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
