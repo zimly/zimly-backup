@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,11 +17,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.ui.screens.editor.editorViewModel
 import app.zimly.backup.ui.screens.editor.steps.BucketConfigurationStep
 import app.zimly.backup.ui.screens.editor.steps.DownloadTargetStep
 import app.zimly.backup.ui.screens.editor.steps.SyncDirectionStep
 import app.zimly.backup.ui.screens.editor.steps.UploadSourceStep
-import app.zimly.backup.ui.screens.editor.editorViewModel
 import app.zimly.backup.ui.screens.permission.PermissionRequestScreen
 import app.zimly.backup.ui.screens.start.StartScreen
 import app.zimly.backup.ui.screens.sync.SyncScreen
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        enableEdgeToEdge()
         Thread.setDefaultUncaughtExceptionHandler { _: Thread, throwable: Throwable ->
             Log.e(TAG, "Unhandled Exception!", throwable)
 

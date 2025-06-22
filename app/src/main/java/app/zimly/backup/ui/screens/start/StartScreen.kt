@@ -10,11 +10,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -56,6 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -125,10 +135,13 @@ private fun StartLayout(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.displayCutout,
         topBar = {
             if (numSelected > 0) {
                 TopAppBar(
-                    modifier = Modifier.testTag("List Selection Actions"),
+                    modifier = Modifier
+                        .testTag("List Selection Actions")
+                        .windowInsetsPadding(WindowInsets.displayCutout),
                     title = {
                         Text(
                             text = "$numSelected selected",
@@ -164,7 +177,9 @@ private fun StartLayout(
                 )
             } else {
                 TopAppBar(
-                    modifier = Modifier.testTag("Zimly Title"),
+                    modifier = Modifier
+                        .testTag("Zimly Title")
+                        .windowInsetsPadding(WindowInsets.displayCutout),
                     title = {
                         Text(
                             text = "Zimly",
@@ -176,7 +191,9 @@ private fun StartLayout(
         },
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
-            FloatingActionButton(onClick = {
+            FloatingActionButton(
+                modifier = Modifier.windowInsetsPadding(WindowInsets.displayCutout),
+                onClick = {
                 addRemote()
             }) {
                 Icon(Icons.Filled.Add, "Add Remote")
@@ -203,7 +220,9 @@ private fun RemoteList(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.padding(all = 16.dp) then Modifier.padding(
             top = innerPadding.calculateTopPadding(),
-            bottom = innerPadding.calculateBottomPadding()
+            bottom = innerPadding.calculateBottomPadding(),
+            start = innerPadding.calculateStartPadding(LayoutDirection.Ltr),
+            end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
         ) then Modifier.fillMaxWidth()
     ) {
         items(remotes) { remote ->
