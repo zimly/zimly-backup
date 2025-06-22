@@ -48,9 +48,8 @@ class UploadSyncService(
 
             return locals.filter { local ->
                 val remote = remotesByName[local.relPath]
-                val onlyLocal = remote == null
-                val newerLocal = remote != null && local.lastModified > remote.modified.toInstant().toEpochMilli()
-                onlyLocal || newerLocal
+                val isNewOrUpdatedLocal = remote == null || local.lastModified > remote.modified.toInstant().toEpochMilli()
+                isNewOrUpdatedLocal
             }
         }
     }
