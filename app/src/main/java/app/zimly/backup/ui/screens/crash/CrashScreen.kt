@@ -1,14 +1,18 @@
 package app.zimly.backup.ui.screens.crash
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
@@ -61,6 +65,9 @@ fun CrashScreen(
 
     val state by viewModel.errorState.collectAsState()
     Scaffold(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.displayCutout),
         bottomBar = {
             Actions()
         }
