@@ -128,7 +128,6 @@ private fun StartLayout(
     }
 
     Scaffold(
-
         modifier = Modifier
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.displayCutout),
