@@ -9,14 +9,14 @@ plugins {
 
 
 android {
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         // This gets hot-patched for Google Play releases.
         applicationId = "app.zimly.backup"
         namespace = "app.zimly.backup"
         minSdk = 29
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 85
         versionName = "3.1.1"
 
