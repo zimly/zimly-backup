@@ -8,7 +8,6 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.util.Log
 import java.io.InputStream
-import java.io.OutputStream
 
 /**
  * Wraps the [ContentResolver] for media specific queries. Compared to [LocalMediaResolver]
