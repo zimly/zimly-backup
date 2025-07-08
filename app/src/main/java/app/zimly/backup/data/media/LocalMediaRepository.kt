@@ -72,12 +72,10 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 var photoUri: Uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id)
                 photoUri= MediaStore.setRequireOriginal(photoUri)
 
-                // TODO: This is odd:
-                // 1. Remove the null check? Both bucketName and relPath are nullable
-                // 2. Since later Android versions MediaStore.MediaColumns.RELATIVE_PATH would be
+                // Since later Android versions MediaStore.MediaColumns.RELATIVE_PATH would be
                 // "correcter" according to chatty, but that would potentially mess with existing configurations.
                 val objectPath = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                val relObjectPath = if (relPath.isNullOrEmpty()) name else "$relPath/$name"
+                val relObjectPath = if (relPath.isNullOrEmpty()) name else if (relPath.endsWith("/")) "$relPath$name" else "$relPath/$name"
                 photos.add(ContentObject(objectPath, relObjectPath, size, mimeType, photoUri, dateModified))
             }
         }
@@ -135,7 +133,7 @@ class LocalMediaRepository(private val contentResolver: ContentResolver): MediaR
                 val videoUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id)
 
                 val objectName = if (bucketName.isNullOrEmpty()) name else "$bucketName/$name"
-                val relObjectPath = if (relPath.isNullOrEmpty()) name else "$relPath/$name"
+                val relObjectPath = if (relPath.isNullOrEmpty()) name else "${relPath.removeSuffix("/")}/$name"
                 videos.add(ContentObject(objectName, relObjectPath, size, mimeType, videoUri, dateModified))
             }
         }

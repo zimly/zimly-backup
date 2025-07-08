@@ -32,8 +32,15 @@ class UploadSyncService(
          * Determines which local [ContentObject]s should be uploaded based on remote presence and modification time.
          *
          * A local object is selected if:
-         * * It does not exist remotely (by matching [ContentObject.relPath] to [S3Object.name]), or
+         * * It does not exist remotely (by matching [ContentObject.path] to [S3Object.name]), or
          * * Its local [ContentObject.lastModified] is more recent than the corresponding remote [S3Object.modified].
+         *
+         * Careful with [ContentObject.relPath] vs [ContentObject.path]: We use relPath in Downloads and
+         * path in Uploads. As a consequence, you can't create a "circular" setup where uploads and
+         * downloads work together.
+         *
+         * The reason was originally to prefix the Media Collection in the bucket, e.g. Camera/IMG_0001.png. If we
+         * change this now, existing configurations in the wild would break.
          *
          * @param locals The list of local [ContentObject]s.
          * @param remotes The list of remote [S3Object]s.
@@ -47,7 +54,7 @@ class UploadSyncService(
             val remotesByName = remotes.associateBy { it.name }
 
             return locals.filter { local ->
-                val remote = remotesByName[local.relPath]
+                val remote = remotesByName[local.path]
                 val isNewOrUpdatedLocal = remote == null || local.lastModified > remote.modified.toInstant().toEpochMilli()
                 isNewOrUpdatedLocal
             }

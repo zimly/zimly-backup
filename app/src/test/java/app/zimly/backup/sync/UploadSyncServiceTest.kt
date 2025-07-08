@@ -138,8 +138,8 @@ class UploadSyncServiceTest {
     fun onlyLocal() {
         val locales = listOf(
             ContentObject(
-                "/absolute/test/test_image.png",
-                "test/test_image.png",
+                "Camera/test/test_image.png",
+                "Camera/test/test_image.png",
                 123,
                 "image/png",
                 mockk<Uri>(),
@@ -161,8 +161,8 @@ class UploadSyncServiceTest {
         val later = earlier.plus(Duration.ofHours(2))
         val locales = listOf(
             ContentObject(
-                "/absolute/test/test_image.png",
-                "test/test_image.png",
+                "Camera/test_image.png",
+                "Camera/test_image.png",
                 123,
                 "image/png",
                 mockk<Uri>(),
@@ -172,7 +172,7 @@ class UploadSyncServiceTest {
         )
         val remotes = listOf(
             S3Object(
-                name = "test/test_image.png",
+                name = "Camera/test_image.png",
                 size = 123,
                 checksum = "awd",
                 modified = later,
@@ -192,8 +192,8 @@ class UploadSyncServiceTest {
         val later = earlier.plus(Duration.ofHours(2))
         val locals = listOf(
             ContentObject(
-                "/absolute/test/test_image.png",
-                "test/test_image.png",
+                "Camera/test_image.png",
+                "Camera/test_image.png",
                 123,
                 "image/png",
                 mockk<Uri>(),
@@ -203,7 +203,7 @@ class UploadSyncServiceTest {
         )
         val remotes = listOf(
             S3Object(
-                name = "test/test_image.png",
+                name = "Camera/test_image.png",
                 size = 123,
                 checksum = "awd",
                 modified = earlier,
