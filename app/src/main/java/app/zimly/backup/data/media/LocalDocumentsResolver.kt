@@ -126,8 +126,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         }
 
         // Get existing or create new document
-        // Should we filter by mimeType here? Strictly speaking this is correct.
-        val document = getDocumentUri(parentUri, objectName, mimeType) ?: DocumentsContract.createDocument(
+        val document = getDocumentUri(parentUri, objectName) ?: DocumentsContract.createDocument(
             contentResolver,
             parentUri,
             mimeType,
@@ -163,7 +162,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         return currentUri
     }
 
-    private fun getDocumentUri(parentDocumentUri: Uri, documentName: String, mimeType: String): Uri? {
+    private fun getDocumentUri(parentDocumentUri: Uri, documentName: String, mimeType: String? = null): Uri? {
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
             root,
@@ -190,12 +189,14 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             while (cursor.moveToNext()) {
                 val docId = cursor.getString(idIndex)
                 val name = cursor.getString(nameIndex)
-                val mType = cursor.getString(mimeTypeIndex)
+                val actualMimeType = cursor.getString(mimeTypeIndex)
                 // DocumentsContract does not support server-side filtering via selection/selectionArgs
                 // for COLUMN_DISPLAY_NAME or COLUMN_MIME_TYPE it seems. :sad_panda:
-                if (name == documentName && mType == mimeType) {
-                    documentUri =
-                        DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
+                if (name == documentName) {
+                    if (mimeType != null && actualMimeType != mimeType) {
+                        continue
+                    }
+                    documentUri = DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
                     return@query // exits the lambda immediately
                 }
             }
