@@ -24,13 +24,12 @@ class LocalDocumentsResolverTest {
 
 
     @Test
-    fun testSomethingWithContentResolver() {
+    fun listObjectsRecursive() {
         val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
 
         val resolver = LocalDocumentsResolver(context, rootUri)
 
         val result = resolver.listObjects()
-        assertTrue(result.isNotEmpty())
-
+        assertTrue(result.size == 2)
     }
 }
