@@ -22,7 +22,6 @@ class LocalDocumentsResolverTest {
         ShadowContentResolver.registerProviderInternal(authority, provider)
     }
 
-
     @Test
     fun listObjectsRecursive() {
         val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
@@ -31,5 +30,29 @@ class LocalDocumentsResolverTest {
 
         val result = resolver.listObjects()
         assertTrue(result.size == 2)
+    }
+
+    @Test
+    fun existingDocument() {
+        val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
+
+        val resolver = LocalDocumentsResolver(context, rootUri)
+
+        val result = resolver.createOrFindDocument("test1.txt", "text/plain")
+
+        assertTrue(result.authority == authority)
+        assertTrue(result.path?.contains("test1.txt") == true)
+    }
+
+    @Test
+    fun nonExistingDocument() {
+        val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
+
+        val resolver = LocalDocumentsResolver(context, rootUri)
+
+        val result = resolver.createOrFindDocument("Folder1/test1.txt", "text/plain")
+
+        assertTrue(result.authority == authority)
+        assertTrue(result.path?.contains("Folder1/test1.txt") == true)
     }
 }

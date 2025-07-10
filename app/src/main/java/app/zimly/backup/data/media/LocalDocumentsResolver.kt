@@ -108,11 +108,19 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
     }
 
     /**
-     * Takes a complete [objectPath], e.g. Pictures/2025/picture.png, and creates the directory path
-     * if it's missing and an empty Document with the trailing objectName and returns the [OutputStream].
+     * Creates a [OutputStream] for a given document identified by [objectPath]. Creates the document
+     * including parent directories if not existing.
      */
     override fun createOutputStream(objectPath: String, mimeType: String): OutputStream {
+        val document = createOrFindDocument(objectPath, mimeType)
+        return getOutputStream(document)
+    }
 
+    /**
+     * Takes a complete [objectPath], e.g. Pictures/2025/picture.png, and creates the directory path
+     * if it's missing and an empty Document with the trailing objectName and returns the [Uri].
+     */
+    internal fun createOrFindDocument(objectPath: String, mimeType: String): Uri {
         val (directories, objectName) = extractPath(objectPath)
         val rootDocUri = DocumentsContract.buildDocumentUriUsingTree(
             root,
@@ -126,19 +134,12 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         }
 
         // Get existing or create new document
-        val document = getDocumentUri(parentUri, objectName) ?: DocumentsContract.createDocument(
+        return getDocumentUri(parentUri, objectName) ?: DocumentsContract.createDocument(
             contentResolver,
             parentUri,
             mimeType,
             objectName
         ) ?: throw IOException("Failed to create file in $parentUri")
-
-        return getOutputStream(document)
-    }
-
-    private fun getOutputStream(document: Uri): OutputStream {
-        return contentResolver.openOutputStream(document)
-            ?: throw IOException("Failed to open stream for $document")
     }
 
     /**
@@ -160,6 +161,11 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             currentUri = uri
         }
         return currentUri
+    }
+
+    private fun getOutputStream(document: Uri): OutputStream {
+        return contentResolver.openOutputStream(document)
+            ?: throw IOException("Failed to open stream for $document")
     }
 
     private fun getDocumentUri(parentDocumentUri: Uri, documentName: String, mimeType: String? = null): Uri? {
