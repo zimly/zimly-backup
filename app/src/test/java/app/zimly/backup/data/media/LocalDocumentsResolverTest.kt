@@ -18,7 +18,7 @@ class LocalDocumentsResolverTest {
 
     @Before
     fun setup() {
-        val provider = FakeDocumentsProvider()
+        val provider = FakeDocumentsProvider(authority)
         ShadowContentResolver.registerProviderInternal(authority, provider)
     }
 

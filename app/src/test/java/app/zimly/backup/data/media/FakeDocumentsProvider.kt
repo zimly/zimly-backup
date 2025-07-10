@@ -12,7 +12,7 @@ private const val DOCUMENT = 0
 private const val CHILDREN = 1
 
 
-class FakeDocumentsProvider : ContentProvider() {
+class FakeDocumentsProvider(private val authority: String) : ContentProvider() {
     private val documents = mutableMapOf<String, FakeDocument>(
         "primary:Documents/test.txt" to FakeDocument(
             "primary:Documents/test.txt",
@@ -68,8 +68,8 @@ class FakeDocumentsProvider : ContentProvider() {
         )
 
         val matcher = UriMatcher(UriMatcher.NO_MATCH).apply {
-            addURI("com.android.externalstorage.documents", "tree/*/document/*", DOCUMENT)
-            addURI("com.android.externalstorage.documents", "tree/*/document/*/children", CHILDREN)
+            addURI(authority, "tree/*/document/*", DOCUMENT)
+            addURI(authority, "tree/*/document/*/children", CHILDREN)
         }
 
         return when (matcher.match(uri)) {
