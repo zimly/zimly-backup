@@ -6,6 +6,7 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import android.os.Bundle
 import android.provider.DocumentsContract
 
 private const val DOCUMENT = 0
@@ -115,9 +116,51 @@ class FakeDocumentsProvider(private val authority: String) : ContentProvider() {
         }
     }
 
+    /**
+     * Stub implementation to make [DocumentsContract.createDocument] work.
+     */
+    override fun call(
+        method: String,
+        arg: String?,
+        extras: Bundle?
+    ): Bundle? {
+        return when (method) {
+            "android:createDocument" -> {
+                val parentUri = extras?.getParcelable<Uri>("uri")
+                val mimeType = extras?.getString("mime_type")
+                val displayName = extras?.getString("_display_name")
+
+                if (parentUri == null || mimeType == null || displayName == null) {
+                    throw IllegalArgumentException("Missing data in extras")
+                }
+                val parentDocId = DocumentsContract.getDocumentId(parentUri)
+
+                val newDocId = "$parentDocId/$displayName"
+
+                val newDocUri = DocumentsContract.buildDocumentUri(
+                    authority,
+                    newDocId
+                )
+
+                documents[newDocId] = FakeDocument(
+                    id = newDocId,
+                    parentId = parentDocId,
+                    name = displayName,
+                    mimeType = mimeType,
+                )
+
+                Bundle().apply {
+                    putParcelable("uri", newDocUri)
+                }
+            }
+
+            else -> super.call(method, arg, extras)
+        }
+    }
     // These can be no-op for read-only tests
     override fun getType(uri: Uri): String? = "vnd.android.document"
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int =
         DOCUMENT
 
