@@ -10,6 +10,9 @@ import org.robolectric.shadows.ShadowContentResolver
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
+/**
+ * Todo: This will start breaking with newer APIs.
+ */
 @RunWith(RobolectricTestRunner::class)
 class LocalDocumentsResolverTest {
 

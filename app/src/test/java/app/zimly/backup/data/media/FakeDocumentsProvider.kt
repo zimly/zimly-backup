@@ -126,7 +126,7 @@ class FakeDocumentsProvider(private val authority: String) : ContentProvider() {
     ): Bundle? {
         return when (method) {
             "android:createDocument" -> {
-                val parentUri = extras?.getParcelable("uri", Uri::class.java)
+                val parentUri = extras?.getParcelable<Uri>("uri")
                 val mimeType = extras?.getString("mime_type")
                 val displayName = extras?.getString("_display_name")
 
