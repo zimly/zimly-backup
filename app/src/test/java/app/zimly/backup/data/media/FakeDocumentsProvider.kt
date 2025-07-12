@@ -6,48 +6,18 @@ import android.content.UriMatcher
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
-import android.os.Bundle
 import android.provider.DocumentsContract
 
 private const val DOCUMENT = 0
 private const val CHILDREN = 1
 
 
-class FakeDocumentsProvider(private val authority: String) : ContentProvider() {
-    private val documents = mutableMapOf<String, FakeDocument>(
-        "primary:Documents/test.txt" to FakeDocument(
-            "primary:Documents/test.txt",
-            "test.txt",
-            "text/plain",
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-        "primary:Documents/test1.txt" to FakeDocument(
-            "primary:Documents/test1.txt",
-            "test1.txt",
-            "text/plain",
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-        "primary:Documents/Folder1" to FakeDocument(
-            "primary:Documents/Folder1",
-            "Folder1",
-            DocumentsContract.Document.MIME_TYPE_DIR,
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-        "primary:Documents/Folder2" to FakeDocument(
-            "primary:Documents/Folder2",
-            "Folder2",
-            DocumentsContract.Document.MIME_TYPE_DIR,
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-    )
+/**
+ * A [ContentProvider] implementation that allows testing Android APIs using roboelectric. This is
+ * still not satisfactory, and some things should potentially be abstracted into [DocumentsRepository].
+ * But there are still key parts that are very closely tied to the [ContentProvider]s functionality.
+ */
+class FakeDocumentsProvider(private val authority: String, private val documentStore: MutableMap<String, FakeDocument> = mutableMapOf()) : ContentProvider() {
 
     override fun onCreate(): Boolean = true
 
@@ -78,7 +48,7 @@ class FakeDocumentsProvider(private val authority: String) : ContentProvider() {
                 val parentId = DocumentsContract.getDocumentId(uri)
                     ?: return cursor
 
-                documents.values
+                documentStore.values
                     .filter { it.parentId == parentId }
                     .forEach {
                         cursor.addRow(
@@ -98,7 +68,7 @@ class FakeDocumentsProvider(private val authority: String) : ContentProvider() {
             DOCUMENT -> {
                 val docId = DocumentsContract.getDocumentId(uri)
                     ?: return cursor
-                val doc = documents[docId] ?: return cursor
+                val doc = documentStore[docId] ?: return cursor
 
                 cursor.addRow(
                     arrayOf(
@@ -116,47 +86,6 @@ class FakeDocumentsProvider(private val authority: String) : ContentProvider() {
         }
     }
 
-    /**
-     * Stub implementation to make [DocumentsContract.createDocument] work.
-     */
-    override fun call(
-        method: String,
-        arg: String?,
-        extras: Bundle?
-    ): Bundle? {
-        return when (method) {
-            "android:createDocument" -> {
-                val parentUri = extras?.getParcelable<Uri>("uri")
-                val mimeType = extras?.getString("mime_type")
-                val displayName = extras?.getString("_display_name")
-
-                if (parentUri == null || mimeType == null || displayName == null) {
-                    throw IllegalArgumentException("Missing data in extras")
-                }
-                val parentDocId = DocumentsContract.getDocumentId(parentUri)
-
-                val newDocId = "$parentDocId/$displayName"
-
-                val newDocUri = DocumentsContract.buildDocumentUri(
-                    authority,
-                    newDocId
-                )
-
-                documents[newDocId] = FakeDocument(
-                    id = newDocId,
-                    parentId = parentDocId,
-                    name = displayName,
-                    mimeType = mimeType,
-                )
-
-                Bundle().apply {
-                    putParcelable("uri", newDocUri)
-                }
-            }
-
-            else -> super.call(method, arg, extras)
-        }
-    }
     // These can be no-op for read-only tests
     override fun getType(uri: Uri): String? = "vnd.android.document"
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null

@@ -13,7 +13,7 @@ import java.io.OutputStream
  * https://developer.android.com/training/data-storage/shared/documents-files#grant-access-directory
  * https://developer.android.com/training/data-storage/shared/documents-files#persist-permissions
  */
-class LocalDocumentsResolver(context: Context, private val root: Uri) :
+class LocalDocumentsResolver(context: Context, private val root: Uri, val documentsRepository: DocumentsRepository = DocumentsContractRepository(context.contentResolver)) :
     LocalContentResolver, WriteableContentResolver {
 
     val contentResolver: ContentResolver = context.contentResolver
@@ -134,8 +134,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         }
 
         // Get existing or create new document
-        return getDocumentUri(parentUri, objectName) ?: DocumentsContract.createDocument(
-            contentResolver,
+        return getDocumentUri(parentUri, objectName) ?: documentsRepository.createDocument(
             parentUri,
             mimeType,
             objectName
@@ -151,8 +150,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         for (directory in pathSegments) {
             var uri = getDocumentUri(currentUri, directory, DocumentsContract.Document.MIME_TYPE_DIR)
             if (uri == null) {
-                uri = DocumentsContract.createDocument(
-                    contentResolver,
+                uri = documentsRepository.createDocument(
                     currentUri,
                     DocumentsContract.Document.MIME_TYPE_DIR,
                     directory
