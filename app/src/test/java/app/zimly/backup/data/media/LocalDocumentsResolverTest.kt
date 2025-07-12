@@ -22,7 +22,6 @@ import kotlin.test.assertTrue
 @Config(sdk = [35])
 class LocalDocumentsResolverTest {
 
-
     private lateinit var documentStore: FakeDocumentStore
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val authority = "com.android.externalstorage.documents"
@@ -47,21 +46,21 @@ class LocalDocumentsResolverTest {
                 "primary:Documents"
             ),
             FakeDocument(
-                "primary:Documents/test1.txt",
-                "test1.txt",
-                "text/plain",
-                System.currentTimeMillis(),
-                12345L,
-                "primary:Documents"
-            ),
-            FakeDocument(
                 "primary:Documents/Folder1",
                 "Folder1",
                 DocumentsContract.Document.MIME_TYPE_DIR,
                 System.currentTimeMillis(),
                 12345L,
                 "primary:Documents"
-            )
+            ),
+            FakeDocument(
+                "primary:Documents/Folder1/test1.txt",
+                "test1.txt",
+                "text/plain",
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents/Folder1"
+            ),
         )
         val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
 
@@ -73,6 +72,10 @@ class LocalDocumentsResolverTest {
 
         // THEN
         assertTrue(result.size == 2, "Lists all objects except directories")
+        assertTrue(result.count { it.path == "Documents/Folder1/test1.txt" } == 1, "ContentObject.path starts with root")
+        assertTrue(result.count { it.relPath == "Folder1/test1.txt" } == 1, "ContentObject.relPath does not contain root")
+        assertTrue(result.count { it.path == "Documents/test.txt" } == 1, "ContentObject.path starts with root")
+        assertTrue(result.count { it.relPath == "test.txt" } == 1, "ContentObject.relPath does not contain root")
     }
 
     @Test
