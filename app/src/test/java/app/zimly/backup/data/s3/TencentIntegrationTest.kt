@@ -1,10 +1,12 @@
 package app.zimly.backup.data.s3
 
+import android.util.Log
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.sync.UploadSyncService
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -14,6 +16,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
 import kotlin.time.TimeSource
 
 class TencentIntegrationTest {
@@ -22,6 +25,13 @@ class TencentIntegrationTest {
 
     @Before
     fun setUp() {
+
+        mockkStatic(Log::class)
+        every { Log.v(any(), any()) } returns 0
+        every { Log.d(any(), any()) } returns 0
+        every { Log.i(any(), any()) } returns 0
+        every { Log.e(any(), any()) } returns 0
+        every { Log.isLoggable(any(), any()) } returns false
 
         val url = "https://cos.eu-frankfurt.myqcloud.com"
         val bucket = "zimly-test-1361781432"
@@ -86,7 +96,8 @@ class TencentIntegrationTest {
                 "Camera/test_image.png",
                 123L,
                 "image/png",
-                mockk()
+                mockk(),
+                Instant.now().toEpochMilli(),
             )
         )
 

@@ -13,7 +13,7 @@ import java.io.OutputStream
  * https://developer.android.com/training/data-storage/shared/documents-files#grant-access-directory
  * https://developer.android.com/training/data-storage/shared/documents-files#persist-permissions
  */
-class LocalDocumentsResolver(context: Context, private val root: Uri) :
+class LocalDocumentsResolver(context: Context, private val root: Uri, val documentsRepository: DocumentsRepository = DocumentsContractRepository(context.contentResolver)) :
     LocalContentResolver, WriteableContentResolver {
 
     val contentResolver: ContentResolver = context.contentResolver
@@ -65,7 +65,8 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
             DocumentsContract.Document.COLUMN_DISPLAY_NAME,
             DocumentsContract.Document.COLUMN_MIME_TYPE,
-            DocumentsContract.Document.COLUMN_SIZE
+            DocumentsContract.Document.COLUMN_SIZE,
+            DocumentsContract.Document.COLUMN_LAST_MODIFIED,
         )
 
         contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
@@ -76,12 +77,14 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             val mimeTypeIndex =
                 cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
             val sizeIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE)
+            val lastModifiedIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
 
             while (cursor.moveToNext()) {
                 val documentId = cursor.getString(idIndex)
                 val displayName = cursor.getString(nameIndex)
                 val mimeType = cursor.getString(mimeTypeIndex)
                 val size = cursor.getLong(sizeIndex)
+                val lastModified = cursor.getLong(lastModifiedIndex)
 
                 // Resolve directories recursively
                 if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
@@ -91,7 +94,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
                     val path = removeStorageIdentifier(documentId)
                     val relPath = documentId.substringAfter("$rootDocumentId/")
 
-                    files.add(ContentObject(path, relPath, size, mimeType, fileUri))
+                    files.add(ContentObject(path, relPath, size, mimeType, fileUri, lastModified))
                     // Log or handle the file
                     Log.i(TAG, "File: $displayName, MIME Type: $mimeType, Uri: $fileUri")
                 }
@@ -105,11 +108,19 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
     }
 
     /**
-     * Takes a complete [objectPath], e.g. Pictures/2025/picture.png, and creates the directory path
-     * if it's missing and an empty Document with the trailing objectName and returns the [OutputStream].
+     * Creates a [OutputStream] for a given document identified by [objectPath]. Creates the document
+     * including parent directories if not existing.
      */
     override fun createOutputStream(objectPath: String, mimeType: String): OutputStream {
+        val document = createOrFindDocument(objectPath, mimeType)
+        return getOutputStream(document)
+    }
 
+    /**
+     * Takes a complete [objectPath], e.g. Pictures/2025/picture.png, and creates the directory path
+     * if it's missing and an empty Document with the trailing objectName and returns the [Uri].
+     */
+    internal fun createOrFindDocument(objectPath: String, mimeType: String): Uri {
         val (directories, objectName) = extractPath(objectPath)
         val rootDocUri = DocumentsContract.buildDocumentUriUsingTree(
             root,
@@ -122,27 +133,12 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             rootDocUri
         }
 
-        return getOutputStream(
+        // Get existing or create new document
+        return getDocumentUri(parentUri, objectName) ?: documentsRepository.createDocument(
             parentUri,
-            objectName,
-            mimeType
-        )
-    }
-
-    private fun getOutputStream(
-        parentDirectory: Uri,
-        fileName: String,
-        mimeType: String
-    ): OutputStream {
-        val fileUri = DocumentsContract.createDocument(
-            contentResolver,
-            parentDirectory,
             mimeType,
-            fileName
-        ) ?: throw IOException("Failed to create file in $parentDirectory")
-
-        return contentResolver.openOutputStream(fileUri)
-            ?: throw IOException("Failed to open stream for $fileUri")
+            objectName
+        ) ?: throw IOException("Failed to create file in $parentUri")
     }
 
     /**
@@ -152,10 +148,9 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
 
         var currentUri = rootDocument
         for (directory in pathSegments) {
-            var uri = findDirectory(currentUri, directory)
+            var uri = getDocumentUri(currentUri, directory, DocumentsContract.Document.MIME_TYPE_DIR)
             if (uri == null) {
-                uri = DocumentsContract.createDocument(
-                    contentResolver,
+                uri = documentsRepository.createDocument(
                     currentUri,
                     DocumentsContract.Document.MIME_TYPE_DIR,
                     directory
@@ -166,10 +161,15 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
         return currentUri
     }
 
-    private fun findDirectory(parentDocumentUri: Uri, directoryName: String): Uri? {
+    private fun getOutputStream(document: Uri): OutputStream {
+        return contentResolver.openOutputStream(document)
+            ?: throw IOException("Failed to open stream for $document")
+    }
+
+    private fun getDocumentUri(parentDocumentUri: Uri, documentName: String, mimeType: String? = null): Uri? {
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-            parentDocumentUri,
+            root,
             DocumentsContract.getDocumentId(parentDocumentUri)
         )
 
@@ -179,7 +179,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             DocumentsContract.Document.COLUMN_MIME_TYPE
         )
 
-        var folderUri: Uri? = null
+        var documentUri: Uri? = null
 
         contentResolver.query(childrenUri, projection, null, null, null)?.use query@{ cursor ->
 
@@ -193,15 +193,19 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
             while (cursor.moveToNext()) {
                 val docId = cursor.getString(idIndex)
                 val name = cursor.getString(nameIndex)
-                val mimeType = cursor.getString(mimeTypeIndex)
-                if (name == directoryName && mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                    folderUri =
-                        DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
+                val actualMimeType = cursor.getString(mimeTypeIndex)
+                // DocumentsContract does not support server-side filtering via selection/selectionArgs
+                // for COLUMN_DISPLAY_NAME or COLUMN_MIME_TYPE it seems. :sad_panda:
+                if (name == documentName) {
+                    if (mimeType != null && actualMimeType != mimeType) {
+                        continue
+                    }
+                    documentUri = DocumentsContract.buildDocumentUriUsingTree(parentDocumentUri, docId)
                     return@query // exits the lambda immediately
                 }
             }
         }
-        return folderUri
+        return documentUri
     }
 
     /**

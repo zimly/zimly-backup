@@ -37,6 +37,7 @@ class MinioIntegrationTest {
         every { Log.d(any(), any()) } returns 0
         every { Log.i(any(), any()) } returns 0
         every { Log.e(any(), any()) } returns 0
+        every { Log.isLoggable(any(), any()) } returns false
 
         val bucket = "test-bucket"
         minioRepository = MinioRepository(minioContainer.s3URL, minioUser, minioPwd, bucket)

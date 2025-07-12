@@ -1,5 +1,8 @@
 package app.zimly.backup.data.s3
 
+import android.util.Log
+import io.mockk.every
+import io.mockk.mockkStatic
 import junit.framework.TestCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.onEach
@@ -13,16 +16,25 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
 import okio.buffer
-import okio.sink
-import okio.source
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 
 class ProgressTest {
+
+    @Before
+    fun setUp() {
+        mockkStatic(Log::class)
+        every { Log.v(any(), any()) } returns 0
+        every { Log.d(any(), any()) } returns 0
+        every { Log.i(any(), any()) } returns 0
+        every { Log.e(any(), any()) } returns 0
+        every { Log.isLoggable(any(), any()) } returns false
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test

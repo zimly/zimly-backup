@@ -17,8 +17,8 @@ android {
         namespace = "app.zimly.backup"
         minSdk = 29
         targetSdk = 36
-        versionCode = 86
-        versionName = "3.1.2"
+        versionCode = 89
+        versionName = "3.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -145,6 +145,7 @@ dependencies {
     // To use Kotlin annotation processing tool (ksp)
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    testImplementation("org.robolectric:robolectric:4.15.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.testcontainers:minio:1.21.3")

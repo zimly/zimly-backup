@@ -27,17 +27,49 @@ class UploadSyncService(
 
     companion object {
         val TAG: String? = UploadSyncService::class.simpleName
+
+        /**
+         * Determines which local [ContentObject]s should be uploaded based on remote presence and modification time.
+         *
+         * A local object is selected if:
+         * * It does not exist remotely (by matching [ContentObject.path] to [S3Object.name]), or
+         * * Its local [ContentObject.lastModified] is more recent than the corresponding remote [S3Object.modified].
+         *
+         * Careful with [ContentObject.relPath] vs [ContentObject.path]: We use relPath in Downloads and
+         * path in Uploads. As a consequence, you can't create a "circular" setup where uploads and
+         * downloads work together.
+         *
+         * The reason was originally to prefix the Media Collection in the bucket, e.g. Camera/IMG_0001.png. If we
+         * change this now, existing configurations in the wild would break.
+         *
+         * @param locals The list of local [ContentObject]s.
+         * @param remotes The list of remote [S3Object]s.
+         * @return A list of local [ContentObject]s to upload.
+         */
+        fun calculateUploads(
+            locals: List<ContentObject>,
+            remotes: List<S3Object>
+        ): List<ContentObject> {
+
+            val remotesByName = remotes.associateBy { it.name }
+
+            return locals.filter { local ->
+                val remote = remotesByName[local.path]
+                val isNewOrUpdatedLocal = remote == null || local.lastModified > remote.modified.toInstant().toEpochMilli()
+                isNewOrUpdatedLocal
+            }
+        }
     }
 
     override fun calculateDiff(): UploadDiff {
         try {
             val remotes = s3Repository.listObjects()
             val objects = localContentResolver.listObjects()
-            val diff =
-                objects.filter { local -> remotes.none { remote -> remote.name == local.path } }
-            val totalBytes = diff.sumOf { it.size }
 
-            return UploadDiff(diff.size, totalBytes, remotes, objects, diff)
+            val uploads = calculateUploads(objects, remotes)
+            val totalBytes = uploads.sumOf { it.size }
+
+            return UploadDiff(uploads.size, totalBytes, remotes, objects, uploads)
         } catch (e: Exception) {
             var message = e.message
             if (e is ErrorResponseException) {
@@ -72,6 +104,7 @@ class UploadSyncService(
             .runningFold(SyncProgress.EMPTY) { acc, value ->
                 val sumTransferredBytes =
                     acc.transferredBytes + value.readBytes
+                // Divide by 0 safe-guard in case of empty file size(s)
                 val percentage = sumTransferredBytes.toFloat() / diff.totalBytes
                 SyncProgress(
                     transferredBytes = sumTransferredBytes,
