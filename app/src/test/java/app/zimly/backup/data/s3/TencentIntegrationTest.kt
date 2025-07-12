@@ -1,10 +1,12 @@
 package app.zimly.backup.data.s3
 
+import android.util.Log
 import app.zimly.backup.data.media.ContentObject
 import app.zimly.backup.data.media.LocalContentResolver
 import app.zimly.backup.sync.UploadSyncService
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -23,6 +25,13 @@ class TencentIntegrationTest {
 
     @Before
     fun setUp() {
+
+        mockkStatic(Log::class)
+        every { Log.v(any(), any()) } returns 0
+        every { Log.d(any(), any()) } returns 0
+        every { Log.i(any(), any()) } returns 0
+        every { Log.e(any(), any()) } returns 0
+        every { Log.isLoggable(any(), any()) } returns false
 
         val url = "https://cos.eu-frankfurt.myqcloud.com"
         val bucket = "zimly-test-1361781432"
