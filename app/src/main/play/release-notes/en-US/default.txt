@@ -1,5 +1,6 @@
 3.2.0
 * Detect changes in documents and media and update remote respectively local copies #38
+* Fix progress tracking with empty file sizes #46
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
