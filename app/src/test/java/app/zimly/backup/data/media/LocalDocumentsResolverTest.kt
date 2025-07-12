@@ -3,6 +3,7 @@ package app.zimly.backup.data.media
 import android.content.Context
 import android.provider.DocumentsContract
 import androidx.test.core.app.ApplicationProvider
+import app.zimly.backup.data.media.FakeDocumentStore
 import app.zimly.backup.data.media.FakeDocumentsProvider.FakeDocument
 import org.junit.Before
 import org.junit.runner.RunWith
@@ -21,79 +22,148 @@ import kotlin.test.assertTrue
 @Config(sdk = [35])
 class LocalDocumentsResolverTest {
 
-    private var documentStore: MutableMap<String, FakeDocument> = mutableMapOf(
-        "primary:Documents/test.txt" to FakeDocument(
-            "primary:Documents/test.txt",
-            "test.txt",
-            "text/plain",
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-        "primary:Documents/test1.txt" to FakeDocument(
-            "primary:Documents/test1.txt",
-            "test1.txt",
-            "text/plain",
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-        "primary:Documents/Folder1" to FakeDocument(
-            "primary:Documents/Folder1",
-            "Folder1",
-            DocumentsContract.Document.MIME_TYPE_DIR,
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-        "primary:Documents/Folder2" to FakeDocument(
-            "primary:Documents/Folder2",
-            "Folder2",
-            DocumentsContract.Document.MIME_TYPE_DIR,
-            System.currentTimeMillis(),
-            12345L,
-            "primary:Documents"
-        ),
-    )
+
+    private lateinit var documentStore: FakeDocumentStore
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val authority = "com.android.externalstorage.documents"
 
     @Before
     fun setup() {
+        this.documentStore = FakeDocumentStore()
         val provider = FakeDocumentsProvider(authority, documentStore)
         ShadowContentResolver.registerProviderInternal(authority, provider)
     }
 
     @Test
     fun listObjectsRecursive() {
+        // GIVEN
+        documentStore.add(
+            FakeDocument(
+                "primary:Documents/test.txt",
+                "test.txt",
+                "text/plain",
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents"
+            ),
+            FakeDocument(
+                "primary:Documents/test1.txt",
+                "test1.txt",
+                "text/plain",
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents"
+            ),
+            FakeDocument(
+                "primary:Documents/Folder1",
+                "Folder1",
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents"
+            )
+        )
         val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
 
         // Does not need FakeDocumentsRepository.
         val resolver = LocalDocumentsResolver(context, rootUri)
 
+        // WHEN
         val result = resolver.listObjects()
-        assertTrue(result.size == 2)
+
+        // THEN
+        assertTrue(result.size == 2, "Lists all objects except directories")
     }
 
     @Test
     fun existingDocument() {
+        // GIVEN
+        documentStore.add(
+            FakeDocument(
+                "primary:Documents/test.txt",
+                "test.txt",
+                "text/plain",
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents"
+            ),
+            FakeDocument(
+                "primary:Documents/Folder1",
+                "Folder1",
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents"
+            )
+        )
         val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
 
         // Does not need FakeDocumentsRepository.
         val resolver = LocalDocumentsResolver(context, rootUri)
 
-        val result = resolver.createOrFindDocument("test1.txt", "text/plain")
+        // WHEN
+        val result = resolver.createOrFindDocument("test.txt", "text/plain")
 
+        // THEN
         assertTrue(result.authority == authority)
-        assertTrue(result.path?.contains("test1.txt") == true)
+        assertTrue(result.path?.contains("test.txt") == true)
     }
 
     @Test
-    fun nonExistingDocument() {
+    fun existingNestedDocument() {
+        // GIVEN
+        documentStore.add(
+            FakeDocument(
+                "primary:Documents/Folder1/test.txt",
+                "test.txt",
+                "text/plain",
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents/Folder1"
+            ),
+            FakeDocument(
+                "primary:Documents/Folder1",
+                "Folder1",
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents"
+            )
+        )
+        val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
+
+        // Does not need FakeDocumentsRepository.
+        val resolver = LocalDocumentsResolver(context, rootUri)
+
+        // WHEN
+        val result = resolver.createOrFindDocument("Folder1/test.txt", "text/plain")
+
+        // THEN
+        assertTrue(result.authority == authority)
+        assertTrue(result.path?.contains("test.txt") == true)
+    }
+
+    @Test
+    fun nonExistingParentAndDocument() {
+        documentStore.add(
+            FakeDocument(
+                "primary:Documents/Folder1",
+                "Folder1",
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                System.currentTimeMillis(),
+                12345L,
+                "primary:Documents"
+            )
+        )
+
         val rootUri = DocumentsContract.buildTreeDocumentUri(authority, "primary:Documents")
 
         // Needs FakeDocumentsRepository.
-        val resolver = LocalDocumentsResolver(context, rootUri, FakeDocumentsRepository(authority, documentStore))
+        val resolver = LocalDocumentsResolver(
+            context,
+            rootUri,
+            FakeDocumentsRepository(authority, documentStore)
+        )
 
         val result = resolver.createOrFindDocument("Folder1/Folder2/test1.txt", "text/plain")
 

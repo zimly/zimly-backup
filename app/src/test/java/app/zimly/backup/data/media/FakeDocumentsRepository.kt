@@ -6,7 +6,7 @@ import app.zimly.backup.data.media.FakeDocumentsProvider.FakeDocument
 
 class FakeDocumentsRepository(
     private val authority: String,
-    private val documentStore: MutableMap<String, FakeDocument>
+    private val documentStore: FakeDocumentStore
 ) : DocumentsRepository {
 
     /**
@@ -24,11 +24,13 @@ class FakeDocumentsRepository(
         val newDocUri =
             DocumentsContract.buildDocumentUri(authority, newDocId)
 
-        documentStore[newDocId] = FakeDocument(
-            id = newDocId,
-            parentId = parentDocId,
-            name = displayName,
-            mimeType = mimeType,
+        documentStore.add(
+            FakeDocument(
+                id = newDocId,
+                parentId = parentDocId,
+                name = displayName,
+                mimeType = mimeType,
+            )
         )
 
         return newDocUri

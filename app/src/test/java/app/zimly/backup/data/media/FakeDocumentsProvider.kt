@@ -17,7 +17,7 @@ private const val CHILDREN = 1
  * still not satisfactory, and some things should potentially be abstracted into [DocumentsRepository].
  * But there are still key parts that are very closely tied to the [ContentProvider]s functionality.
  */
-class FakeDocumentsProvider(private val authority: String, private val documentStore: MutableMap<String, FakeDocument> = mutableMapOf()) : ContentProvider() {
+class FakeDocumentsProvider(private val authority: String, private val documentStore: FakeDocumentStore) : ContentProvider() {
 
     override fun onCreate(): Boolean = true
 
@@ -48,7 +48,7 @@ class FakeDocumentsProvider(private val authority: String, private val documentS
                 val parentId = DocumentsContract.getDocumentId(uri)
                     ?: return cursor
 
-                documentStore.values
+                documentStore.list()
                     .filter { it.parentId == parentId }
                     .forEach {
                         cursor.addRow(
