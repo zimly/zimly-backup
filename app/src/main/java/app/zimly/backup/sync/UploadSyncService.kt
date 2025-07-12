@@ -72,6 +72,7 @@ class UploadSyncService(
             .runningFold(SyncProgress.EMPTY) { acc, value ->
                 val sumTransferredBytes =
                     acc.transferredBytes + value.readBytes
+                // Divide by 0 safe-guard in case of empty file size(s)
                 val percentage = sumTransferredBytes.toFloat() / diff.totalBytes
                 SyncProgress(
                     transferredBytes = sumTransferredBytes,

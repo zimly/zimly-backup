@@ -29,7 +29,9 @@ class ProgressTracker(private val size: Long) {
                 val readBytes = pro.first
                 val timeMark = pro.second
                 val totalBytes = acc.totalReadBytes + readBytes
-                val percentage = totalBytes.toFloat() / size
+
+                // Divide by zero safe guard - e.g. empty files
+                val percentage = if (size == 0L) 1f else totalBytes.toFloat() / size
 
                 var duration = (timeMark - acc.timeMark).inWholeMilliseconds
 

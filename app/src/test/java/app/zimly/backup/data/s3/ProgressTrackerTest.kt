@@ -36,4 +36,26 @@ class ProgressTrackerTest {
         MatcherAssert.assertThat(res.last().totalReadBytes, `is`(totalSize))
         MatcherAssert.assertThat(res.last().percentage, `is`(1F))
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun emptySize() = runTest {
+        val totalSize = 0L
+        val tracker = ProgressTracker(totalSize)
+
+        val res = mutableListOf<Progress>()
+
+        // https://developer.android.com/kotlin/flow/test
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            tracker.observe()
+                .onEach { println("$it") }
+                .toList(res)
+        }
+
+        tracker.stepBy(0L)
+
+        MatcherAssert.assertThat(res.last().totalReadBytes, `is`(totalSize))
+        MatcherAssert.assertThat(res.last().percentage, `is`(1F))
+    }
+
 }
