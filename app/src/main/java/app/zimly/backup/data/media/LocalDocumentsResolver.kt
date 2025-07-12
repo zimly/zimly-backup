@@ -169,7 +169,7 @@ class LocalDocumentsResolver(context: Context, private val root: Uri) :
     private fun findDirectory(parentDocumentUri: Uri, directoryName: String): Uri? {
 
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-            parentDocumentUri,
+            root,
             DocumentsContract.getDocumentId(parentDocumentUri)
         )
 
