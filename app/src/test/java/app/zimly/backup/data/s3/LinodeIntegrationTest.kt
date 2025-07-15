@@ -12,28 +12,13 @@ import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.ClassRule
+import org.junit.rules.ExternalResource
 import java.time.Instant
-import kotlin.test.Ignore
+import kotlin.test.Test
 import kotlin.time.TimeSource
 
-@Ignore("Fix init problem")
 class LinodeIntegrationTest {
-
-    private lateinit var s3Repository: MinioRepository
-
-    @Before
-    fun setUp() {
-        this.s3Repository = MinioRepository(
-            bucket.s3Endpoint,
-            accessKey.accessKey,
-            accessKey.secretKey,
-            bucket.label,
-        )
-    }
 
     @Test
     fun putLinode() = runTest {
@@ -49,7 +34,7 @@ class LinodeIntegrationTest {
 
         // WHEN
         val res =
-            s3Repository.put(stream, "testObj", "image/png", size)
+            repository.put(stream, "testObj", "image/png", size)
                 .onEach { println(it) }
                 .toList()
 
@@ -58,7 +43,7 @@ class LinodeIntegrationTest {
         val bytesPerSec = size * 1000 / duration
 
         // THEN
-        val name = s3Repository.get("testObj").`object`()
+        val name = repository.get("testObj").`object`()
         val filtered = res.filter { it.bytesPerSec != null }
         val avgSpeed = filtered.sumOf { it.bytesPerSec!! } / filtered.size
 
@@ -84,7 +69,7 @@ class LinodeIntegrationTest {
             )
         )
 
-        val ss = UploadSyncService(s3Repository, localContentResolver)
+        val ss = UploadSyncService(repository, localContentResolver)
 
         val diff = ss.calculateDiff()
 
@@ -93,39 +78,40 @@ class LinodeIntegrationTest {
 
     @After
     fun tearDown() = runBlocking {
-        s3Repository.removeAll()
+        repository.removeAll()
     }
 
     companion object {
+        private lateinit var api: LinodeApi
         private lateinit var bucket: LinodeApi.BucketResponse
         private lateinit var accessKey: LinodeApi.KeyResponse
+        private lateinit var repository: MinioRepository
 
-        private val token = System.getenv("LINODE_API_TOKEN")
-            ?: throw Exception("LINODE_API_TOKEN anv variable missing")
+        @JvmField
+        @ClassRule
+        val linodeResource = object : ExternalResource() {
 
-        private val api = LinodeApi(token)
+            override fun before() {
+                val token = System.getenv("LINODE_API_TOKEN")
+                    ?: error("Missing LINODE_API_TOKEN")
 
-        @JvmStatic
-        @BeforeClass
-        fun bootstrap() {
+                api = LinodeApi(token)
+                bucket = api.createBucket("zimly-test")
+                accessKey = api.createKey("zimly-test", bucket.label)
 
-            val bucketName = "zimly-test"
-            val key = "zimly-test"
+                repository = MinioRepository(
+                    bucket.s3Endpoint,
+                    accessKey.accessKey,
+                    accessKey.secretKey,
+                    bucket.label,
+                )
+            }
 
-            this.bucket = api.createBucket(bucketName)
-            this.accessKey = api.createKey(key, bucket.label)
-
-            requireNotNull(accessKey.accessKey) { "Test case needs valid AWS key for zimly-test bucket" }
-            requireNotNull(accessKey.secretKey) { "Test case needs valid AWS secret for zimly-test bucket" }
-
-        }
-
-        @JvmStatic
-        @AfterClass
-        fun cleanup() {
-            api.deleteKey(accessKey.id)
-            api.deleteBucket(bucket.region, bucket.label)
-            api.cancelSubscription()
+            override fun after() {
+                api.deleteKey(accessKey.id)
+                api.deleteBucket(bucket.region, bucket.label)
+                api.cancelSubscription()
+            }
         }
     }
 }
