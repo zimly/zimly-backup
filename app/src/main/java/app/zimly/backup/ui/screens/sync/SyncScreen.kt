@@ -54,6 +54,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -292,7 +295,14 @@ fun SyncLayout(
 private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
     Card(
         colors = CardDefaults.cardColors(containerColor = containerBackground()),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = when(remote.direction) {
+                    SyncDirection.UPLOAD -> "S3 Upload Target"
+                    SyncDirection.DOWNLOAD -> "S3 Download Source"
+                }
+            }
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
             val icon = when(remote.direction) {
@@ -302,12 +312,16 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
             Icon(
                 icon,
                 "Remote",
-                modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                modifier = Modifier
+                    .semantics { hideFromAccessibility() }
+                    .padding(top = 8.dp, end = 8.dp)
             )
         }
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {},
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "URL", textAlign = TextAlign.Left)
@@ -315,7 +329,9 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
             }
             remote.region?.let {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics(mergeDescendants = true) {},
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = "Region", textAlign = TextAlign.Left)
@@ -324,7 +340,9 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {},
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Bucket", textAlign = TextAlign.Left)
