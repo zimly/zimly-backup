@@ -294,15 +294,16 @@ fun SyncLayout(
 
 @Composable
 private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
+    val cardDescription = when (remote.direction) {
+        SyncDirection.UPLOAD -> "S3 Upload Target"
+        SyncDirection.DOWNLOAD -> "S3 Download Source"
+    }
     Card(
         colors = CardDefaults.cardColors(containerColor = containerBackground()),
         modifier = Modifier
             .fillMaxWidth()
             .semantics {
-                contentDescription = when(remote.direction) {
-                    SyncDirection.UPLOAD -> "S3 Upload Target"
-                    SyncDirection.DOWNLOAD -> "S3 Download Source"
-                }
+                contentDescription = cardDescription
             }
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
@@ -361,6 +362,10 @@ private fun DiffDetails(
     createDiff: () -> Unit,
     direction: SyncDirection,
 ) {
+    val cardDescription = when (direction) {
+        SyncDirection.UPLOAD -> "Upload Diff Details"
+        SyncDirection.DOWNLOAD -> "Download Diff Details"
+    }
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
@@ -368,10 +373,7 @@ private fun DiffDetails(
         modifier = Modifier
             .fillMaxWidth()
             .semantics {
-                contentDescription = when(direction) {
-                    SyncDirection.UPLOAD -> "Upload Diff Details"
-                    SyncDirection.DOWNLOAD -> "Download Diff Details"
-                }
+                contentDescription = cardDescription
             }
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
