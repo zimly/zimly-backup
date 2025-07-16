@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -364,7 +365,14 @@ private fun DiffDetails(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = when(direction) {
+                    SyncDirection.UPLOAD -> "Upload Diff Details"
+                    SyncDirection.DOWNLOAD -> "Download Diff Details"
+                }
+            }
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
             val icon = when(direction) {
@@ -374,12 +382,16 @@ private fun DiffDetails(
             Icon(
                 icon,
                 "Progress",
-                modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                modifier = Modifier
+                    .padding(top = 8.dp, end = 8.dp)
+                    .semantics { hideFromAccessibility() }
             )
         }
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {},
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 val label = when(direction) {
@@ -390,11 +402,13 @@ private fun DiffDetails(
                 if (progress.diffCount > -1) {
                     Text(text = "${progress.progressCount} / ${progress.diffCount}")
                 } else {
-                    Text(text = "-")
+                    Text(text = "-", modifier = Modifier.semantics { contentDescription = "Not yet calculated" })
                 }
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {},
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 val label = when(direction) {
@@ -417,7 +431,7 @@ private fun DiffDetails(
                         }"
                     )
                 } else {
-                    Text(text = "-")
+                    Text(text = "-",  modifier = Modifier.semantics { contentDescription = "Not yet calculated" })
                 }
 
             }
@@ -434,7 +448,8 @@ private fun DiffDetails(
                 onClick = createDiff,
                 contentPadding = PaddingValues(horizontal = 24.dp), // Reset padding
                 modifier = Modifier
-                    .height(32.dp),
+                    .height(32.dp)
+                    .semantics { onClick(label = "Calculate Diff", null) },
             ) {
                 Text(text = "Calculate")
             }
