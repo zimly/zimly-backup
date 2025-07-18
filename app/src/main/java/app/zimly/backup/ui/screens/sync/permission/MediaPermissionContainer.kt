@@ -3,6 +3,7 @@ package app.zimly.backup.ui.screens.sync.permission
 import android.app.Activity
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -152,6 +157,8 @@ private fun PermissionWarning(openDialog: () -> Unit) {
         ),
         modifier = Modifier
             .fillMaxWidth()
+            .semantics { contentDescription = "Warning: Missing Media Permissions"}
+            .focusable()
     ) {
 
         Row(
@@ -163,14 +170,20 @@ private fun PermissionWarning(openDialog: () -> Unit) {
                 Icons.Outlined.Lock,
                 "Media Permission Alert",
                 tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .semantics { hideFromAccessibility() }
             )
-            Text("Missing Media Permissions", modifier = Modifier.weight(1f))
+            Text("Missing Media Permissions", modifier = Modifier
+                .weight(1f)
+                .focusable()
+                .semantics { hideFromAccessibility() })
             TextButton(
                 onClick = { openDialog() },
                 contentPadding = PaddingValues(
                     horizontal = 16.dp,
                 ), // Reset padding
+                modifier = Modifier.semantics { onClick(label = "Learn how to grant Media Permissions.", null) },
             ) {
                 Text(text = "Learn More")
             }
