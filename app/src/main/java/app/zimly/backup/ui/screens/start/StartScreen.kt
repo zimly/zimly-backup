@@ -200,7 +200,7 @@ private fun StartLayout(
 @OptIn(ExperimentalFoundationApi::class)
 private fun RemoteList(
     innerPadding: PaddingValues,
-    remotes: List<RemoteView>,
+    remotes: List<RemoteItemState>,
     numSelected: Int,
     select: (Int) -> Unit,
     syncRemote: (Int, SyncDirection) -> Unit
@@ -219,7 +219,7 @@ private fun RemoteList(
 
 @Composable
 private fun RemoteItemCard(
-    remote: RemoteView,
+    remote: RemoteItemState,
     selectMode: Boolean,
     select: (Int) -> Unit,
     syncRemote: (Int, SyncDirection) -> Unit
@@ -301,7 +301,7 @@ private fun GetStarted(innerPadding: PaddingValues) {
 fun DefaultPreview() {
     ZimzyncTheme {
         val remotes = generateSequence(0) { it + 1 }.take(10).map {
-            RemoteView(
+            RemoteItemState(
                 uid = it,
                 name = "test $it",
                 url = "https://blob.rawbot.zone/$it",
@@ -332,7 +332,7 @@ fun DefaultPreview() {
     }
 }
 
-data class RemoteView(
+data class RemoteItemState(
     val uid: Int,
     val name: String,
     val url: String,
