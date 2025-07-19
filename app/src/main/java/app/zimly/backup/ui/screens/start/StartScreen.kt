@@ -212,49 +212,59 @@ private fun RemoteList(
             .fillMaxWidth()
     ) {
         items(remotes) { remote ->
-            Box(
-                modifier = Modifier
-                    // Note: Order matters!
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(color = containerBackground())
-                    .then(
-                        if (remote.selected) Modifier.border(
-                            width = Dp(2f),
-                            color = MaterialTheme.colorScheme.secondary,
-                            shape = RoundedCornerShape(12.dp)
-                        ) else Modifier
-                    )
-                    .fillMaxWidth()
-                    .combinedClickable(
-                        onClick = {
-                            if (numSelected > 0) select(remote.uid) else syncRemote(
-                                remote.uid, remote.direction
-                            )
-                        },
-                        onLongClick = { select(remote.uid) })
-                    .padding(16.dp)
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
-                        Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Column(modifier = Modifier.wrapContentWidth()) {
-                        Box(contentAlignment = Alignment.TopEnd) {
-                            val icon = when (remote.direction) {
-                                SyncDirection.UPLOAD -> when (remote.contentType) {
-                                    ContentType.MEDIA -> Icons.Outlined.Image
-                                    ContentType.FOLDER -> Icons.Outlined.Folder
-                                }
+            RemoteItemCard(remote, numSelected > 0, select, syncRemote)
+        }
+    }
+}
 
-                                SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
-                            }
-                            Icon(icon, "Remote Configuration")
+@Composable
+private fun RemoteItemCard(
+    remote: RemoteView,
+    selectMode: Boolean,
+    select: (Int) -> Unit,
+    syncRemote: (Int, SyncDirection) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            // Note: Order matters!
+            .clip(RoundedCornerShape(12.dp))
+            .background(color = containerBackground())
+            .then(
+                if (remote.selected) Modifier.border(
+                    width = Dp(2f),
+                    color = MaterialTheme.colorScheme.secondary,
+                    shape = RoundedCornerShape(12.dp)
+                ) else Modifier
+            )
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    if (selectMode) select(remote.uid) else syncRemote(
+                        remote.uid, remote.direction
+                    )
+                },
+                onLongClick = { select(remote.uid) })
+            .padding(16.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
+                Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Column(modifier = Modifier.wrapContentWidth()) {
+                Box(contentAlignment = Alignment.TopEnd) {
+                    val icon = when (remote.direction) {
+                        SyncDirection.UPLOAD -> when (remote.contentType) {
+                            ContentType.MEDIA -> Icons.Outlined.Image
+                            ContentType.FOLDER -> Icons.Outlined.Folder
                         }
+
+                        SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
                     }
+                    Icon(icon, "Remote Configuration")
                 }
             }
         }
