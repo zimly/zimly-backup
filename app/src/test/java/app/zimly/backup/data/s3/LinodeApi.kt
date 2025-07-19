@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import java.util.concurrent.TimeUnit
 
 private const val LINODE_API = "https://api.linode.com/v4/object-storage"
 
@@ -18,7 +19,12 @@ class LinodeApi(private val token: String) {
 
     fun createBucket(label: String): BucketResponse {
 
-        val client = OkHttpClient()
+        val timeout = 20L
+        val client = OkHttpClient.Builder()
+            .connectTimeout(timeout, TimeUnit.SECONDS)
+            .readTimeout(timeout, TimeUnit.SECONDS)
+            .writeTimeout(timeout, TimeUnit.SECONDS)
+            .build()
 
         val mediaType: MediaType = "application/json".toMediaType()
         val body = """
