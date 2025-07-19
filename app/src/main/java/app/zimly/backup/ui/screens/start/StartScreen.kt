@@ -53,6 +53,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -236,7 +238,10 @@ private fun RemoteItemCard(
                         )
                     },
                     onLongClick = { select(remote.uid) })
-                .semantics(mergeDescendants = true) { },
+                .semantics {
+                    onClick("Open configuration", null)
+                    onLongClick("Copy or Delete configurations", null)
+                },
             headlineContent = { Text(remote.name) },
             supportingContent = {
                 Text(
@@ -256,7 +261,10 @@ private fun RemoteItemCard(
 
                     SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
                 }
-                Icon(icon, "Remote Configuration")
+                Icon(
+                    icon,
+                    "${remote.contentType} ${remote.direction} configuration",
+                )
             },
             colors = ListItemDefaults.colors(containerColor = containerBackground())
         )
