@@ -10,6 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.hamcrest.CoreMatchers
@@ -92,7 +93,7 @@ class DownloadSyncServiceTest {
         val ss = DownloadSyncService(minioRepository, localContentResolver)
 
         // WHEN
-        val res = ss.synchronize().last()
+        val res = ss.synchronize().toList().last()
 
         // THEN
         MatcherAssert.assertThat(res.transferredFiles, CoreMatchers.`is`(2))
