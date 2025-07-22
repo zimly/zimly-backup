@@ -1,14 +1,12 @@
 package app.zimly.backup.ui.screens.start
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
@@ -18,23 +16,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -52,13 +51,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -145,7 +145,7 @@ private fun StartLayout(
                     navigationIcon = {
                         IconButton(onClick = { back() }) {
                             Icon(
-                                imageVector = Icons.Filled.ArrowBack,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Go Back"
                             )
                         }
@@ -200,7 +200,7 @@ private fun StartLayout(
 @OptIn(ExperimentalFoundationApi::class)
 private fun RemoteList(
     innerPadding: PaddingValues,
-    remotes: List<RemoteView>,
+    remotes: List<RemoteItemState>,
     numSelected: Int,
     select: (Int) -> Unit,
     syncRemote: (Int, SyncDirection) -> Unit
@@ -212,52 +212,62 @@ private fun RemoteList(
             .fillMaxWidth()
     ) {
         items(remotes) { remote ->
-            Box(
-                modifier = Modifier
-                    // Note: Order matters!
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(color = containerBackground())
-                    .then(
-                        if (remote.selected) Modifier.border(
-                            width = Dp(2f),
-                            color = MaterialTheme.colorScheme.secondary,
-                            shape = RoundedCornerShape(12.dp)
-                        ) else Modifier
-                    )
-                    .fillMaxWidth()
-                    .combinedClickable(
-                        onClick = {
-                            if (numSelected > 0) select(remote.uid) else syncRemote(
-                                remote.uid, remote.direction
-                            )
-                        },
-                        onLongClick = { select(remote.uid) })
-                    .padding(16.dp)
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(remote.name, color = MaterialTheme.colorScheme.onSurface)
-                        Text(remote.url, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Column(modifier = Modifier.wrapContentWidth()) {
-                        Box(contentAlignment = Alignment.TopEnd) {
-                            val icon = when (remote.direction) {
-                                SyncDirection.UPLOAD -> when (remote.contentType) {
-                                    ContentType.MEDIA -> Icons.Outlined.Image
-                                    ContentType.FOLDER -> Icons.Outlined.Folder
-                                }
-
-                                SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
-                            }
-                            Icon(icon, "Remote Configuration")
-                        }
-                    }
-                }
-            }
+            RemoteItemCard(remote, numSelected > 0, select, syncRemote)
         }
+    }
+}
+
+@Composable
+private fun RemoteItemCard(
+    remote: RemoteItemState,
+    selectMode: Boolean,
+    select: (Int) -> Unit,
+    syncRemote: (Int, SyncDirection) -> Unit
+) {
+    Card(
+        border = if (remote.selected) BorderStroke(
+            2.dp, MaterialTheme.colorScheme.secondary
+        ) else null
+    ) {
+        ListItem(
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = {
+                        if (selectMode) select(remote.uid) else syncRemote(
+                            remote.uid, remote.direction
+                        )
+                    },
+                    onLongClick = { select(remote.uid) })
+                .semantics {
+                    onClick("Open configuration", null)
+                    onLongClick("Copy or Delete configurations", null)
+                },
+            headlineContent = { Text(remote.name) },
+            supportingContent = {
+                Text(
+                    remote.url,
+                    // https://issuetracker.google.com/issues/305342674
+                    // no-wrap as workaround.
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            trailingContent = {
+                val icon = when (remote.direction) {
+                    SyncDirection.UPLOAD -> when (remote.contentType) {
+                        ContentType.MEDIA -> Icons.Outlined.Image
+                        ContentType.FOLDER -> Icons.Outlined.Folder
+                    }
+
+                    SyncDirection.DOWNLOAD -> Icons.Outlined.Cloud
+                }
+                Icon(
+                    icon,
+                    "${remote.contentType} ${remote.direction} configuration",
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = containerBackground())
+        )
     }
 }
 
@@ -291,10 +301,10 @@ private fun GetStarted(innerPadding: PaddingValues) {
 fun DefaultPreview() {
     ZimzyncTheme {
         val remotes = generateSequence(0) { it + 1 }.take(10).map {
-            RemoteView(
+            RemoteItemState(
                 uid = it,
                 name = "test $it",
-                url = "https://blob.rawbot.zone/$it",
+                url = if (it % 3 == 0) "https://blob.rawbot.zone/$it/very-long-url-that-should-wrap-or-so " else "https://blob.rawbot.zone/$it",
                 contentType = if (it % 2 == 0) ContentType.MEDIA else ContentType.FOLDER,
                 direction = SyncDirection.UPLOAD
             )
@@ -322,7 +332,7 @@ fun DefaultPreview() {
     }
 }
 
-data class RemoteView(
+data class RemoteItemState(
     val uid: Int,
     val name: String,
     val url: String,

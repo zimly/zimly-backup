@@ -1,6 +1,5 @@
-3.2.0
-* Detect changes in documents and media and update remote respectively local copies #38
-* Fix progress tracking with empty file sizes #46
+3.3.0
+* Improve screen reader support by adding semantic descriptions to screens and interactive controls #43
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases

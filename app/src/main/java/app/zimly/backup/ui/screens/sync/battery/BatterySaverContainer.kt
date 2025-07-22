@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.BatteryManager
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -153,6 +159,8 @@ private fun BatterySaverWarning(openSettings: () -> Unit) {
         ),
         modifier = Modifier
             .fillMaxWidth()
+            .semantics { contentDescription = "Warning: Battery Saver detected"}
+            .focusable()
     ) {
 
         Row(
@@ -164,14 +172,20 @@ private fun BatterySaverWarning(openSettings: () -> Unit) {
                 Icons.Outlined.BatteryAlert,
                 "Battery Alert",
                 tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .semantics { hideFromAccessibility() }
             )
-            Text("Battery Saver Detected", modifier = Modifier.weight(1f))
+            Text("Battery Saver Detected", modifier = Modifier
+                .weight(1f)
+                .focusable()
+                .semantics { hideFromAccessibility() })
             TextButton(
                 onClick = { openSettings() },
                 contentPadding = PaddingValues(
                     horizontal = 16.dp,
                 ), // Reset padding
+                modifier = Modifier.semantics { onClick(label = "Learn how to disable Battery Saver", null) },
             ) {
                 Text(text = "Learn More")
             }
@@ -190,11 +204,12 @@ fun BatterySaverInfoDialog(
             Icon(
                 imageVector = Icons.Outlined.BatteryAlert,
                 contentDescription = "Battery Saver Alert",
-                tint = MaterialTheme.colorScheme.error
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.semantics { hideFromAccessibility() }
             )
         },
         title = {
-            Text(text = "Battery Saver Detected")
+            Text(text = "Battery Saver Detected", modifier = Modifier.semantics { hideFromAccessibility() })
         },
         text = {
             Column {
@@ -217,7 +232,11 @@ fun BatterySaverInfoDialog(
                 ) {
                     Checkbox(
                         checked = checked,
-                        onCheckedChange = { checked = it }
+                        onCheckedChange = { checked = it },
+                        modifier = Modifier.semantics {
+                                // Set any explicit semantic properties
+                                stateDescription = if (checked) "Checked: Will not alert again" else "Unchecked: Will alert again next time"
+                            }
                     )
                     Text(
                         "Don't show again"
@@ -229,12 +248,17 @@ fun BatterySaverInfoDialog(
             closeDialog(checked)
         },
         confirmButton = {
-            TextButton(onClick = { openSettings() }) {
+            TextButton(
+                onClick = { openSettings() },
+                modifier = Modifier.semantics { onClick(label = "Open Android App Battery Usage Settings", null) },
+            ) {
                 Text("Open Settings")
             }
         },
         dismissButton = {
-            TextButton(onClick = { closeDialog(checked) }
+            TextButton(
+                onClick = { closeDialog(checked) },
+                modifier = Modifier.semantics { onClick(label = "Close Alert Dialog.", null) },
             ) {
                 Text("Dismiss")
             }

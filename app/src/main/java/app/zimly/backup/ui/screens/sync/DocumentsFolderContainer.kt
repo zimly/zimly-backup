@@ -18,6 +18,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -49,30 +52,41 @@ fun DocumentsFolderContainer(
 @Composable
 private fun DocumentsFolder(documentsFolderState: DocumentsFolderState) {
 
+    val cardDescription = "Folder on Device"
     val displayName = UriField.displayName(documentsFolderState.folder)
     Card(
         colors = CardDefaults.cardColors(
             containerColor = containerBackground(),
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                contentDescription = cardDescription
+            }
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
             Icon(
                 Icons.Outlined.Folder,
                 "Folder",
-                modifier = Modifier.padding(top = 8.dp, end = 8.dp)
+                modifier = Modifier
+                    .semantics { hideFromAccessibility() }
+                    .padding(top = 8.dp, end = 8.dp)
             )
         }
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {},
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Folder")
                 Text(displayName)
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {},
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Documents")

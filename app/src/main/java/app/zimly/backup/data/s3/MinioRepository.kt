@@ -231,7 +231,7 @@ class MinioRepository(
                         val countedSource = rawSource.counted(progressTracker)
                         stream.use { os ->
                             os.sink().buffer().use { sink ->
-                                // do not wasting I/O resources on cancelled work
+                                // do not waste I/O resources on cancelled work
                                 ensureActive()
                                 sink.writeAll(countedSource)
                                 sink.flush()

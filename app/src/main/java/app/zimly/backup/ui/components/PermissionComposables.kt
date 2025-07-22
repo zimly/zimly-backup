@@ -17,6 +17,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,16 +60,19 @@ fun PermissionRationaleDialog(
         onGranted(grants)
     }
     AlertDialog(
-        modifier = Modifier.testTag("permissions_dialog"),
+        modifier = Modifier
+            .testTag("permissions_dialog")
+            .semantics { hideFromAccessibility() },
         icon = {
             Icon(
                 imageVector = Icons.Outlined.Lock,
                 contentDescription = "Missing Permissions Alert",
-                tint = MaterialTheme.colorScheme.error
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.semantics { hideFromAccessibility() }
             )
         },
         title = {
-            Text("Permissions Required")
+            Text("Permissions Required", modifier = Modifier.semantics { hideFromAccessibility() })
         },
         text = {
             Column {
@@ -87,23 +93,47 @@ fun PermissionRationaleDialog(
         onDismissRequest = closeDialog,
         confirmButton = {
             if (permissionsPermanentlyDenied) {
-                TextButton(onClick = {
-                    openSettings()
-                    closeDialog()
-                }) {
+                TextButton(
+                    onClick = {
+                        openSettings()
+                        closeDialog()
+                    },
+                    modifier = Modifier
+                        .semantics {
+                            onClick(
+                                label = "Open App Settings to grant permissions",
+                                null
+                            )
+                        },
+                ) {
                     Text("Open Settings")
                 }
             } else {
-                TextButton(onClick = {
-                    permissionLauncher.launch(permissions)
-                    closeDialog()
-                }) {
+                TextButton(
+                    onClick = {
+                        permissionLauncher.launch(permissions)
+                        closeDialog()
+                    },
+                    modifier = Modifier.semantics {
+                        onClick(
+                            label = "Grant permissions",
+                            null
+                        )
+                    }) {
                     Text("Grant Permissions")
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = closeDialog) {
+            TextButton(
+                onClick = closeDialog,
+                modifier = Modifier.semantics {
+                    onClick(
+                        label = "Close Dialog",
+                        null
+                    )
+                }
+            ) {
                 Text("Cancel")
             }
         }
