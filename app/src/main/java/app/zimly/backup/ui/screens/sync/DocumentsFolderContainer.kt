@@ -107,6 +107,7 @@ class DocumentsFolderViewModel(
 ) : ViewModel() {
 
     val folderState = snapshotFlow { folderPath }.map {
+        // TODO Error handling
         val documentsCount = localContentResolver.listObjects().size
         return@map DocumentsFolderState(it, documentsCount)
     }.flowOn(Dispatchers.IO)
