@@ -72,6 +72,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
+import app.zimly.backup.ui.screens.sync.permission.DocumentsPermissionContainer
 import app.zimly.backup.ui.screens.sync.permission.MediaPermissionContainer
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +94,7 @@ fun SyncScreen(
     val syncConfigurationState by viewModel.syncConfigurationState.collectAsStateWithLifecycle(null)
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
+    // TODO: Documents Permissions
     val permissionsGranted by viewModel.permissionsGranted.collectAsStateWithLifecycle()
     val syncInProgress by viewModel.syncInProgress.collectAsStateWithLifecycle()
 
@@ -142,7 +144,10 @@ fun SyncScreen(
                 },
                 warningsContainer = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        MediaPermissionContainer()
+                        when (syncConfiguration.contentType) {
+                            ContentType.MEDIA -> MediaPermissionContainer()
+                            ContentType.FOLDER -> DocumentsPermissionContainer({ edit(syncConfiguration.direction, remoteId) }, syncConfiguration.sourceUri)
+                        }
                         BatterySaverContainer()
                     }
                 }
