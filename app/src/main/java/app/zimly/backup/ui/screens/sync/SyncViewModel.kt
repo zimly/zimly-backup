@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.snapshotFlow
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -180,7 +181,11 @@ class SyncViewModel(
     private fun permissionsGranted(remote: SyncConfigurationState): Boolean {
         return when (remote.contentType) {
             ContentType.MEDIA -> mediaPermissionService.permissionsGranted()
-            ContentType.FOLDER -> DocumentsPermissionService.permissionGranted(contentResolver, remote)
+            ContentType.FOLDER -> {
+                val writePermission = remote.direction == SyncDirection.DOWNLOAD
+                val uri = remote.contentUri.toUri()
+                DocumentsPermissionService.permissionGranted(contentResolver, uri, writePermission)
+            }
         }
 
     }

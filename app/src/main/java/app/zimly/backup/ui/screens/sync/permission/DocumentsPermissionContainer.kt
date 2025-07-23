@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import app.zimly.backup.permission.DocumentsPermissionService
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +44,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class DocumentsPermissionViewModel(
     private val contentResolver: ContentResolver,
-    private val targetUri: Uri
+    private val targetUri: Uri,
+    private val writePermission: Boolean
 ) : ViewModel() {
 
     private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -53,31 +55,21 @@ class DocumentsPermissionViewModel(
         updateState()
     }
 
-    fun hasPersistedUriPermission(
-        requireWrite: Boolean = false
-    ): Boolean {
-        val permissions = contentResolver.persistedUriPermissions
-        return permissions.any {
-            it.uri == targetUri &&
-                    it.isReadPermission &&
-                    (!requireWrite || it.isWritePermission)
-        }
-    }
-
     fun updateState() {
-        val granted = hasPersistedUriPermission()
-        _showWarning.value = granted
+        _showWarning.value = !DocumentsPermissionService.permissionGranted(contentResolver, targetUri, writePermission)
     }
 
     companion object {
 
         val FOLDER_URI = object : CreationExtras.Key<Uri> {}
+        val WRITE_PERMISSION = object : CreationExtras.Key<Boolean> {}
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
                 val uri = checkNotNull(this[FOLDER_URI])
-                DocumentsPermissionViewModel(application.contentResolver, uri)
+                val writePermission = checkNotNull(this[WRITE_PERMISSION])
+                DocumentsPermissionViewModel(application.contentResolver, uri, writePermission)
             }
         }
     }
@@ -87,11 +79,13 @@ class DocumentsPermissionViewModel(
 fun DocumentsPermissionContainer(
     edit: () -> Unit,
     folderPath: String,
+    writePermission: Boolean,
     viewModel: DocumentsPermissionViewModel = viewModel(
         factory = DocumentsPermissionViewModel.Factory,
         extras = MutableCreationExtras().apply {
             set(APPLICATION_KEY, LocalContext.current.applicationContext as Application)
             set(DocumentsPermissionViewModel.FOLDER_URI, folderPath.toUri())
+            set(DocumentsPermissionViewModel.WRITE_PERMISSION, writePermission)
         })
 ) {
 

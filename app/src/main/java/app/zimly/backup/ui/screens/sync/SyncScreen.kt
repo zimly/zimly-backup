@@ -145,7 +145,11 @@ fun SyncScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         when (syncConfiguration.contentType) {
                             ContentType.MEDIA -> MediaPermissionContainer()
-                            ContentType.FOLDER -> DocumentsPermissionContainer({ edit(syncConfiguration.direction, remoteId) }, syncConfiguration.contentUri)
+                            ContentType.FOLDER -> {
+                                val direction = syncConfiguration.direction
+                                val writePermissions = direction == SyncDirection.DOWNLOAD
+                                DocumentsPermissionContainer({ edit(direction, remoteId) }, syncConfiguration.contentUri, writePermissions)
+                            }
                         }
                         BatterySaverContainer()
                     }
