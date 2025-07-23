@@ -138,15 +138,15 @@ fun SyncScreen(
                 createDiff,
                 sourceContainer = {
                     when (syncConfiguration.contentType) {
-                        ContentType.MEDIA -> MediaCollectionContainer(syncConfiguration.sourceUri)
-                        ContentType.FOLDER -> DocumentsFolderContainer(syncConfiguration.sourceUri)
+                        ContentType.MEDIA -> MediaCollectionContainer(syncConfiguration.contentUri)
+                        ContentType.FOLDER -> DocumentsFolderContainer(syncConfiguration.contentUri)
                     }
                 },
                 warningsContainer = {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         when (syncConfiguration.contentType) {
                             ContentType.MEDIA -> MediaPermissionContainer()
-                            ContentType.FOLDER -> DocumentsPermissionContainer({ edit(syncConfiguration.direction, remoteId) }, syncConfiguration.sourceUri)
+                            ContentType.FOLDER -> DocumentsPermissionContainer({ edit(syncConfiguration.direction, remoteId) }, syncConfiguration.contentUri)
                         }
                         BatterySaverContainer()
                     }

@@ -24,6 +24,7 @@ import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.permission.DocumentsPermissionService
 import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
@@ -125,7 +126,7 @@ class SyncViewModel(
                 bucket = it.bucket,
                 region = it.region,
                 contentType = it.contentType,
-                sourceUri = it.contentUri,
+                contentUri = it.contentUri,
                 direction = it.direction
             )
         }.flowOn(Dispatchers.IO)
@@ -342,7 +343,7 @@ class SyncViewModel(
         var bucket: String,
         var region: String? = null,
         var contentType: ContentType,
-        var sourceUri: String,
+        var contentUri: String,
         val direction: SyncDirection,
     )
 
