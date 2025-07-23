@@ -34,7 +34,7 @@ fun InProgressPreview() {
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera",
+        contentUri = "Camera",
         direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(
@@ -63,7 +63,7 @@ fun CompletedPreview() {
         url = "https://my-backup.dyndns.com",
         bucket = "zimly-backup",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera",
+        contentUri = "Camera",
         direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(
@@ -92,7 +92,7 @@ fun IdlePreview() {
         url = "https://my-backup.dyndns.com",
         bucket = "bucket",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera",
+        contentUri = "Camera",
         direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress()
@@ -113,7 +113,7 @@ fun CalculatingPreview() {
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera",
+        contentUri = "Camera",
         direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress(status = Status.CALCULATING)
@@ -135,7 +135,7 @@ fun PermissionsMissingPreview() {
         url = "https://my-backup.dyndns.com",
         bucket = "bucket",
         contentType = ContentType.MEDIA,
-        sourceUri = "Camera",
+        contentUri = "Camera",
         direction = SyncDirection.UPLOAD
     )
     val progressState = SyncViewModel.Progress()
@@ -195,16 +195,16 @@ private fun PreviewSync(
 private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
     when (remote.contentType) {
         ContentType.MEDIA -> {
-            MediaCollectionContainer(remote.sourceUri, viewModel = viewModel {
-                MediaCollectionViewModel(StubMediaResolver(), remote.sourceUri)
+            MediaCollectionContainer(remote.contentUri, viewModel = viewModel {
+                MediaCollectionViewModel(StubMediaResolver(), remote.contentUri)
             })
         }
 
         ContentType.FOLDER -> {
-            DocumentsFolderContainer(remote.sourceUri, viewModel = viewModel {
+            DocumentsFolderContainer(remote.contentUri, viewModel = viewModel {
                 DocumentsFolderViewModel(
                     StubContentResolver(),
-                    remote.sourceUri.toUri()
+                    remote.contentUri.toUri()
                 )
             })
         }
