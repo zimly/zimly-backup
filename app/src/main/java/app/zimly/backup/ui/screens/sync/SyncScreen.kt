@@ -94,7 +94,6 @@ fun SyncScreen(
     val syncConfigurationState by viewModel.syncConfigurationState.collectAsStateWithLifecycle(null)
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
-    // TODO: Documents Permissions
     val permissionsGranted by viewModel.permissionsGranted.collectAsStateWithLifecycle()
     val syncInProgress by viewModel.syncInProgress.collectAsStateWithLifecycle()
 
