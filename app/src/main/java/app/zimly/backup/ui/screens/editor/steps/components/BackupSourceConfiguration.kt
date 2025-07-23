@@ -28,8 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.permission.DocumentsPermissionService
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.theme.containerBackground
@@ -97,7 +99,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
                 ContentType.MEDIA ->
                     MediaSelectorContainer(backupSource.mediaField)
                 ContentType.FOLDER ->
-                    DocumentsFolderSelector(backupSource.folderField)
+                    DocumentsFolderSelector(backupSource.folderField, false)
             }
             BackupSourceError(backupSource)
         }
@@ -125,8 +127,12 @@ private fun BackupSourceError(backupSource: BackupSourceField) {
 
 @Composable
 fun DocumentsFolderSelector(
-    folderField: UriField
+    folderField: UriField,
+    writePermission: Boolean
 ) {
+
+    val context = LocalContext.current
+
     val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(it) else folderField.update(Uri.EMPTY) }
     val focus: () -> Unit = { folderField.touch() }
     val folder = folderField.state.collectAsState()
@@ -138,20 +144,27 @@ fun DocumentsFolderSelector(
         }
 
     if (folderSelected) {
-        val displayName = UriField.displayName(folder.value.value)
-        OutlinedCard {
-            Row(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
-                Spacer(modifier = Modifier.width(8.dp))
-                Column {
-                    Text(displayName)
+        // TODO state
+        val permissionGranted = DocumentsPermissionService.permissionGranted(context.contentResolver, folder.value.value, writePermission)
+
+        if (permissionGranted) {
+            val displayName = UriField.displayName(folder.value.value)
+            OutlinedCard {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(displayName)
+                    }
                 }
             }
+        } else {
+            Text("Permissions missing, please reselect the Folder and grant permissions")
         }
     }
 

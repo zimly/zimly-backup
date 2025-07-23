@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -124,7 +123,7 @@ fun DownloadTargetStep(
                 modifier = Modifier
                     .padding(16.dp)
             ) {
-                DocumentsFolderSelector(viewModel.folderField)
+                DocumentsFolderSelector(viewModel.folderField, true)
             }
         }
     }
