@@ -31,7 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.LocalMediaRepository
-import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.ui.components.PermissionBox
 import app.zimly.backup.ui.components.PermissionRationaleDialog
 import app.zimly.backup.ui.screens.editor.form.field.TextField
@@ -42,7 +42,7 @@ import kotlinx.coroutines.flow.update
 
 class MediaSelectorViewModel(
     private val mediaRepository: LocalMediaRepository,
-    private val permissionService: PermissionService
+    private val permissionService: MediaPermissionService
 ) : ViewModel() {
 
     private val internal: MutableStateFlow<UiState> = MutableStateFlow(UiState())
@@ -97,7 +97,7 @@ class MediaSelectorViewModel(
                 val application = checkNotNull(this[APPLICATION_KEY])
 
                 val mediaRepository = LocalMediaRepository(application.contentResolver)
-                val permissionService = PermissionService(application.applicationContext, application.packageName)
+                val permissionService = MediaPermissionService(application.applicationContext, application.packageName)
                 MediaSelectorViewModel(mediaRepository, permissionService)
             }
         }
