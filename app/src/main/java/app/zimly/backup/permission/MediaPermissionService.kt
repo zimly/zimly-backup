@@ -11,7 +11,7 @@ import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-class PermissionService(private val context: Context, private val packageName: String, permissionsProvider: () -> Array<String> = ::permissionProvider) {
+class MediaPermissionService(private val context: Context, private val packageName: String, permissionsProvider: () -> Array<String> = ::permissionProvider) {
 
     private val requiredPermissions = permissionsProvider()
 

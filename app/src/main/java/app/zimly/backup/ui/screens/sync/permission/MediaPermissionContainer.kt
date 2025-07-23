@@ -37,7 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.ui.components.PermissionRationaleDialog
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +45,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class MediaPermissionViewModel(
-    private val permissionService: PermissionService
+    private val permissionService: MediaPermissionService
 ) : ViewModel() {
 
     private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -99,7 +99,7 @@ class MediaPermissionViewModel(
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
 
-                val permissionService = PermissionService(
+                val permissionService = MediaPermissionService(
                     application.applicationContext,
                     application.packageName
                 )

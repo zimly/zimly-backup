@@ -15,12 +15,12 @@ import org.junit.Test
 class PermissionServiceTest {
 
     private lateinit var context: Context
-    private lateinit var permissionService: PermissionService
+    private lateinit var permissionService: MediaPermissionService
 
     @Before
     fun setUp() {
         this.context = mockk<Context>()
-        this.permissionService = PermissionService(context, "app.zimly.test") {
+        this.permissionService = MediaPermissionService(context, "app.zimly.test") {
             arrayOf(
                 Manifest.permission.READ_MEDIA_IMAGES,
                 Manifest.permission.READ_MEDIA_VIDEO,
@@ -68,7 +68,7 @@ class PermissionServiceTest {
             )
         } returns PackageManager.PERMISSION_GRANTED
 
-        val permissionService = PermissionService(context, "app.zimly.test")
+        val permissionService = MediaPermissionService(context, "app.zimly.test")
 
         val result = permissionService.permissionsGranted()
 
@@ -87,7 +87,7 @@ class PermissionServiceTest {
             )
         } returns PackageManager.PERMISSION_GRANTED andThen PackageManager.PERMISSION_DENIED andThen PackageManager.PERMISSION_GRANTED
 
-        val permissionService = PermissionService(context, "app.zimly.test")
+        val permissionService = MediaPermissionService(context, "app.zimly.test")
 
         val result = permissionService.permissionsGranted()
 

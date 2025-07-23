@@ -7,7 +7,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.permission.MediaPermissionService
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Rule
@@ -20,7 +20,7 @@ class MediaPermissionContainerTest {
     @Test
     fun permissionWarningAndDialog() {
 
-        val permissionService = mockk<PermissionService>()
+        val permissionService = mockk<MediaPermissionService>()
 
         every { permissionService.permissionsGranted() } returns false
         every { permissionService.requiredPermissions() } returns arrayOf(

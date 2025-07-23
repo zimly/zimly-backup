@@ -24,7 +24,7 @@ import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
-import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.sync.SyncInputs
 import app.zimly.backup.sync.SyncOutputs
 import app.zimly.backup.sync.SyncService
@@ -57,7 +57,7 @@ class SyncViewModel(
     private val remoteId: Int,
     private val workManager: WorkManager,
     private val contentResolver: ContentResolver,
-    permissionService: PermissionService
+    private val mediaPermissionService: MediaPermissionService
 ) : ViewModel() {
 
     // Todo: https://luisramos.dev/testing-your-android-viewmodel
@@ -74,7 +74,7 @@ class SyncViewModel(
                 val workManager = WorkManager.getInstance(application.applicationContext)
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
-                val permissionService = PermissionService(
+                val mediaPermissionService = MediaPermissionService(
                     application.applicationContext,
                     application.packageName
                 )
@@ -83,7 +83,7 @@ class SyncViewModel(
                     remoteId,
                     workManager,
                     application.contentResolver,
-                    permissionService
+                    mediaPermissionService
                 )
             }
         }

@@ -16,7 +16,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import app.zimly.backup.data.db.remote.SyncDirection
-import app.zimly.backup.permission.PermissionService
+import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.ui.screens.editor.editorViewModel
 import app.zimly.backup.ui.screens.editor.steps.BucketConfigurationStep
 import app.zimly.backup.ui.screens.editor.steps.DownloadTargetStep
@@ -47,10 +47,10 @@ class MainActivity : ComponentActivity() {
             finish()
         }
 
-        val permissionService = PermissionService(applicationContext, application.packageName)
+        val mediaPermissionService = MediaPermissionService(applicationContext, application.packageName)
         setContent {
             ZimzyncTheme {
-                AppNavigation(permissionService.permissionsGranted())
+                AppNavigation(mediaPermissionService.permissionsGranted())
             }
         }
     }
