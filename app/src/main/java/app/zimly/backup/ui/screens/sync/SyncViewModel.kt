@@ -171,9 +171,19 @@ class SyncViewModel(
     val syncInProgress = _syncInProgress.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // TODO update this, when permissions change.
-    private val _permissionsGranted = MutableStateFlow(permissionService.permissionsGranted())
+    private val _permissionsGranted = syncConfigurationState
+        .map { permissionsGranted(it) }
 
-    val permissionsGranted: StateFlow<Boolean> = _permissionsGranted.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val permissionsGranted: StateFlow<Boolean> =
+        _permissionsGranted.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    private fun permissionsGranted(remote: SyncConfigurationState): Boolean {
+        return when (remote.contentType) {
+            ContentType.MEDIA -> mediaPermissionService.permissionsGranted()
+            ContentType.FOLDER -> DocumentsPermissionService.permissionGranted(contentResolver, remote)
+        }
+
+    }
 
     /**
      * Calculate the diff between remote bucket and the local gallery. This is a "heavy" computation.
