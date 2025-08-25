@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.sync
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -37,12 +39,12 @@ import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import androidx.core.net.toUri
 
 @Composable
 fun DocumentsFolderContainer(
     folderPath: String,
-    viewModel: DocumentsFolderViewModel = viewModel(factory = factory(folderPath)),
+    onError: (error: String) -> Unit,
+    viewModel: DocumentsFolderViewModel = viewModel(factory = factory(folderPath, onError)),
 ) {
     val folder by viewModel.folderState.collectAsStateWithLifecycle(DocumentsFolderState())
 
@@ -103,18 +105,26 @@ data class DocumentsFolderState(
 
 class DocumentsFolderViewModel(
     localContentResolver: LocalContentResolver,
-    folderPath: Uri
+    folderPath: Uri,
+    onError: (error: String) -> Unit
 ) : ViewModel() {
 
     val folderState = snapshotFlow { folderPath }.map {
-        // TODO Error handling
-        val documentsCount = localContentResolver.listObjects().size
-        return@map DocumentsFolderState(it, documentsCount)
+        try {
+            val documentsCount = localContentResolver.listObjects().size
+            return@map DocumentsFolderState(it, documentsCount)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load document count.", e)
+            onError("Failed to list documents: ${e.message}")
+            return@map DocumentsFolderState(it, 0)
+        }
     }.flowOn(Dispatchers.IO)
 
     companion object {
 
-        val factory: (folderPath: String) -> ViewModelProvider.Factory = { folderPath ->
+        private val TAG: String? = DocumentsFolderViewModel::class.simpleName
+
+        val factory: (folderPath: String, onError: (error: String) -> Unit) -> ViewModelProvider.Factory = { folderPath, onError ->
             viewModelFactory {
                 initializer {
                     val application = checkNotNull(this[APPLICATION_KEY])
@@ -122,7 +132,7 @@ class DocumentsFolderViewModel(
                     val folderUri = folderPath.toUri()
                     val contentResolver = LocalDocumentsResolver(application.applicationContext, folderUri)
 
-                    DocumentsFolderViewModel(contentResolver, folderUri)
+                    DocumentsFolderViewModel(contentResolver, folderUri, onError)
                 }
             }
         }

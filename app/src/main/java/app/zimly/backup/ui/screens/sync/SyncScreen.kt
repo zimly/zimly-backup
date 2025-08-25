@@ -128,17 +128,20 @@ fun SyncScreen(
             back,
             clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
         ) {
-            val enableDiffAction = permissionsGranted && !syncInProgress
 
             SyncOverview(
                 syncConfiguration,
                 progress,
-                enableDiffAction,
+                permissionsGranted,
                 createDiff,
                 sourceContainer = {
-                    when (syncConfiguration.contentType) {
-                        ContentType.MEDIA -> MediaCollectionContainer(syncConfiguration.contentUri)
-                        ContentType.FOLDER -> DocumentsFolderContainer(syncConfiguration.contentUri)
+                    if (permissionsGranted) {
+                        when (syncConfiguration.contentType) {
+                            ContentType.MEDIA -> MediaCollectionContainer(syncConfiguration.contentUri)
+                            ContentType.FOLDER -> DocumentsFolderContainer(
+                                syncConfiguration.contentUri,
+                                { viewModel.viewModelScope.launch { viewModel.onError(it) } })
+                        }
                     }
                 },
                 warningsContainer = {
