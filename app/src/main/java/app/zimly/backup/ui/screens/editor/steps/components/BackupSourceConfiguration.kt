@@ -137,15 +137,18 @@ fun DocumentsFolderSelector(
     val focus: () -> Unit = { folderField.touch() }
     val folder = folderField.state.collectAsState()
     val folderSelected = folder.value.value != Uri.EMPTY
+    var permissionGranted = DocumentsPermissionService.permissionGranted(context.contentResolver, folder.value.value, writePermission)
+
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             select(uri)
+            // TODO this does not work, as permissions are not persisted until the final save.
+            permissionGranted = DocumentsPermissionService.permissionGranted(context.contentResolver, folder.value.value, writePermission)
         }
 
     if (folderSelected) {
         // TODO state
-        val permissionGranted = DocumentsPermissionService.permissionGranted(context.contentResolver, folder.value.value, writePermission)
 
         if (permissionGranted) {
             val displayName = UriField.displayName(folder.value.value)

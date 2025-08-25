@@ -352,6 +352,10 @@ class SyncViewModel(
         _error.emit(null)
     }
 
+    suspend fun onError(errorMessage: String) {
+        _error.emit(errorMessage)
+    }
+
     data class SyncConfigurationState(
         var name: String,
         var url: String,

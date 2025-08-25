@@ -201,10 +201,11 @@ private fun ContentContainer(remote: SyncViewModel.SyncConfigurationState) {
         }
 
         ContentType.FOLDER -> {
-            DocumentsFolderContainer(remote.contentUri, viewModel = viewModel {
+            DocumentsFolderContainer(remote.contentUri, {}, viewModel = viewModel {
                 DocumentsFolderViewModel(
                     StubContentResolver(),
-                    remote.contentUri.toUri()
+                    remote.contentUri.toUri(),
+                    {}
                 )
             })
         }
