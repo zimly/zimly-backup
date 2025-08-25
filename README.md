@@ -20,3 +20,7 @@ Key Features:
 Or download the latest APK from the [Releases Section](https://github.com/zimly/zimly-backup/releases/latest).
 
 Visit [zimly.app](https://www.zimly.app)
+
+## Contributions
+
+Please read [CONTRIBUTIONS.md](./CONTRIBUTIONS.md).
