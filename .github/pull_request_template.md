@@ -4,4 +4,4 @@
 ---
 **Acknowledgment:**
 
- [ ] I confirm that I have read and agree to the [CONTRIBUTIONS.md](./CONTRIBUTIONS.md).
+ [ ] I confirm that I have read and agree to the [CONTRIBUTIONS.md](https://github.com/zimly/zimly-backup/blob/main/CONTRIBUTIONS.md).
