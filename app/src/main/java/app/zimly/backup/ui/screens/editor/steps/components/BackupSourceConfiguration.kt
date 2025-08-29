@@ -28,16 +28,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.ContentType
-import app.zimly.backup.permission.DocumentsPermissionService
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-fun BackupSourceConfiguration(backupSource: BackupSourceField) {
+fun BackupSourceConfiguration(backupSource: BackupSourceField, permissionWarning: Boolean) {
 
     // TODO Should this only operate on UI state? If not, should it reset the other option?
     // Or should it go together with the lower onSelect into the parent viewmodel or field?
@@ -99,7 +97,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
                 ContentType.MEDIA ->
                     MediaSelectorContainer(backupSource.mediaField)
                 ContentType.FOLDER ->
-                    DocumentsFolderSelector(backupSource.folderField, false)
+                    DocumentsFolderSelector(backupSource.folderField, permissionWarning)
             }
             BackupSourceError(backupSource)
         }
@@ -128,29 +126,25 @@ private fun BackupSourceError(backupSource: BackupSourceField) {
 @Composable
 fun DocumentsFolderSelector(
     folderField: UriField,
-    writePermission: Boolean
+    permissionWarning: Boolean
 ) {
-
-    val context = LocalContext.current
 
     val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(it) else folderField.update(Uri.EMPTY) }
     val focus: () -> Unit = { folderField.touch() }
     val folder = folderField.state.collectAsState()
     val folderSelected = folder.value.value != Uri.EMPTY
-    var permissionGranted = DocumentsPermissionService.permissionGranted(context.contentResolver, folder.value.value, writePermission)
-
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             select(uri)
-            // TODO this does not work, as permissions are not persisted until the final save.
-            permissionGranted = DocumentsPermissionService.permissionGranted(context.contentResolver, folder.value.value, writePermission)
         }
 
     if (folderSelected) {
         // TODO state
 
-        if (permissionGranted) {
+        if (permissionWarning) {
+            Text("Permissions missing, please reselect the Folder and grant permissions")
+        } else {
             val displayName = UriField.displayName(folder.value.value)
             OutlinedCard {
                 Row(
@@ -166,8 +160,6 @@ fun DocumentsFolderSelector(
                     }
                 }
             }
-        } else {
-            Text("Permissions missing, please reselect the Folder and grant permissions")
         }
     }
 

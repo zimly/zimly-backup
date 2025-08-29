@@ -15,29 +15,36 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.ui.screens.editor.EditorViewModel
+import app.zimly.backup.ui.screens.editor.EditorViewModel.Permissions
 import app.zimly.backup.ui.screens.editor.steps.components.BackupSourceConfiguration
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
 import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
-class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, String>>) :
+class UploadSourceViewModel(private val store: ValueStore<EditorViewModel.ContentState>) :
     ViewModel() {
 
     val backupSource = BackupSourceField()
+    private val _permissionWarning = MutableStateFlow(true)
+    val permissionWarning = _permissionWarning.asStateFlow()
 
     init {
         viewModelScope.launch {
             store.load()
                 .filterNotNull()
                 .collectLatest {
-                    backupSource.update(it.first)
-                    when (it.first) {
-                        ContentType.MEDIA -> backupSource.mediaField.update(it.second)
-                        ContentType.FOLDER -> backupSource.folderField.update(it.second.toUri())
+                    backupSource.update(it.contentType)
+                    when (it.contentType) {
+                        ContentType.MEDIA -> backupSource.mediaField.update(it.contentUri)
+                        ContentType.FOLDER -> backupSource.folderField.update(it.contentUri.toUri())
                     }
+                    _permissionWarning.value = it.permissions == Permissions.DENIED
                 }
         }
     }
@@ -48,7 +55,11 @@ class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, Stri
             ContentType.MEDIA -> backupSource.mediaField.state.value.value
             ContentType.FOLDER -> backupSource.folderField.state.value.value.toString()
         }
-        store.persist(Pair(sourceType, sourceUri)) { nextStep() }
+        val permissions = when (sourceType) {
+            ContentType.MEDIA -> Permissions.GRANTED
+            ContentType.FOLDER -> Permissions.PENDING
+        }
+        store.persist(EditorViewModel.ContentState(sourceType, sourceUri, permissions)) { nextStep() }
     }
 
     fun isValid(): Flow<Boolean> {
@@ -59,7 +70,7 @@ class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, Stri
         val TAG: String? = UploadSourceViewModel::class.simpleName
 
         // Optional remote ID
-        val VALUE_STORE_KEY = object : CreationExtras.Key<ValueStore<Pair<ContentType, String>>> {}
+        val VALUE_STORE_KEY = object : CreationExtras.Key<ValueStore<EditorViewModel.ContentState>> {}
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
 
@@ -75,7 +86,7 @@ class UploadSourceViewModel(private val store: ValueStore<Pair<ContentType, Stri
 
 @Composable
 fun UploadSourceStep(
-    store: ValueStore<Pair<ContentType, String>>,
+    store: ValueStore<EditorViewModel.ContentState>,
     nextStep: () -> Unit,
     previousStep: () -> Unit,
     viewModel: UploadSourceViewModel = viewModel(
@@ -86,6 +97,7 @@ fun UploadSourceStep(
 ) {
 
     val valid by viewModel.isValid().collectAsStateWithLifecycle(false)
+    val permissionWarning by viewModel.permissionWarning.collectAsStateWithLifecycle()
 
     WizardStep(
         title = "Select Content to Upload",
@@ -103,7 +115,7 @@ fun UploadSourceStep(
             }
         }
     ) {
-        BackupSourceConfiguration(viewModel.backupSource)
+        BackupSourceConfiguration(viewModel.backupSource, permissionWarning)
     }
 
 }

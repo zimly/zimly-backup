@@ -24,6 +24,8 @@ import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.data.db.remote.RemoteDao
 import app.zimly.backup.data.db.remote.SyncDirection
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.permission.DocumentsPermissionService
+import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.ui.components.Notification
 import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.EditorViewModel.Companion.REMOTE_ID_KEY
@@ -48,16 +50,26 @@ import kotlinx.coroutines.launch
 class EditorViewModel(
     private val remoteDao: RemoteDao,
     private val contentResolver: ContentResolver,
+    private val mediaPermissionService: MediaPermissionService,
     private val remoteId: Int? = null
 ) : ViewModel(), NotificationProvider {
 
-    var draft = MutableStateFlow(Draft())
+    val draft = MutableStateFlow(Draft())
     val notification: MutableStateFlow<Notification?> = MutableStateFlow(null)
 
     init {
         remoteId?.let {
             viewModelScope.launch {
                 val remote = remoteDao.loadById(remoteId)
+
+                val writePermission = when (remote.direction) {
+                    SyncDirection.UPLOAD -> false
+                    SyncDirection.DOWNLOAD -> true
+                }
+                val permissions = when(remote.contentType) {
+                    ContentType.MEDIA -> if (mediaPermissionService.permissionsGranted()) Permissions.GRANTED else Permissions.DENIED
+                    ContentType.FOLDER -> if (DocumentsPermissionService.permissionGranted(contentResolver, remote.contentUri.toUri(), writePermission)) Permissions.GRANTED else Permissions.DENIED
+                }
                 draft.value = Draft(
                     bucket = BucketForm.BucketConfiguration(
                         url = remote.url,
@@ -70,27 +82,30 @@ class EditorViewModel(
                     ),
                     direction = remote.direction,
                     contentType = remote.contentType,
-                    contentUri = remote.contentUri
+                    contentUri = remote.contentUri,
+                    permissions = permissions
                 )
             }
         }
     }
 
-    val contentStore = object : ValueStore<Pair<ContentType, String>> {
-        override fun persist(value: Pair<ContentType, String>, callback: (Boolean) -> Unit) {
+    // TODO: Split per usecase: DownloadTargetStep vs UploadSourceStep
+    val contentStore = object : ValueStore<ContentState> {
+        override fun persist(value: ContentState, callback: (Boolean) -> Unit) {
             draft.update {
                 it.copy(
-                    contentType = value.first,
-                    contentUri = value.second
+                    contentType = value.contentType,
+                    contentUri = value.contentUri,
+                    permissions = value.permissions
                 )
             }
             callback(true)
         }
 
-        override fun load(): Flow<Pair<ContentType, String>?> {
+        override fun load(): Flow<ContentState?> {
             return draft
                 .filter { it.contentType != null && it.contentUri != null }
-                .map { draft -> Pair(draft.contentType!!, draft.contentUri!!) }
+                .map { draft -> ContentState(draft.contentType!!, draft.contentUri!!, draft.permissions) }
         }
     }
 
@@ -132,6 +147,9 @@ class EditorViewModel(
 
             if (draftValue.contentType == ContentType.FOLDER) {
                 persistPermissions(draftValue.direction, draftValue.contentUri)
+                draft.update {
+                    it.copy(permissions = Permissions.GRANTED)
+                }
             }
             val remote = Remote(
                 uid = remoteId,
@@ -183,8 +201,22 @@ class EditorViewModel(
         val direction: SyncDirection? = null,
         val bucket: BucketForm.BucketConfiguration? = null,
         val contentType: ContentType? = null,
-        val contentUri: String? = null
+        val contentUri: String? = null,
+        val permissions: Permissions = Permissions.PENDING
     )
+
+    // Represents the a documents folder or media collection including the permission state.
+    data class ContentState(
+        val contentType: ContentType,
+        val contentUri: String,
+        val permissions: Permissions
+    )
+
+    // Document Permissions are granted upon persisting the draft to the DB, hence there's a pending state.
+    // Media Permissions are granted app scoped.
+    enum class Permissions {
+        GRANTED, DENIED, PENDING //, PERSISTED?
+    }
 
     companion object {
         val TAG: String? = EditorViewModel::class.simpleName
@@ -198,8 +230,11 @@ class EditorViewModel(
                 val remoteId = this[REMOTE_ID_KEY]
                 val db = ZimlyDatabase.Companion.getInstance(application.applicationContext)
                 val remoteDao = db.remoteDao()
-
-                EditorViewModel(remoteDao, application.contentResolver, remoteId)
+                val mediaPermissionService = MediaPermissionService(
+                    application.applicationContext,
+                    application.packageName
+                )
+                EditorViewModel(remoteDao, application.contentResolver, mediaPermissionService, remoteId)
             }
         }
     }
