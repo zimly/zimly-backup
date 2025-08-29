@@ -27,31 +27,39 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.ContentType
+import app.zimly.backup.ui.screens.editor.EditorViewModel
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.screens.editor.steps.components.DocumentsFolderSelector
 import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
-class DownloadTargetViewModel(private val store: ValueStore<Pair<ContentType, String>>) :
+class DownloadTargetViewModel(private val store: ValueStore<EditorViewModel.ContentState>) :
     ViewModel() {
 
     val folderField = UriField("Select a folder for your data")
+    private val _permissionWarning = MutableStateFlow(true)
+    val permissionWarning = _permissionWarning.asStateFlow()
 
     init {
         viewModelScope.launch {
             store.load()
                 .filterNotNull()
-                .collectLatest { folderField.update(it.second.toUri()) }
+                .collectLatest {
+                    folderField.update(it.contentUri.toUri())
+                    _permissionWarning.value = it.permissions == EditorViewModel.Permissions.DENIED
+                }
         }
     }
 
     fun persist(nextStep: () -> Unit) {
-        val value = folderField.state.value.value.toString()
-        store.persist(Pair(ContentType.FOLDER, value)) { nextStep() }
+        val contentUri = folderField.state.value.value.toString()
+        store.persist(EditorViewModel.ContentState(ContentType.FOLDER, contentUri, EditorViewModel.Permissions.PENDING)) { nextStep() }
     }
 
     fun isValid(): Flow<Boolean> {
@@ -62,7 +70,7 @@ class DownloadTargetViewModel(private val store: ValueStore<Pair<ContentType, St
         val TAG: String? = DownloadTargetViewModel::class.simpleName
 
         // Optional remote ID
-        val VALUE_STORE_KEY = object : CreationExtras.Key<ValueStore<Pair<ContentType, String>>> {}
+        val VALUE_STORE_KEY = object : CreationExtras.Key<ValueStore<EditorViewModel.ContentState>> {}
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
 
@@ -78,7 +86,7 @@ class DownloadTargetViewModel(private val store: ValueStore<Pair<ContentType, St
 
 @Composable
 fun DownloadTargetStep(
-    store: ValueStore<Pair<ContentType, String>>,
+    store: ValueStore<EditorViewModel.ContentState>,
     nextStep: () -> Unit,
     previousStep: () -> Unit,
     viewModel: DownloadTargetViewModel = viewModel(
@@ -89,7 +97,7 @@ fun DownloadTargetStep(
 ) {
 
     val valid by viewModel.isValid().collectAsStateWithLifecycle(false)
-
+    val permissionWarning by viewModel.permissionWarning.collectAsStateWithLifecycle()
     WizardStep(
         title = "Select Download Location",
         navigation = {
@@ -123,7 +131,7 @@ fun DownloadTargetStep(
                 modifier = Modifier
                     .padding(16.dp)
             ) {
-                DocumentsFolderSelector(viewModel.folderField, true)
+                DocumentsFolderSelector(viewModel.folderField, permissionWarning)
             }
         }
     }
