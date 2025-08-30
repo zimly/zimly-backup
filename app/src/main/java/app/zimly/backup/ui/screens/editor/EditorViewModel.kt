@@ -207,6 +207,7 @@ class EditorViewModel(
     )
 
     // Represents the a documents folder or media collection including the permission state.
+    // TODO: This should be replaced with [UriPermission] after splitting Media and Documents.
     data class ContentState(
         val contentType: ContentType,
         val contentUri: String,
