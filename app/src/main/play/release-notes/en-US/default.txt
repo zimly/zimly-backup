@@ -1,5 +1,5 @@
-3.3.0
-* Improve screen reader support by adding semantic descriptions to screens and interactive controls #43
+3.4.0
+* Handle revoked folder permissions gracefully #37
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
