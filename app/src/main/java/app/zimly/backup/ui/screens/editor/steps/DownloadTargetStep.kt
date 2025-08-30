@@ -28,13 +28,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.editor.EditorViewModel
+import app.zimly.backup.ui.screens.editor.form.field.UriPermission
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.screens.editor.steps.components.DocumentsFolderSelector
 import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import app.zimly.backup.ui.theme.containerBackground
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -42,24 +41,25 @@ import kotlinx.coroutines.launch
 class DownloadTargetViewModel(private val store: ValueStore<EditorViewModel.ContentState>) :
     ViewModel() {
 
-    val folderField = UriField("Select a folder for your data")
-    private val _permissionWarning = MutableStateFlow(true)
-    val permissionWarning = _permissionWarning.asStateFlow()
+    val folderField = UriField("Select a folder and grant permissions for your data")
 
     init {
         viewModelScope.launch {
             store.load()
                 .filterNotNull()
                 .collectLatest {
-                    folderField.update(it.contentUri.toUri())
-                    _permissionWarning.value = it.permissions == EditorViewModel.Permissions.DENIED
+                    // Enforce the touch to propagate error related to revoked permissions
+                    // Has to happen before update.
+                    folderField.touch()
+                    folderField.update(UriPermission(it.contentUri.toUri(), it.permissions))
                 }
         }
     }
 
     fun persist(nextStep: () -> Unit) {
-        val contentUri = folderField.state.value.value.toString()
-        store.persist(EditorViewModel.ContentState(ContentType.FOLDER, contentUri, EditorViewModel.Permissions.PENDING)) { nextStep() }
+        val contentUri = folderField.state.value.value.uri.toString()
+        val permission = folderField.state.value.value.permission
+        store.persist(EditorViewModel.ContentState(ContentType.FOLDER, contentUri, permission)) { nextStep() }
     }
 
     fun isValid(): Flow<Boolean> {
@@ -97,7 +97,6 @@ fun DownloadTargetStep(
 ) {
 
     val valid by viewModel.isValid().collectAsStateWithLifecycle(false)
-    val permissionWarning by viewModel.permissionWarning.collectAsStateWithLifecycle()
     WizardStep(
         title = "Select Download Location",
         navigation = {
@@ -131,7 +130,7 @@ fun DownloadTargetStep(
                 modifier = Modifier
                     .padding(16.dp)
             ) {
-                DocumentsFolderSelector(viewModel.folderField, permissionWarning)
+                DocumentsFolderSelector(viewModel.folderField)
             }
         }
     }

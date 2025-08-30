@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.update
  */
 class BackupSourceField : Field<ContentType> {
     val mediaField = TextField("Select a collection for backup")
-    val folderField = UriField("Select a folder for backup")
+    val folderField = UriField("Select a folder and grant permissions for your data")
 
     private val internal: MutableStateFlow<FieldState> =
         MutableStateFlow(FieldState(ContentType.MEDIA))

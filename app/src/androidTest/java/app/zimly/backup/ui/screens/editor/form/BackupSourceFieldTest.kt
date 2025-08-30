@@ -1,8 +1,8 @@
 package app.zimly.backup.ui.screens.editor.form
 
-import android.net.Uri
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.form.field.UriPermission
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -68,7 +68,7 @@ class BackupSourceFieldTest {
         field.update(ContentType.FOLDER)
         field.folderField.touch()
         // None selected, folder picker closed
-        field.folderField.update(Uri.EMPTY)
+        field.folderField.update(UriPermission())
 
         assertFalse("Field should be invalid first", validations.first())
         assertFalse("Field should be invalid after update", validations[1])
@@ -76,7 +76,7 @@ class BackupSourceFieldTest {
 
         assertNull("No error initially", errors[0])
         assertNull("No error after.. ?", errors[1])
-        assertEquals("Select a folder for backup", errors[2])
+        assertEquals("Select a folder and grant permissions for your data", errors[2])
 
         jobValid.cancel()
         jobError.cancel()
