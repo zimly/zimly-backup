@@ -1,21 +1,16 @@
-# Zim Sync: Privacy policy
-
-Welcome to the Zim Sync app for Android!
+# Zimly: Privacy policy
 
 ## Data collected by the app
 
-This app refrains from collecting or sharing any privacy-sensitive data or personally identifiable
-information.
+This app refrains from collecting or sharing any privacy-sensitive data or personally identifiable information.
 
 No trackers or analytics software are installed.
 
-It accesses locally stored media and media location data solely for the purpose of backing up that
-data to a user-defined remote storage.
+It accesses locally stored media, documents and media location data solely for the purpose of backing up that data to a user-defined remote storage.
 
 All user configurations are stored on the device only and can be deleted by uninstalling the app.
 
-Data in transit is encrypted using SSL (https) unless the user opts out and configures their remote
-storage differently.
+Data in transit is encrypted using SSL (https) unless the user opts out and configures their remote storage differently.
 
 ## Explanation of permissions requested in the app
 
