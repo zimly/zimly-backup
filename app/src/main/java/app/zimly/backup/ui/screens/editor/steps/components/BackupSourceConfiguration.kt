@@ -31,11 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.editor.form.field.BackupSourceField
+import app.zimly.backup.ui.screens.editor.form.field.Permissions
+import app.zimly.backup.ui.screens.editor.form.field.UriPermission
 import app.zimly.backup.ui.screens.editor.form.field.UriField
 import app.zimly.backup.ui.theme.containerBackground
 
 @Composable
-fun BackupSourceConfiguration(backupSource: BackupSourceField, permissionWarning: Boolean) {
+fun BackupSourceConfiguration(backupSource: BackupSourceField) {
 
     // TODO Should this only operate on UI state? If not, should it reset the other option?
     // Or should it go together with the lower onSelect into the parent viewmodel or field?
@@ -97,7 +99,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField, permissionWarning
                 ContentType.MEDIA ->
                     MediaSelectorContainer(backupSource.mediaField)
                 ContentType.FOLDER ->
-                    DocumentsFolderSelector(backupSource.folderField, permissionWarning)
+                    DocumentsFolderSelector(backupSource.folderField)
             }
             BackupSourceError(backupSource)
         }
@@ -126,10 +128,10 @@ private fun BackupSourceError(backupSource: BackupSourceField) {
 @Composable
 fun DocumentsFolderSelector(
     folderField: UriField,
-    permissionWarning: Boolean
 ) {
 
-    val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(it) else folderField.update(Uri.EMPTY) }
+    val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(UriPermission(it, Permissions.PENDING)) else folderField.update(
+        UriPermission()) }
     val focus: () -> Unit = { folderField.touch() }
     val folder = folderField.state.collectAsState()
     val folderSelected = folder.value.value != Uri.EMPTY
@@ -141,23 +143,18 @@ fun DocumentsFolderSelector(
 
     if (folderSelected) {
         // TODO state
-
-        if (permissionWarning) {
-            Text("Permissions missing, please reselect the Folder and grant permissions")
-        } else {
-            val displayName = UriField.displayName(folder.value.value)
-            OutlinedCard {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(displayName)
-                    }
+        val displayName = UriField.displayName(folder.value.value.uri)
+        OutlinedCard {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Artist image")
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(displayName)
                 }
             }
         }

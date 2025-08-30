@@ -5,13 +5,23 @@ import app.zimly.backup.data.media.LocalDocumentsResolver
 
 class UriField(
     errorMessage: String = "This field is required.",
-    validate: (value: Uri) -> Boolean = { it.path?.isNotEmpty() ?: false },
-    defaultValue: Uri = Uri.EMPTY
-): BaseField<Uri>(errorMessage, validate, defaultValue) {
+    validate: (value: UriPermission) -> Boolean = { !it.uri.path.isNullOrEmpty() && it.permission != Permissions.DENIED },
+    defaultValue: UriPermission = UriPermission()
+): BaseField<UriPermission>(errorMessage, validate, defaultValue) {
 
     companion object {
         fun displayName(uri: Uri): String {
             return LocalDocumentsResolver.objectPath(uri)
         }
     }
+}
+
+data class UriPermission (
+    val uri: Uri = Uri.EMPTY,
+    val permission: Permissions = Permissions.DENIED
+)
+
+// Document Permissions are granted upon persisting the draft to the DB, hence there's a pending state.
+enum class Permissions {
+    GRANTED, DENIED, PENDING //, PERSISTED?
 }

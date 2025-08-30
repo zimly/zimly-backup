@@ -30,6 +30,7 @@ import app.zimly.backup.ui.components.Notification
 import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.EditorViewModel.Companion.REMOTE_ID_KEY
 import app.zimly.backup.ui.screens.editor.form.BucketForm
+import app.zimly.backup.ui.screens.editor.form.field.Permissions
 import app.zimly.backup.ui.screens.editor.steps.ValueStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +90,7 @@ class EditorViewModel(
         }
     }
 
-    // TODO: Split per usecase: DownloadTargetStep vs UploadSourceStep
+    // TODO: Split per usecase: Documents vs Media.
     val contentStore = object : ValueStore<ContentState> {
         override fun persist(value: ContentState, callback: (Boolean) -> Unit) {
             draft.update {
@@ -211,12 +212,6 @@ class EditorViewModel(
         val contentUri: String,
         val permissions: Permissions
     )
-
-    // Document Permissions are granted upon persisting the draft to the DB, hence there's a pending state.
-    // Media Permissions are granted app scoped.
-    enum class Permissions {
-        GRANTED, DENIED, PENDING //, PERSISTED?
-    }
 
     companion object {
         val TAG: String? = EditorViewModel::class.simpleName
