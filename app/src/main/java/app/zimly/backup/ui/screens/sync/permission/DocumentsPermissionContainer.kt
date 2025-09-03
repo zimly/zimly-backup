@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.onClick
@@ -46,17 +47,21 @@ class DocumentsPermissionViewModel(
     private val contentResolver: ContentResolver,
     private val targetUri: Uri,
     private val writePermission: Boolean
-) : ViewModel() {
+) : ViewModel(), DocumentsPermissionVMContract {
 
     private val _showWarning: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showWarning: StateFlow<Boolean> = _showWarning.asStateFlow()
+    override val showWarning: StateFlow<Boolean> = _showWarning.asStateFlow()
 
     init {
         updateState()
     }
 
     fun updateState() {
-        _showWarning.value = !DocumentsPermissionService.permissionGranted(contentResolver, targetUri, writePermission)
+        _showWarning.value = !DocumentsPermissionService.permissionGranted(
+            contentResolver,
+            targetUri,
+            writePermission
+        )
     }
 
     companion object {
@@ -80,19 +85,24 @@ fun DocumentsPermissionContainer(
     edit: () -> Unit,
     folderPath: String,
     writePermission: Boolean,
-    viewModel: DocumentsPermissionViewModel = viewModel(
+    // Downcasting the VM to the Contract :thinking_face:
+    viewModel: DocumentsPermissionVMContract = viewModel<DocumentsPermissionViewModel>(
         factory = DocumentsPermissionViewModel.Factory,
         extras = MutableCreationExtras().apply {
             set(APPLICATION_KEY, LocalContext.current.applicationContext as Application)
             set(DocumentsPermissionViewModel.FOLDER_URI, folderPath.toUri())
             set(DocumentsPermissionViewModel.WRITE_PERMISSION, writePermission)
-        })
+        }) as DocumentsPermissionVMContract
 ) {
 
     val showWarning by viewModel.showWarning.collectAsStateWithLifecycle()
     if (showWarning)
         PermissionWarning { edit() }
 
+}
+
+interface DocumentsPermissionVMContract {
+    val showWarning: StateFlow<Boolean>
 }
 
 @Composable
@@ -131,12 +141,14 @@ private fun PermissionWarning(onClick: () -> Unit) {
                 contentPadding = PaddingValues(
                     horizontal = 16.dp,
                 ), // Reset padding
-                modifier = Modifier.semantics {
-                    onClick(
-                        label = "Update Folder Permissions",
-                        null
-                    )
-                },
+                modifier = Modifier
+                    .testTag("update-button")
+                    .semantics {
+                        onClick(
+                            label = "Update Folder Permissions",
+                            null
+                        )
+                    },
             ) {
                 Text(text = "Update")
             }
