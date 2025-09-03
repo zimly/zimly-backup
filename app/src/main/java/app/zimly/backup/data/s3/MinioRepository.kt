@@ -71,7 +71,7 @@ class MinioRepository(
      *
      */
     private fun mc(uploadProgressTracker: ProgressTracker? = null): MinioAsyncClient {
-        return try {
+        try {
             val client = MinioAsyncClient.builder()
                 .httpClient(client(uploadProgressTracker))
                 .endpoint(url)
