@@ -26,6 +26,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -133,8 +135,9 @@ fun DocumentsFolderSelector(
     val select: (folder: Uri?) -> Unit = { if (it != null) folderField.update(UriPermission(it, Permissions.PENDING)) else folderField.update(
         UriPermission()) }
     val focus: () -> Unit = { folderField.touch() }
-    val folder = folderField.state.collectAsState()
-    val folderSelected = folder.value.value != Uri.EMPTY
+    val folderState by folderField.state.collectAsState()
+    val folderUri = folderState.value.uri
+    val folderSelected = folderUri != Uri.EMPTY
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
@@ -142,8 +145,9 @@ fun DocumentsFolderSelector(
         }
 
     if (folderSelected) {
-        // TODO state
-        val displayName = UriField.displayName(folder.value.value.uri)
+        val displayName = remember(folderUri) {
+            UriField.displayName(folderUri)
+        }
         OutlinedCard {
             Row(
                 modifier = Modifier

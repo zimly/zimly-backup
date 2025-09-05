@@ -91,6 +91,7 @@ class EditorViewModel(
     }
 
     // TODO: Split per usecase: Documents vs Media.
+    // Permissions are not used in case of Media. They're handled in [MediaPermissionContainer] standalone.
     val contentStore = object : ValueStore<ContentState> {
         override fun persist(value: ContentState, callback: (Boolean) -> Unit) {
             draft.update {

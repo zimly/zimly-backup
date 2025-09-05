@@ -43,7 +43,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class DocumentsPermissionViewModel(
+private class DocumentsPermissionViewModel(
     private val contentResolver: ContentResolver,
     private val targetUri: Uri,
     private val writePermission: Boolean
