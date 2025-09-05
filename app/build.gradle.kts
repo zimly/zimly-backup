@@ -17,7 +17,7 @@ android {
         namespace = "app.zimly.backup"
         minSdk = 29
         targetSdk = 36
-        versionCode = 91
+        versionCode = 92
         versionName = "3.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
