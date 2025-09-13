@@ -69,7 +69,6 @@ class DownloadTargetViewModel(private val store: ValueStore<EditorViewModel.Cont
     companion object {
         val TAG: String? = DownloadTargetViewModel::class.simpleName
 
-        // Optional remote ID
         val VALUE_STORE_KEY = object : CreationExtras.Key<ValueStore<EditorViewModel.ContentState>> {}
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {

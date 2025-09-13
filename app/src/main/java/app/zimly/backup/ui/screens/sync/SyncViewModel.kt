@@ -22,8 +22,8 @@ import androidx.work.WorkManager
 import androidx.work.WorkQuery
 import androidx.work.workDataOf
 import app.zimly.backup.data.db.ZimlyDatabase
-import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncDao
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.permission.DocumentsPermissionService
 import app.zimly.backup.permission.MediaPermissionService
@@ -55,8 +55,8 @@ import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SyncViewModel(
-    private val dao: RemoteDao,
-    private val remoteId: Int,
+    private val dao: SyncDao,
+    private val syncProfileId: Int,
     private val workManager: WorkManager,
     private val contentResolver: ContentResolver,
     private val mediaPermissionService: MediaPermissionService
@@ -66,23 +66,22 @@ class SyncViewModel(
     companion object {
         val TAG: String? = SyncViewModel::class.simpleName
 
-        // Optional remote ID
-        val REMOTE_ID_KEY = object : CreationExtras.Key<Int> {}
+        val SYNC_PROFILE_ID_KEY = object : CreationExtras.Key<Int> {}
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
-                val remoteId = checkNotNull(this[REMOTE_ID_KEY])
+                val syncProfileId = checkNotNull(this[SYNC_PROFILE_ID_KEY])
                 val workManager = WorkManager.getInstance(application.applicationContext)
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
-                val remoteDao = db.remoteDao()
+                val syncDao = db.syncDao()
                 val mediaPermissionService = MediaPermissionService(
                     application.applicationContext,
                     application.packageName
                 )
                 SyncViewModel(
-                    remoteDao,
-                    remoteId,
+                    syncDao,
+                    syncProfileId,
                     workManager,
                     application.contentResolver,
                     mediaPermissionService
@@ -116,12 +115,12 @@ class SyncViewModel(
 
     // This identifier is used to identify already running sync instances and prevent simultaneous
     // sync-executions.
-    private var uniqueWorkIdentifier = "sync_${remoteId}"
+    private var uniqueWorkIdentifier = "sync_${syncProfileId}"
 
-    var syncConfigurationState: Flow<SyncConfigurationState> = snapshotFlow { remoteId }
+    var syncProfileState: Flow<SyncProfileState> = snapshotFlow { syncProfileId }
         .map { dao.loadById(it) }
         .map {
-            SyncConfigurationState(
+            SyncProfileState(
                 name = it.name,
                 url = it.url,
                 bucket = it.bucket,
@@ -172,18 +171,18 @@ class SyncViewModel(
     val syncInProgress = _syncInProgress.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // TODO update this, when permissions change.
-    private val _permissionsGranted = syncConfigurationState
+    private val _permissionsGranted = syncProfileState
         .map { permissionsGranted(it) }
 
     val permissionsGranted: StateFlow<Boolean> =
         _permissionsGranted.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    private fun permissionsGranted(remote: SyncConfigurationState): Boolean {
-        return when (remote.contentType) {
+    private fun permissionsGranted(syncProfile: SyncProfileState): Boolean {
+        return when (syncProfile.contentType) {
             ContentType.MEDIA -> mediaPermissionService.permissionsGranted()
             ContentType.FOLDER -> {
-                val writePermission = remote.direction == SyncDirection.DOWNLOAD
-                val uri = remote.contentUri.toUri()
+                val writePermission = syncProfile.direction == SyncDirection.DOWNLOAD
+                val uri = syncProfile.contentUri.toUri()
                 DocumentsPermissionService.permissionGranted(contentResolver, uri, writePermission)
             }
         }
@@ -206,9 +205,9 @@ class SyncViewModel(
             )
         }
         try {
-            val remote = dao.loadById(remoteId)
+            val syncProfile = dao.loadById(syncProfileId)
 
-            val syncService = SyncService.get(context, remote)
+            val syncService = SyncService.get(context, syncProfile)
 
             val diff = syncService.calculateDiff()
             // Display result of the minio request to the user
@@ -323,7 +322,7 @@ class SyncViewModel(
                 status = Status.CALCULATING
             )
         }
-        val data = workDataOf(SyncInputs.REMOTE_CONFIGURATION_ID to remoteId)
+        val data = workDataOf(SyncInputs.SYNC_PROFILE_ID to syncProfileId)
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
@@ -356,7 +355,7 @@ class SyncViewModel(
         _error.emit(errorMessage)
     }
 
-    data class SyncConfigurationState(
+    data class SyncProfileState(
         var name: String,
         var url: String,
         var bucket: String,

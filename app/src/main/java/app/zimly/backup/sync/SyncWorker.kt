@@ -86,21 +86,21 @@ class SyncWorker(
         suspend fun initSyncService(context: Context, inputData: Data): SyncService {
 
             val db = ZimlyDatabase.getInstance(context.applicationContext)
-            val dao = db.remoteDao()
+            val dao = db.syncDao()
 
-            val remoteId = inputData.getInt(SyncInputs.REMOTE_CONFIGURATION_ID, -1)
-            if (remoteId == -1) {
-                throw IllegalArgumentException("Remote configuration cannot be loaded, no ID passed.")
+            val syncProfileId = inputData.getInt(SyncInputs.SYNC_PROFILE_ID, -1)
+            if (syncProfileId == -1) {
+                throw IllegalArgumentException("Sync Profile configuration cannot be loaded, no ID passed.")
             }
-            val remote = dao.loadById(remoteId)
+            val syncProfile = dao.loadById(syncProfileId)
 
-            return SyncService.get(context, remote)
+            return SyncService.get(context, syncProfile)
         }
     }
 }
 
 object SyncInputs {
-    const val REMOTE_CONFIGURATION_ID = "remote_id"
+    const val SYNC_PROFILE_ID = "sync_profile_id"
 }
 
 object SyncOutputs {

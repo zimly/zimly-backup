@@ -1,7 +1,7 @@
 package app.zimly.backup.ui.screens.editor.form
 
 import android.webkit.URLUtil
-import app.zimly.backup.data.db.remote.Remote
+import app.zimly.backup.data.db.sync.SyncProfile
 import app.zimly.backup.ui.screens.editor.form.field.BooleanField
 import app.zimly.backup.ui.screens.editor.form.field.Field
 import app.zimly.backup.ui.screens.editor.form.field.RegionField
@@ -73,14 +73,14 @@ class BucketForm : Form {
         virtualHostedStyle.update(bucketConfiguration.virtualHostedStyle)
     }
 
-    fun populate(remote: Remote) {
-        name.update(remote.name)
-        url.update(remote.url)
-        key.update(remote.key)
-        secret.update(remote.secret)
-        bucket.update(remote.bucket)
-        region.update(remote.region)
-        virtualHostedStyle.update(remote.virtualHostedStyle)
+    fun populate(syncProfile: SyncProfile) {
+        name.update(syncProfile.name)
+        url.update(syncProfile.url)
+        key.update(syncProfile.key)
+        secret.update(syncProfile.secret)
+        bucket.update(syncProfile.bucket)
+        region.update(syncProfile.region)
+        virtualHostedStyle.update(syncProfile.virtualHostedStyle)
     }
 
     fun values(): BucketConfiguration {

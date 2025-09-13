@@ -2,8 +2,8 @@ package app.zimly.backup.sync
 
 import android.content.Context
 import androidx.core.net.toUri
-import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncProfile
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.data.media.LocalMediaResolverImpl
@@ -16,22 +16,22 @@ interface SyncService {
 
     companion object {
         /**
-         * Provides the [SyncService] based on [Remote] configuration and profile.
+         * Provides the [SyncService] based on [SyncProfile].
          */
-        fun get(context: Context, remote: Remote): SyncService {
+        fun get(context: Context, syncProfile: SyncProfile): SyncService {
 
             val s3Repository =
-                MinioRepository(remote.url, remote.key, remote.secret, remote.bucket, remote.region, remote.virtualHostedStyle)
+                MinioRepository(syncProfile.url, syncProfile.key, syncProfile.secret, syncProfile.bucket, syncProfile.region, syncProfile.virtualHostedStyle)
 
-            return when (remote.contentType) {
+            return when (syncProfile.contentType) {
                 ContentType.MEDIA -> {
-                    val contentResolver = LocalMediaResolverImpl(context, remote.contentUri)
+                    val contentResolver = LocalMediaResolverImpl(context, syncProfile.contentUri)
                     UploadSyncService(s3Repository, contentResolver)
                 }
 
                 ContentType.FOLDER -> {
-                    val contentResolver = LocalDocumentsResolver(context, remote.contentUri.toUri())
-                    when (remote.direction) {
+                    val contentResolver = LocalDocumentsResolver(context, syncProfile.contentUri.toUri())
+                    when (syncProfile.direction) {
                         SyncDirection.UPLOAD -> UploadSyncService(s3Repository, contentResolver)
                         SyncDirection.DOWNLOAD -> DownloadSyncService(
                             s3Repository,

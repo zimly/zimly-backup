@@ -69,7 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.screens.sync.battery.BatterySaverContainer
 import app.zimly.backup.ui.screens.sync.permission.DocumentsPermissionContainer
@@ -80,18 +80,18 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SyncScreen(
-    remoteId: Int,
+    syncProfileId: Int,
     edit: (SyncDirection?, Int) -> Unit,
     back: () -> Unit,
     viewModel: SyncViewModel = viewModel(
         factory = SyncViewModel.Factory,
         extras = MutableCreationExtras().apply {
             set(APPLICATION_KEY, LocalContext.current.applicationContext as Application)
-            set(SyncViewModel.REMOTE_ID_KEY, remoteId)
+            set(SyncViewModel.SYNC_PROFILE_ID_KEY, syncProfileId)
         })
 ) {
 
-    val syncConfigurationState by viewModel.syncConfigurationState.collectAsStateWithLifecycle(null)
+    val syncConfigurationState by viewModel.syncProfileState.collectAsStateWithLifecycle(null)
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
     val permissionsGranted by viewModel.permissionsGranted.collectAsStateWithLifecycle()
@@ -124,7 +124,7 @@ fun SyncScreen(
                 }
             },
             cancelSync = { viewModel.cancelSync() },
-            edit = { edit(syncConfiguration.direction, remoteId) },
+            edit = { edit(syncConfiguration.direction, syncProfileId) },
             back,
             clearError = { viewModel.viewModelScope.launch { viewModel.clearError() } },
         ) {
@@ -151,7 +151,7 @@ fun SyncScreen(
                             ContentType.FOLDER -> {
                                 val direction = syncConfiguration.direction
                                 val writePermissions = direction == SyncDirection.DOWNLOAD
-                                DocumentsPermissionContainer({ edit(direction, remoteId) }, syncConfiguration.contentUri, writePermissions)
+                                DocumentsPermissionContainer({ edit(direction, syncProfileId) }, syncConfiguration.contentUri, writePermissions)
                             }
                         }
                         BatterySaverContainer()
@@ -165,7 +165,7 @@ fun SyncScreen(
 
 @Composable
 fun SyncOverview(
-    remote: SyncViewModel.SyncConfigurationState,
+    syncProfile: SyncViewModel.SyncProfileState,
     progress: SyncViewModel.Progress,
     enableActions: Boolean,
     createDiff: () -> Unit,
@@ -174,9 +174,9 @@ fun SyncOverview(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-        Bucket(remote)
+        Bucket(syncProfile)
         sourceContainer()
-        DiffDetails(progress, enableActions, createDiff, remote.direction)
+        DiffDetails(progress, enableActions, createDiff, syncProfile.direction)
 
     }
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -189,7 +189,7 @@ fun SyncOverview(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyncLayout(
-    syncConfiguration: SyncViewModel.SyncConfigurationState,
+    syncConfiguration: SyncViewModel.SyncProfileState,
     error: String?,
     enableActions: Boolean,
     syncInProgress: Boolean,
@@ -242,7 +242,7 @@ fun SyncLayout(
                     IconButton(onClick = { edit() }) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
-                            contentDescription = "Edit Remote"
+                            contentDescription = "Edit Profile"
                         )
                     }
 
@@ -304,8 +304,8 @@ fun SyncLayout(
 }
 
 @Composable
-private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
-    val cardDescription = when (remote.direction) {
+private fun Bucket(syncProfile: SyncViewModel.SyncProfileState) {
+    val cardDescription = when (syncProfile.direction) {
         SyncDirection.UPLOAD -> "S3 Upload Target"
         SyncDirection.DOWNLOAD -> "S3 Download Source"
     }
@@ -318,13 +318,13 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
             }
     ) {
         Box(contentAlignment = Alignment.TopEnd, modifier = Modifier.fillMaxWidth()) {
-            val icon = when(remote.direction) {
+            val icon = when(syncProfile.direction) {
                 SyncDirection.UPLOAD -> Icons.Outlined.CloudUpload
                 SyncDirection.DOWNLOAD -> Icons.Outlined.CloudDownload
             }
             Icon(
                 icon,
-                "Remote",
+                "Sync Profile",
                 modifier = Modifier
                     .semantics { hideFromAccessibility() }
                     .padding(top = 8.dp, end = 8.dp)
@@ -338,9 +338,9 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "URL", textAlign = TextAlign.Left)
-                Text(remote.url, textAlign = TextAlign.Right)
+                Text(syncProfile.url, textAlign = TextAlign.Right)
             }
-            remote.region?.let {
+            syncProfile.region?.let {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -348,7 +348,7 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(text = "Region", textAlign = TextAlign.Left)
-                    Text(remote.region!!)
+                    Text(syncProfile.region!!)
                 }
             }
 
@@ -359,7 +359,7 @@ private fun Bucket(remote: SyncViewModel.SyncConfigurationState) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = "Bucket", textAlign = TextAlign.Left)
-                Text(remote.bucket)
+                Text(syncProfile.bucket)
             }
 
         }

@@ -62,7 +62,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -72,10 +72,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun StartScreen(
     viewModel: StartViewModel = viewModel(factory = StartViewModel.Factory),
-    syncRemote: (Int, SyncDirection) -> Unit,
-    addRemote: () -> Unit,
+    openSyncProfile: (Int, SyncDirection) -> Unit,
+    addSyncProfile: () -> Unit,
 ) {
-    val remotes by viewModel.remotesState.collectAsState(initial = emptyList())
+    val syncProfiles by viewModel.syncProfilesState.collectAsState(initial = emptyList())
     val numSelected by viewModel.numSelected().collectAsState(0)
 
     val notification by viewModel.notificationState.collectAsState()
@@ -86,16 +86,16 @@ fun StartScreen(
         snackbarState,
         notification,
         clearMessage = { viewModel.clearMessage() },
-        addRemote = addRemote,
+        addSyncProfile = addSyncProfile,
         numSelected,
         back = { viewModel.resetSelect() },
         copy = { viewModel.viewModelScope.launch { viewModel.copy() } },
         delete = { viewModel.viewModelScope.launch { viewModel.delete() } },
     ) { innerPadding ->
-        if (remotes.isEmpty()) {
+        if (syncProfiles.isEmpty()) {
             GetStarted(innerPadding)
         }
-        RemoteList(innerPadding, remotes, numSelected, { viewModel.select(it) }, syncRemote)
+        SyncProfileList(innerPadding, syncProfiles, numSelected, { viewModel.select(it) }, openSyncProfile)
     }
 }
 
@@ -105,7 +105,7 @@ private fun StartLayout(
     snackbarState: SnackbarHostState,
     notification: String?,
     clearMessage: () -> Unit,
-    addRemote: () -> Unit,
+    addSyncProfile: () -> Unit,
     numSelected: Int,
     back: () -> Unit,
     copy: () -> Unit,
@@ -157,13 +157,13 @@ private fun StartLayout(
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.CopyAll,
-                                contentDescription = "Copy Selected Remotes"
+                                contentDescription = "Copy Selected Profiles"
                             )
                         }
                         IconButton(onClick = { delete() }) {
                             Icon(
                                 imageVector = Icons.Filled.Delete,
-                                contentDescription = "Delete Selected Remotes"
+                                contentDescription = "Delete Selected Profiles"
                             )
                         }
                     }
@@ -183,9 +183,9 @@ private fun StartLayout(
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                addRemote()
+                addSyncProfile()
             }) {
-                Icon(Icons.Filled.Add, "Add Remote")
+                Icon(Icons.Filled.Add, "Add Sync Profile")
             }
         },
         snackbarHost = {
@@ -198,12 +198,12 @@ private fun StartLayout(
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-private fun RemoteList(
+private fun SyncProfileList(
     innerPadding: PaddingValues,
-    remotes: List<RemoteItemState>,
+    syncProfiles: List<SyncProfileState>,
     numSelected: Int,
     select: (Int) -> Unit,
-    syncRemote: (Int, SyncDirection) -> Unit
+    doSync: (Int, SyncDirection) -> Unit
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -211,21 +211,21 @@ private fun RemoteList(
             .padding(innerPadding)
             .fillMaxWidth()
     ) {
-        items(remotes) { remote ->
-            RemoteItemCard(remote, numSelected > 0, select, syncRemote)
+        items(syncProfiles) { syncProfile ->
+            SyncProfileListItem(syncProfile, numSelected > 0, select, doSync)
         }
     }
 }
 
 @Composable
-private fun RemoteItemCard(
-    remote: RemoteItemState,
+private fun SyncProfileListItem(
+    syncProfile: SyncProfileState,
     selectMode: Boolean,
     select: (Int) -> Unit,
-    syncRemote: (Int, SyncDirection) -> Unit
+    doSync: (Int, SyncDirection) -> Unit
 ) {
     Card(
-        border = if (remote.selected) BorderStroke(
+        border = if (syncProfile.selected) BorderStroke(
             2.dp, MaterialTheme.colorScheme.secondary
         ) else null
     ) {
@@ -233,19 +233,19 @@ private fun RemoteItemCard(
             modifier = Modifier
                 .combinedClickable(
                     onClick = {
-                        if (selectMode) select(remote.uid) else syncRemote(
-                            remote.uid, remote.direction
+                        if (selectMode) select(syncProfile.uid) else doSync(
+                            syncProfile.uid, syncProfile.direction
                         )
                     },
-                    onLongClick = { select(remote.uid) })
+                    onLongClick = { select(syncProfile.uid) })
                 .semantics {
                     onClick("Open configuration", null)
                     onLongClick("Copy or Delete configurations", null)
                 },
-            headlineContent = { Text(remote.name) },
+            headlineContent = { Text(syncProfile.name) },
             supportingContent = {
                 Text(
-                    remote.url,
+                    syncProfile.url,
                     // https://issuetracker.google.com/issues/305342674
                     // no-wrap as workaround.
                     maxLines = 1,
@@ -253,8 +253,8 @@ private fun RemoteItemCard(
                 )
             },
             trailingContent = {
-                val icon = when (remote.direction) {
-                    SyncDirection.UPLOAD -> when (remote.contentType) {
+                val icon = when (syncProfile.direction) {
+                    SyncDirection.UPLOAD -> when (syncProfile.contentType) {
                         ContentType.MEDIA -> Icons.Outlined.Image
                         ContentType.FOLDER -> Icons.Outlined.Folder
                     }
@@ -263,7 +263,7 @@ private fun RemoteItemCard(
                 }
                 Icon(
                     icon,
-                    "${remote.contentType} ${remote.direction} configuration",
+                    "${syncProfile.contentType} ${syncProfile.direction} configuration",
                 )
             },
             colors = ListItemDefaults.colors(containerColor = containerBackground())
@@ -300,8 +300,8 @@ private fun GetStarted(innerPadding: PaddingValues) {
 @Composable
 fun DefaultPreview() {
     ZimzyncTheme {
-        val remotes = generateSequence(0) { it + 1 }.take(10).map {
-            RemoteItemState(
+        val syncProfiles = generateSequence(0) { it + 1 }.take(10).map {
+            SyncProfileState(
                 uid = it,
                 name = "test $it",
                 url = if (it % 3 == 0) "https://blob.rawbot.zone/$it/very-long-url-that-should-wrap-or-so " else "https://blob.rawbot.zone/$it",
@@ -318,21 +318,21 @@ fun DefaultPreview() {
             snackbarState,
             notification,
             clearMessage = { },
-            addRemote = { },
+            addSyncProfile = { },
             numSelected,
             back = { },
             copy = { },
             delete = { },
         ) { innerPadding ->
-            if (remotes.isEmpty()) {
+            if (syncProfiles.isEmpty()) {
                 GetStarted(innerPadding)
             }
-            RemoteList(innerPadding, remotes, numSelected, { }, { _, _ -> })
+            SyncProfileList(innerPadding, syncProfiles, numSelected, { }, { _, _ -> })
         }
     }
 }
 
-data class RemoteItemState(
+data class SyncProfileState(
     val uid: Int,
     val name: String,
     val url: String,

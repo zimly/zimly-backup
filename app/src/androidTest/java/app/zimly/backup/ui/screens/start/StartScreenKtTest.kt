@@ -12,8 +12,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import app.zimly.backup.data.db.ZimlyDatabase
-import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncProfile
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -32,7 +32,7 @@ class StartScreenKtTest {
             context, ZimlyDatabase::class.java
         ).build()
 
-        val dao = db.remoteDao()
+        val dao = db.syncDao()
 
         composeTestRule.setContent {
             StartScreen(viewModel = StartViewModel(dao), { _, _ -> }, {})
@@ -49,11 +49,11 @@ class StartScreenKtTest {
             context, ZimlyDatabase::class.java
         ).build()
 
-        val dao = db.remoteDao()
+        val dao = db.syncDao()
 
         runBlocking {
             dao.insert(
-                Remote(
+                SyncProfile(
                     null,
                     "Test 1",
                     "https://zimly.cloud",
@@ -85,11 +85,11 @@ class StartScreenKtTest {
             context, ZimlyDatabase::class.java
         ).build()
 
-        val dao = db.remoteDao()
+        val dao = db.syncDao()
 
         runBlocking {
             dao.insert(
-                Remote(
+                SyncProfile(
                     null,
                     "Test 1",
                     "https://zimly.cloud",

@@ -6,23 +6,23 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.db.ZimlyDatabase
-import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.sync.SyncProfile
+import app.zimly.backup.data.db.sync.SyncDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
-class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
+class StartViewModel(private val dataStore: SyncDao) : ViewModel() {
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = checkNotNull(this[APPLICATION_KEY])
                 val db = ZimlyDatabase.getInstance(application.applicationContext)
-                val remoteDao = db.remoteDao()
-                StartViewModel(remoteDao)
+                val syncDao = db.syncDao()
+                StartViewModel(syncDao)
             }
         }
     }
@@ -31,21 +31,21 @@ class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
     // This needs to be a flow of List, not a flow of selected item. Think about it.
     private val _selectedState = MutableStateFlow(emptyList<Int>())
 
-    private val _remotes = dataStore.getAll()
-    // Combines remotes from DB with the selected state into a specialized
-    // list of RemoteItemState data objects
-    val remotesState = combine(_remotes, _selectedState)
-    { remotes, sel -> remotes.map { RemoteItemState(it.uid!!, it.name, it.url, it.contentType, it.direction, sel.contains(it.uid)) } }
+    private val _syncProfiles = dataStore.getAll()
+    // Combines syncProfiles from DB with the selected state into a specialized
+    // list of SyncProfileState data objects
+    val syncProfilesState = combine(_syncProfiles, _selectedState)
+    { syncProfiles, sel -> syncProfiles.map { SyncProfileState(it.uid!!, it.name, it.url, it.contentType, it.direction, sel.contains(it.uid)) } }
 
     // Notification displayed in the SnackBar upon successful copy/delete operations.
     private val _notification = MutableStateFlow<String?>(null)
     val notificationState = _notification.asStateFlow()
 
-    fun select(remoteId: Int) {
-        if (selected.contains(remoteId)) {
-            selected.remove(remoteId)
+    fun select(syncProfileId: Int) {
+        if (selected.contains(syncProfileId)) {
+            selected.remove(syncProfileId)
         } else {
-            selected.add(remoteId)
+            selected.add(syncProfileId)
         }
         // Trigger state update
         _selectedState.value = selected.toList()
@@ -70,7 +70,7 @@ class StartViewModel(private val dataStore: RemoteDao) : ViewModel() {
     suspend fun copy() {
         selected.forEach {
             val sel = dataStore.loadById(it)
-            val copy = Remote(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, sel.virtualHostedStyle, sel.contentType, sel.contentUri, sel.direction)
+            val copy = SyncProfile(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, sel.virtualHostedStyle, sel.contentType, sel.contentUri, sel.direction)
 
             dataStore.insert(copy)
         }

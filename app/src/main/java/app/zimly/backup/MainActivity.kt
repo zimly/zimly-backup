@@ -15,7 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.ui.screens.editor.editorViewModel
 import app.zimly.backup.ui.screens.editor.steps.BucketConfigurationStep
@@ -28,7 +28,7 @@ import app.zimly.backup.ui.screens.sync.SyncScreen
 import app.zimly.backup.ui.theme.ZimzyncTheme
 
 
-private const val REMOTES_LIST = "remotes-list"
+private const val SYNC_PROFILES = "sync-profiles"
 
 class MainActivity : ComponentActivity() {
 
@@ -61,20 +61,20 @@ class MainActivity : ComponentActivity() {
         var permissionRequest by remember { mutableStateOf(!grantedPermissions) }
         val navController = rememberNavController()
 
-        NavHost(navController, startDestination = REMOTES_LIST) {
+        NavHost(navController, startDestination = SYNC_PROFILES) {
 
-            composable(REMOTES_LIST) {
+            composable(SYNC_PROFILES) {
                 if (permissionRequest) {
                     PermissionRequestScreen({ permissionRequest = false })
                 }
                 StartScreen(
-                    syncRemote = { remoteId, direction ->
+                    openSyncProfile = { syncProfileId, direction ->
                         when (direction) {
-                            SyncDirection.UPLOAD -> navController.navigate("upload-sync?remoteId=$remoteId")
-                            SyncDirection.DOWNLOAD -> navController.navigate("download-sync?remoteId=$remoteId")
+                            SyncDirection.UPLOAD -> navController.navigate("upload-sync?syncProfileId=$syncProfileId")
+                            SyncDirection.DOWNLOAD -> navController.navigate("download-sync?syncProfileId=$syncProfileId")
                         }
                     },
-                    addRemote = { navController.navigate("wizard") })
+                    addSyncProfile = { navController.navigate("wizard") })
             }
 
             navigation(
@@ -101,13 +101,13 @@ class MainActivity : ComponentActivity() {
                     arguments = listOf(navArgument("id") { nullable = true })
                 ) { backStackEntry ->
 
-                    val remoteId = backStackEntry.arguments?.getString("id")?.toInt()
+                    val syncProfileId = backStackEntry.arguments?.getString("id")?.toInt()
 
-                    val vm = navController.editorViewModel(remoteId)
+                    val vm = navController.editorViewModel(syncProfileId)
 
                     UploadSourceStep(
                         store = vm.contentStore,
-                        nextStep = { navController.navigate("wizard/bucket?id=${remoteId}") },
+                        nextStep = { navController.navigate("wizard/bucket?id=${syncProfileId}") },
                         previousStep = { navController.popBackStack() }
                     )
                 }
@@ -116,12 +116,12 @@ class MainActivity : ComponentActivity() {
                     arguments = listOf(navArgument("id") { nullable = true })
                 ) { backStackEntry ->
 
-                    val remoteId = backStackEntry.arguments?.getString("id")?.toInt()
+                    val syncProfileId = backStackEntry.arguments?.getString("id")?.toInt()
 
-                    val vm = navController.editorViewModel(remoteId)
+                    val vm = navController.editorViewModel(syncProfileId)
                     DownloadTargetStep(
                         store = vm.contentStore,
-                        nextStep = { navController.navigate("wizard/bucket?id=${remoteId}") },
+                        nextStep = { navController.navigate("wizard/bucket?id=${syncProfileId}") },
                         previousStep = { navController.popBackStack() }
                     )
                 }
@@ -129,31 +129,31 @@ class MainActivity : ComponentActivity() {
                     route = "wizard/bucket?id={id}",
                     arguments = listOf(navArgument("id") { nullable = true })
                 ) { backStackEntry ->
-                    val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                    val syncProfileId = backStackEntry.arguments?.getString("syncProfileId")?.toInt()
 
-                    val vm = navController.editorViewModel(remoteId)
+                    val vm = navController.editorViewModel(syncProfileId)
                     BucketConfigurationStep(
                         store = vm.bucketStore,
                         vm,
-                        nextStep = { navController.popBackStack(REMOTES_LIST, inclusive = false) },
+                        nextStep = { navController.popBackStack(SYNC_PROFILES, inclusive = false) },
                         previousStep = { navController.popBackStack() },
                     )
                 }
             }
 
             composable(
-                "upload-sync?remoteId={remoteId}",
-                arguments = listOf(navArgument("remoteId") { nullable = false })
+                "upload-sync?syncProfileId={syncProfileId}",
+                arguments = listOf(navArgument("syncProfileId") { nullable = false })
             ) { backStackEntry ->
-                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                val syncProfileId = backStackEntry.arguments?.getString("syncProfileId")?.toInt()
 
-                remoteId?.let {
+                syncProfileId?.let {
                     SyncScreen(
-                        remoteId,
-                        edit = { direction, remoteId ->
+                        syncProfileId,
+                        edit = { direction, syncProfileId ->
                             when (direction) {
-                                SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
-                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=${remoteId}")
+                                SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${syncProfileId}")
+                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=${syncProfileId}")
                                 null -> {} // Might not have loaded in time
                             }
                         },
@@ -162,18 +162,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
             composable(
-                "download-sync?remoteId={remoteId}",
-                arguments = listOf(navArgument("remoteId") { nullable = false })
+                "download-sync?syncProfileId={syncProfileId}",
+                arguments = listOf(navArgument("syncProfileId") { nullable = false })
             ) { backStackEntry ->
-                val remoteId = backStackEntry.arguments?.getString("remoteId")?.toInt()
+                val syncProfileId = backStackEntry.arguments?.getString("syncProfileId")?.toInt()
 
-                remoteId?.let {
+                syncProfileId?.let {
                     SyncScreen(
-                        remoteId,
-                        edit = { direction, remoteId ->
+                        syncProfileId,
+                        edit = { direction, syncProfileId ->
                             when (direction) {
-                                SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${remoteId}")
-                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=${remoteId}")
+                                SyncDirection.UPLOAD -> navController.navigate("wizard/upload?id=${syncProfileId}")
+                                SyncDirection.DOWNLOAD -> navController.navigate("wizard/download?id=${syncProfileId}")
                                 null -> {} // Might not have loaded in time
                             }
                         },

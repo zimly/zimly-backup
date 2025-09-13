@@ -5,9 +5,9 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.zimly.backup.data.db.ZimlyDatabase
-import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncProfile
+import app.zimly.backup.data.db.sync.SyncDao
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -22,7 +22,7 @@ import java.io.IOException
 @RunWith(AndroidJUnit4::class)
 class StartViewModelTest {
     private lateinit var db: ZimlyDatabase
-    private lateinit var dao: RemoteDao
+    private lateinit var dao: SyncDao
     private lateinit var viewModel: StartViewModel
 
     @Before
@@ -32,12 +32,12 @@ class StartViewModelTest {
             context, ZimlyDatabase::class.java
         ).build()
 
-        this.dao = db.remoteDao()
+        this.dao = db.syncDao()
         this.viewModel = StartViewModel(dao)
 
         runBlocking {
             dao.insert(
-                Remote(
+                SyncProfile(
                     null,
                     "Test 1",
                     "https://zimly.cloud",
@@ -52,7 +52,7 @@ class StartViewModelTest {
                 )
             )
             dao.insert(
-                Remote(
+                SyncProfile(
                     null,
                     "Test 2",
                     "https://zimly.cloud",
@@ -72,13 +72,13 @@ class StartViewModelTest {
     @Test
     fun copy() {
         // GIVEN
-        val remotes = runBlocking {
+        val syncProfiles = runBlocking {
             dao.getAll().first()
         }
-        assertThat(remotes.size, `is`(2))
+        assertThat(syncProfiles.size, `is`(2))
 
         // WHEN
-        viewModel.select(remotes[0].uid!!.toInt())
+        viewModel.select(syncProfiles[0].uid!!.toInt())
         runBlocking {
             viewModel.copy()
         }
@@ -92,13 +92,13 @@ class StartViewModelTest {
     @Test
     fun delete() {
         // GIVEN
-        val remotes = runBlocking {
+        val syncProfiles = runBlocking {
             dao.getAll().first()
         }
-        assertThat(remotes.size, `is`(2))
+        assertThat(syncProfiles.size, `is`(2))
 
         // WHEN
-        viewModel.select(remotes[0].uid!!.toInt())
+        viewModel.select(syncProfiles[0].uid!!.toInt())
         runBlocking {
             viewModel.delete()
         }

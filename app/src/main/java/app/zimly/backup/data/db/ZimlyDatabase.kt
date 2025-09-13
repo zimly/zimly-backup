@@ -3,18 +3,20 @@ package app.zimly.backup.data.db
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteTable
 import androidx.room.RenameColumn
+import androidx.room.RenameTable
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.AutoMigrationSpec
 import app.zimly.backup.data.db.notification.Notification
 import app.zimly.backup.data.db.notification.NotificationDao
-import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.db.remote.RemoteDao
+import app.zimly.backup.data.db.sync.SyncProfile
+import app.zimly.backup.data.db.sync.SyncDao
 
 @Database(
-    entities = [Remote::class, Notification::class],
-    version = 7,
+    entities = [SyncProfile::class, Notification::class],
+    version = 8,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = ZimlyDatabase.V3Migration::class),
@@ -22,10 +24,11 @@ import app.zimly.backup.data.db.remote.RemoteDao
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 5, to = 6, spec = ZimlyDatabase.V6Migration::class),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8, spec = ZimlyDatabase.V8Migration::class),
     ]
 )
 abstract class ZimlyDatabase : RoomDatabase() {
-    abstract fun remoteDao(): RemoteDao
+    abstract fun syncDao(): SyncDao
     abstract fun notificationDao(): NotificationDao
 
     @RenameColumn(tableName = "Remote", fromColumnName = "folder", toColumnName = "source_uri")
@@ -34,6 +37,10 @@ abstract class ZimlyDatabase : RoomDatabase() {
     @RenameColumn(tableName = "Remote", fromColumnName = "source_type", toColumnName = "content_type")
     @RenameColumn(tableName = "Remote", fromColumnName = "source_uri", toColumnName = "content_uri")
     class V6Migration : AutoMigrationSpec
+
+    @RenameTable(fromTableName = "Remote", toTableName = "sync_profile")
+    // @DeleteTable(tableName = "Remote") TODO
+    class V8Migration : AutoMigrationSpec
 
     companion object {
 

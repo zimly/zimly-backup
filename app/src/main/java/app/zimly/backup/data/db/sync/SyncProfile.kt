@@ -1,12 +1,12 @@
-package app.zimly.backup.data.db.remote
+package app.zimly.backup.data.db.sync
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import app.zimly.backup.data.media.ContentType
 
-@Entity
-data class Remote(
+@Entity(tableName = "sync_profile")
+data class SyncProfile(
     @PrimaryKey val uid: Int?,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "url") val url: String,

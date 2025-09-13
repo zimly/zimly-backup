@@ -20,15 +20,15 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import app.zimly.backup.data.db.ZimlyDatabase
-import app.zimly.backup.data.db.remote.Remote
-import app.zimly.backup.data.db.remote.RemoteDao
-import app.zimly.backup.data.db.remote.SyncDirection
+import app.zimly.backup.data.db.sync.SyncProfile
+import app.zimly.backup.data.db.sync.SyncDao
+import app.zimly.backup.data.db.sync.SyncDirection
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.permission.DocumentsPermissionService
 import app.zimly.backup.permission.MediaPermissionService
 import app.zimly.backup.ui.components.Notification
 import app.zimly.backup.ui.components.NotificationProvider
-import app.zimly.backup.ui.screens.editor.EditorViewModel.Companion.REMOTE_ID_KEY
+import app.zimly.backup.ui.screens.editor.EditorViewModel.Companion.SYNC_PROFILE_ID_KEY
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.screens.editor.form.field.Permissions
 import app.zimly.backup.ui.screens.editor.steps.ValueStore
@@ -42,48 +42,48 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * An overarching [androidx.lifecycle.ViewModel] that keeps an in-memory [Draft] object of the [app.zimly.backup.data.db.remote.Remote] object to be
+ * An overarching [androidx.lifecycle.ViewModel] that keeps an in-memory [Draft] object of the [app.zimly.backup.data.db.sync.SyncProfile] object to be
  * persisted. The final step maps and persists the draft to the DB and the if needed persists the
  * necessary folder permissions. See [bucketStore]s #persist.
  *
  * It's scoped to the wizard navigation graph using [androidx.navigation.NavBackStackEntry].
  */
 class EditorViewModel(
-    private val remoteDao: RemoteDao,
+    private val syncDao: SyncDao,
     private val contentResolver: ContentResolver,
     private val mediaPermissionService: MediaPermissionService,
-    private val remoteId: Int? = null
+    private val syncProfileId: Int? = null
 ) : ViewModel(), NotificationProvider {
 
     val draft = MutableStateFlow(Draft())
     val notification: MutableStateFlow<Notification?> = MutableStateFlow(null)
 
     init {
-        remoteId?.let {
+        syncProfileId?.let {
             viewModelScope.launch {
-                val remote = remoteDao.loadById(remoteId)
+                val syncProfile = syncDao.loadById(syncProfileId)
 
-                val writePermission = when (remote.direction) {
+                val writePermission = when (syncProfile.direction) {
                     SyncDirection.UPLOAD -> false
                     SyncDirection.DOWNLOAD -> true
                 }
-                val permissions = when(remote.contentType) {
+                val permissions = when(syncProfile.contentType) {
                     ContentType.MEDIA -> if (mediaPermissionService.permissionsGranted()) Permissions.GRANTED else Permissions.DENIED
-                    ContentType.FOLDER -> if (DocumentsPermissionService.permissionGranted(contentResolver, remote.contentUri.toUri(), writePermission)) Permissions.GRANTED else Permissions.DENIED
+                    ContentType.FOLDER -> if (DocumentsPermissionService.permissionGranted(contentResolver, syncProfile.contentUri.toUri(), writePermission)) Permissions.GRANTED else Permissions.DENIED
                 }
                 draft.value = Draft(
                     bucket = BucketForm.BucketConfiguration(
-                        url = remote.url,
-                        name = remote.name,
-                        key = remote.key,
-                        secret = remote.secret,
-                        bucket = remote.bucket,
-                        region = remote.region,
-                        virtualHostedStyle = remote.virtualHostedStyle
+                        url = syncProfile.url,
+                        name = syncProfile.name,
+                        key = syncProfile.key,
+                        secret = syncProfile.secret,
+                        bucket = syncProfile.bucket,
+                        region = syncProfile.region,
+                        virtualHostedStyle = syncProfile.virtualHostedStyle
                     ),
-                    direction = remote.direction,
-                    contentType = remote.contentType,
-                    contentUri = remote.contentUri,
+                    direction = syncProfile.direction,
+                    contentType = syncProfile.contentType,
+                    contentUri = syncProfile.contentUri,
                     permissions = permissions
                 )
             }
@@ -139,7 +139,7 @@ class EditorViewModel(
     }
 
     /**
-     * Map the [Draft] object to [app.zimly.backup.data.db.remote.Remote] and persist it.
+     * Map the [Draft] object to [app.zimly.backup.data.db.sync.SyncProfile] and persist it.
      */
     suspend fun persist(success: (Boolean) -> Unit) {
 
@@ -153,8 +153,8 @@ class EditorViewModel(
                     it.copy(permissions = Permissions.GRANTED)
                 }
             }
-            val remote = Remote(
-                uid = remoteId,
+            val syncProfile = SyncProfile(
+                uid = syncProfileId,
                 direction = draftValue.direction,
                 url = draftValue.bucket.url,
                 key = draftValue.bucket.key,
@@ -166,10 +166,10 @@ class EditorViewModel(
                 contentType = draftValue.contentType,
                 contentUri = draftValue.contentUri
             )
-            if (remote.uid == null) {
-                remoteDao.insert(remote)
+            if (syncProfile.uid == null) {
+                syncDao.insert(syncProfile)
             } else {
-                remoteDao.update(remote)
+                syncDao.update(syncProfile)
             }
             success(true)
         } else {
@@ -218,20 +218,20 @@ class EditorViewModel(
     companion object {
         val TAG: String? = EditorViewModel::class.simpleName
 
-        val REMOTE_ID_KEY = object : CreationExtras.Key<Int?> {}
+        val SYNC_PROFILE_ID_KEY = object : CreationExtras.Key<Int?> {}
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application =
-                    checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY])
-                val remoteId = this[REMOTE_ID_KEY]
+                    checkNotNull(this[APPLICATION_KEY])
+                val syncProfileId = this[SYNC_PROFILE_ID_KEY]
                 val db = ZimlyDatabase.Companion.getInstance(application.applicationContext)
-                val remoteDao = db.remoteDao()
+                val syncDao = db.syncDao()
                 val mediaPermissionService = MediaPermissionService(
                     application.applicationContext,
                     application.packageName
                 )
-                EditorViewModel(remoteDao, application.contentResolver, mediaPermissionService, remoteId)
+                EditorViewModel(syncDao, application.contentResolver, mediaPermissionService, syncProfileId)
             }
         }
     }
@@ -245,7 +245,7 @@ class EditorViewModel(
  */
 @SuppressLint("UnrememberedGetBackStackEntry")
 @Composable
-fun NavController.editorViewModel(remoteId: Int?): EditorViewModel {
+fun NavController.editorViewModel(syncProfileId: Int?): EditorViewModel {
     val parentEntry = remember(this) {
         getBackStackEntry("wizard")
     }
@@ -256,7 +256,7 @@ fun NavController.editorViewModel(remoteId: Int?): EditorViewModel {
         factory = EditorViewModel.Factory,
         extras = MutableCreationExtras().apply {
             this[APPLICATION_KEY] = LocalContext.current.applicationContext as Application
-            this[REMOTE_ID_KEY] = remoteId
+            this[SYNC_PROFILE_ID_KEY] = syncProfileId
         }
     )
 }
