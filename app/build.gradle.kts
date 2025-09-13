@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("androidx.room") version "2.8.0"
     id("com.google.devtools.ksp")
     id("com.github.triplet.play") version "3.12.1"
     kotlin("plugin.serialization") version "1.9.22" // Used for API calls in tests
@@ -34,11 +35,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        // Room schema
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
     }
+
+    // Room DB schemas
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
+
     sourceSets {
         // Adds exported schema location as test resources for `room-testing`
         getByName("androidTest").assets.srcDir("$projectDir/schemas")
@@ -88,7 +91,6 @@ android {
     }
 }
 
-
 play {
     // https://github.com/Triple-T/gradle-play-publisher
     track.set("alpha")
@@ -106,7 +108,7 @@ dependencies {
     debugImplementation(platform(composeBom))
 
     val workManagerVersion = "2.10.3"
-    val roomVersion = "2.7.2"
+    val roomVersion = "2.8.0"
     val lifecycleVersion = "2.9.3"
 
     // minio / S3
