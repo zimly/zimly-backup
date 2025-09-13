@@ -39,6 +39,10 @@ android {
             arg("room.schemaLocation", "$projectDir/schemas")
         }
     }
+    sourceSets {
+        // Adds exported schema location as test resources for `room-testing`
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
 
     buildTypes {
         // To debug minified version, copy this block under a debug {} block
@@ -162,6 +166,7 @@ dependencies {
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
     androidTestImplementation("androidx.test:rules:1.7.0")
     androidTestImplementation("io.mockk:mockk-android:1.14.5")
+    androidTestImplementation("androidx.room:room-testing:$roomVersion")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
