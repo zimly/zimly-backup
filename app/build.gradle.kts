@@ -2,10 +2,10 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
-    id("androidx.room") version "2.8.0"
+    id("androidx.room") version "2.7.2"
     id("com.google.devtools.ksp")
     id("com.github.triplet.play") version "3.12.1"
-    kotlin("plugin.serialization") version "1.9.22" // Used for API calls in tests
+    kotlin("plugin.serialization") version "2.2.20" // Used for API calls in tests
 }
 
 
@@ -108,7 +108,7 @@ dependencies {
     debugImplementation(platform(composeBom))
 
     val workManagerVersion = "2.10.4"
-    val roomVersion = "2.8.0"
+    val roomVersion = "2.7.2"
     val lifecycleVersion = "2.9.3"
 
     // minio / S3
