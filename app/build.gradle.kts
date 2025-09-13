@@ -107,7 +107,7 @@ dependencies {
     androidTestImplementation(composeBom)
     debugImplementation(platform(composeBom))
 
-    val workManagerVersion = "2.10.3"
+    val workManagerVersion = "2.10.4"
     val roomVersion = "2.8.0"
     val lifecycleVersion = "2.9.3"
 
@@ -136,8 +136,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
-    implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("androidx.navigation:navigation-compose:2.9.3")
+    implementation("androidx.activity:activity-compose:1.11.0")
+    implementation("androidx.navigation:navigation-compose:2.9.4")
 
     implementation("androidx.documentfile:documentfile:1.1.0")
 
