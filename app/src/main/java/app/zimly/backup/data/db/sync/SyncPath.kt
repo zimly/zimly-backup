@@ -6,6 +6,7 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 @Entity(
+    tableName = "sync_path",
     foreignKeys = [ForeignKey(
         entity = SyncProfile::class,
         parentColumns = ["uid"],
@@ -16,5 +17,5 @@ import androidx.room.PrimaryKey
 data class SyncPath(
     @PrimaryKey val uid: Int?,
     val profileId: Int,
-    @ColumnInfo(name = "uri") val uri: String,
+    val uri: String,
 )
