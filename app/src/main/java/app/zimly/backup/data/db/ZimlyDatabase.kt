@@ -52,7 +52,7 @@ abstract class ZimlyDatabase : RoomDatabase() {
         override fun onPostMigrate(db: SupportSQLiteDatabase) {
             db.execSQL(
                 """
-                    INSERT INTO sync_path (profile_id, path) 
+                    INSERT INTO sync_path (profile_id, uri) 
                     SELECT uid, content_uri FROM sync_profile 
                     WHERE content_uri IS NOT NULL
                 """.trimIndent()

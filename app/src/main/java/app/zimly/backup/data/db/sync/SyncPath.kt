@@ -10,12 +10,12 @@ import androidx.room.PrimaryKey
     foreignKeys = [ForeignKey(
         entity = SyncProfile::class,
         parentColumns = ["uid"],
-        childColumns = ["profileId"],
+        childColumns = ["profile_id"],
         onDelete = ForeignKey.CASCADE
     )]
 )
 data class SyncPath(
     @PrimaryKey val uid: Int?,
-    val profileId: Int,
+    @ColumnInfo(name = "profile_id") val profileId: Int,
     val uri: String,
 )

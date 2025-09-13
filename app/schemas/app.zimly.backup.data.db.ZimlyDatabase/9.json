@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "d9f81522d3f8d9d68b577712176cae2b",
+    "identityHash": "5d62129b3c2584341fbf6a7003519b15",
     "entities": [
       {
         "tableName": "sync_profile",
@@ -125,7 +125,7 @@
       },
       {
         "tableName": "sync_path",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER, `profileId` INTEGER NOT NULL, `uri` TEXT NOT NULL, PRIMARY KEY(`uid`), FOREIGN KEY(`profileId`) REFERENCES `sync_profile`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER, `profile_id` INTEGER NOT NULL, `uri` TEXT NOT NULL, PRIMARY KEY(`uid`), FOREIGN KEY(`profile_id`) REFERENCES `sync_profile`(`uid`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "uid",
@@ -134,7 +134,7 @@
           },
           {
             "fieldPath": "profileId",
-            "columnName": "profileId",
+            "columnName": "profile_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -157,7 +157,7 @@
             "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
-              "profileId"
+              "profile_id"
             ],
             "referencedColumns": [
               "uid"
@@ -168,7 +168,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd9f81522d3f8d9d68b577712176cae2b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5d62129b3c2584341fbf6a7003519b15')"
     ]
   }
 }

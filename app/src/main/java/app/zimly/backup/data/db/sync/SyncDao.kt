@@ -18,7 +18,7 @@ interface SyncDao {
     @Query("DELETE FROM sync_profile WHERE uid = :id")
     suspend fun deleteById(id: Int);
 
-    @Query("SELECT * FROM sync_path WHERE profileId = :profileId")
+    @Query("SELECT * FROM sync_path WHERE profile_Id = :profileId")
     suspend fun loadSyncPathsByProfileId(profileId: Int): List<SyncPath>
 
     @Update
