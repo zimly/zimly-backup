@@ -91,7 +91,7 @@ fun SyncScreen(
         })
 ) {
 
-    val syncConfigurationState by viewModel.syncProfileState.collectAsStateWithLifecycle(null)
+    val syncConfigurationState by viewModel.syncDetailsState.collectAsStateWithLifecycle(null)
     val error by viewModel.error.collectAsStateWithLifecycle()
     val progress by viewModel.progressState.collectAsStateWithLifecycle()
     val permissionsGranted by viewModel.permissionsGranted.collectAsStateWithLifecycle()
@@ -165,7 +165,7 @@ fun SyncScreen(
 
 @Composable
 fun SyncOverview(
-    syncProfile: SyncViewModel.SyncProfileState,
+    syncProfile: SyncViewModel.SyncDetailsState,
     progress: SyncViewModel.Progress,
     enableActions: Boolean,
     createDiff: () -> Unit,
@@ -189,7 +189,7 @@ fun SyncOverview(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyncLayout(
-    syncConfiguration: SyncViewModel.SyncProfileState,
+    syncConfiguration: SyncViewModel.SyncDetailsState,
     error: String?,
     enableActions: Boolean,
     syncInProgress: Boolean,
@@ -304,7 +304,7 @@ fun SyncLayout(
 }
 
 @Composable
-private fun Bucket(syncProfile: SyncViewModel.SyncProfileState) {
+private fun Bucket(syncProfile: SyncViewModel.SyncDetailsState) {
     val cardDescription = when (syncProfile.direction) {
         SyncDirection.UPLOAD -> "S3 Upload Target"
         SyncDirection.DOWNLOAD -> "S3 Download Source"

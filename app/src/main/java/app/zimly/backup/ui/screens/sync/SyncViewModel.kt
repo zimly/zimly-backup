@@ -117,17 +117,17 @@ class SyncViewModel(
     // sync-executions.
     private var uniqueWorkIdentifier = "sync_${syncProfileId}"
 
-    var syncProfileState: Flow<SyncProfileState> = snapshotFlow { syncProfileId }
+    var syncDetailsState: Flow<SyncDetailsState> = snapshotFlow { syncProfileId }
         .map { dao.loadById(it) }
         .map {
-            SyncProfileState(
-                name = it.name,
-                url = it.url,
-                bucket = it.bucket,
-                region = it.region,
-                contentType = it.contentType,
-                contentUri = it.contentUri,
-                direction = it.direction
+            SyncDetailsState(
+                name = it.profile.name,
+                url = it.profile.url,
+                bucket = it.profile.bucket,
+                region = it.profile.region,
+                contentType = it.profile.contentType,
+                contentUri = it.paths[0].uri,
+                direction = it.profile.direction
             )
         }.flowOn(Dispatchers.IO)
 
@@ -171,13 +171,13 @@ class SyncViewModel(
     val syncInProgress = _syncInProgress.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // TODO update this, when permissions change.
-    private val _permissionsGranted = syncProfileState
+    private val _permissionsGranted = syncDetailsState
         .map { permissionsGranted(it) }
 
     val permissionsGranted: StateFlow<Boolean> =
         _permissionsGranted.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    private fun permissionsGranted(syncProfile: SyncProfileState): Boolean {
+    private fun permissionsGranted(syncProfile: SyncDetailsState): Boolean {
         return when (syncProfile.contentType) {
             ContentType.MEDIA -> mediaPermissionService.permissionsGranted()
             ContentType.FOLDER -> {
@@ -355,7 +355,7 @@ class SyncViewModel(
         _error.emit(errorMessage)
     }
 
-    data class SyncProfileState(
+    data class SyncDetailsState(
         var name: String,
         var url: String,
         var bucket: String,

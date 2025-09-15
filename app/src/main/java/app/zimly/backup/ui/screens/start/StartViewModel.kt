@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.sync.SyncProfile
 import app.zimly.backup.data.db.sync.SyncDao
+import app.zimly.backup.data.db.sync.SyncPath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -68,11 +69,14 @@ class StartViewModel(private val dataStore: SyncDao) : ViewModel() {
     }
 
     suspend fun copy() {
+        // TODO: #map and #insert(profiles, paths)?
         selected.forEach {
-            val sel = dataStore.loadById(it)
-            val copy = SyncProfile(null, "${sel.name} (Copy)", sel.url, sel.key, sel.secret, sel.bucket, sel.region, sel.virtualHostedStyle, sel.contentType, sel.contentUri, sel.direction)
+            val selected = dataStore.loadById(it)
+            val profileCopy = SyncProfile(null, "${selected.profile.name} (Copy)", selected.profile.url, selected.profile.key, selected.profile.secret, selected.profile.bucket, selected.profile.region, selected.profile.virtualHostedStyle, selected.profile.contentType, selected.profile.direction)
 
-            dataStore.insert(copy)
+            val newId = dataStore.insert(profileCopy)
+            val pathCopy = SyncPath(null, newId.toInt(), selected.paths[0].uri)
+            dataStore.insert(pathCopy)
         }
         _notification.value = "Successfully copied ${selected.size} items"
         resetSelect()

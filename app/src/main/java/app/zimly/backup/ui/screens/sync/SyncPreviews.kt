@@ -29,7 +29,7 @@ import java.time.Instant
 @Composable
 fun InProgressPreview() {
 
-    val syncProfile = SyncViewModel.SyncProfileState(
+    val remote = SyncViewModel.SyncDetailsState(
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
@@ -51,14 +51,14 @@ fun InProgressPreview() {
     val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
     val enableActions = true
 
-    PreviewSync(syncProfile, enableActions, syncInProgress, snackbarState, progressState)
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun CompletedPreview() {
 
-    val syncProfile = SyncViewModel.SyncProfileState(
+    val remote = SyncViewModel.SyncDetailsState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         bucket = "zimly-backup",
@@ -80,14 +80,14 @@ fun CompletedPreview() {
     val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
     val enableActions = true
 
-    PreviewSync(syncProfile, enableActions, syncInProgress, snackbarState, progressState)
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun IdlePreview() {
 
-    val syncProfile = SyncViewModel.SyncProfileState(
+    val remote = SyncViewModel.SyncDetailsState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         bucket = "bucket",
@@ -101,14 +101,14 @@ fun IdlePreview() {
     val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
     val enableActions = true
 
-    PreviewSync(syncProfile, enableActions, syncInProgress, snackbarState, progressState)
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun CalculatingPreview() {
 
-    val syncProfile = SyncViewModel.SyncProfileState(
+    val remote = SyncViewModel.SyncDetailsState(
         name = "Camera Backup",
         url = "https://minio.zimly.cloud",
         bucket = "2024-Camera",
@@ -123,14 +123,14 @@ fun CalculatingPreview() {
     val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
     val enableActions = true
 
-    PreviewSync(syncProfile, enableActions, syncInProgress, snackbarState, progressState)
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PermissionsMissingPreview() {
 
-    val syncProfile = SyncViewModel.SyncProfileState(
+    val remote = SyncViewModel.SyncDetailsState(
         name = "Camera Backup",
         url = "https://my-backup.dyndns.com",
         bucket = "bucket",
@@ -144,13 +144,13 @@ fun PermissionsMissingPreview() {
     val syncInProgress = progressState.status in IN_PROGRESS_STATES.map { mapState(it) } + Status.CALCULATING
     val enableActions = false
 
-    PreviewSync(syncProfile, enableActions, syncInProgress, snackbarState, progressState)
+    PreviewSync(remote, enableActions, syncInProgress, snackbarState, progressState)
 }
 
 
 @Composable
 private fun PreviewSync(
-    syncProfile: SyncViewModel.SyncProfileState,
+    remote: SyncViewModel.SyncDetailsState,
     enableActions: Boolean,
     syncInProgress: Boolean,
     snackbarState: SnackbarHostState,
@@ -159,7 +159,7 @@ private fun PreviewSync(
 ) {
     ZimzyncTheme(darkTheme = true) {
         SyncLayout(
-            syncConfiguration = syncProfile,
+            syncConfiguration = remote,
             error = null,
             enableActions,
             syncInProgress,
@@ -171,11 +171,11 @@ private fun PreviewSync(
             clearError = {},
         ) {
             SyncOverview(
-                syncProfile,
+                remote,
                 progressState,
                 enableActions && !syncInProgress,
                 createDiff = {},
-                sourceContainer = { ContentContainer(syncProfile) },
+                sourceContainer = { ContentContainer(remote) },
                 warningsContainer = {
                     BatterySaverContainer(viewModel = viewModel {
                         val stubNotificationDao = object: NotificationDao {
@@ -192,19 +192,19 @@ private fun PreviewSync(
 }
 
 @Composable
-private fun ContentContainer(syncProfile: SyncViewModel.SyncProfileState) {
-    when (syncProfile.contentType) {
+private fun ContentContainer(remote: SyncViewModel.SyncDetailsState) {
+    when (remote.contentType) {
         ContentType.MEDIA -> {
-            MediaCollectionContainer(syncProfile.contentUri, viewModel = viewModel {
-                MediaCollectionViewModel(StubMediaResolver(), syncProfile.contentUri)
+            MediaCollectionContainer(remote.contentUri, viewModel = viewModel {
+                MediaCollectionViewModel(StubMediaResolver(), remote.contentUri)
             })
         }
 
         ContentType.FOLDER -> {
-            DocumentsFolderContainer(syncProfile.contentUri, {}, viewModel = viewModel {
+            DocumentsFolderContainer(remote.contentUri, {}, viewModel = viewModel {
                 DocumentsFolderViewModel(
                     StubContentResolver(),
-                    syncProfile.contentUri.toUri(),
+                    remote.contentUri.toUri(),
                     {}
                 )
             })

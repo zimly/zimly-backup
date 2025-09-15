@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.net.toUri
 import app.zimly.backup.data.db.sync.SyncProfile
 import app.zimly.backup.data.db.sync.SyncDirection
+import app.zimly.backup.data.db.sync.SyncDetails
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.data.media.LocalDocumentsResolver
 import app.zimly.backup.data.media.LocalMediaResolverImpl
@@ -18,20 +19,20 @@ interface SyncService {
         /**
          * Provides the [SyncService] based on [SyncProfile].
          */
-        fun get(context: Context, syncProfile: SyncProfile): SyncService {
+        fun get(context: Context, syncDetails: SyncDetails): SyncService {
 
             val s3Repository =
-                MinioRepository(syncProfile.url, syncProfile.key, syncProfile.secret, syncProfile.bucket, syncProfile.region, syncProfile.virtualHostedStyle)
+                MinioRepository(syncDetails.profile.url, syncDetails.profile.key, syncDetails.profile.secret, syncDetails.profile.bucket, syncDetails.profile.region, syncDetails.profile.virtualHostedStyle)
 
-            return when (syncProfile.contentType) {
+            return when (syncDetails.profile.contentType) {
                 ContentType.MEDIA -> {
-                    val contentResolver = LocalMediaResolverImpl(context, syncProfile.contentUri)
+                    val contentResolver = LocalMediaResolverImpl(context, syncDetails.paths[0].uri)
                     UploadSyncService(s3Repository, contentResolver)
                 }
 
                 ContentType.FOLDER -> {
-                    val contentResolver = LocalDocumentsResolver(context, syncProfile.contentUri.toUri())
-                    when (syncProfile.direction) {
+                    val contentResolver = LocalDocumentsResolver(context, syncDetails.paths[0].uri.toUri())
+                    when (syncDetails.profile.direction) {
                         SyncDirection.UPLOAD -> UploadSyncService(s3Repository, contentResolver)
                         SyncDirection.DOWNLOAD -> DownloadSyncService(
                             s3Repository,

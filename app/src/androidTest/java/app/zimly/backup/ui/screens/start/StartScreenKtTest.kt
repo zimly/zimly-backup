@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.sync.SyncProfile
 import app.zimly.backup.data.db.sync.SyncDirection
+import app.zimly.backup.data.db.sync.SyncPath
 import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
@@ -52,21 +53,21 @@ class StartScreenKtTest {
         val dao = db.syncDao()
 
         runBlocking {
-            dao.insert(
-                SyncProfile(
-                    null,
-                    "Test 1",
-                    "https://zimly.cloud",
-                    "key",
-                    "secret",
-                    "bucket",
-                    null,
-                    false,
-                    ContentType.MEDIA,
-                    "Pictures",
-                    SyncDirection.UPLOAD
-                )
+            val syncProfile = SyncProfile(
+                null,
+                "Test 1",
+                "https://zimly.cloud",
+                "key",
+                "secret",
+                "bucket",
+                null,
+                false,
+                ContentType.MEDIA,
+                SyncDirection.UPLOAD
             )
+            val newId = dao.insert(syncProfile)
+            val path = SyncPath(null, newId.toInt(), "Pictures")
+            dao.insert(path)
         }
 
 
@@ -88,23 +89,22 @@ class StartScreenKtTest {
         val dao = db.syncDao()
 
         runBlocking {
-            dao.insert(
-                SyncProfile(
-                    null,
-                    "Test 1",
-                    "https://zimly.cloud",
-                    "key",
-                    "secret",
-                    "bucket",
-                    null,
-                    false,
-                    ContentType.MEDIA,
-                    "Pictures",
-                    SyncDirection.UPLOAD
-                )
+            val syncProfile = SyncProfile(
+                null,
+                "Test 1",
+                "https://zimly.cloud",
+                "key",
+                "secret",
+                "bucket",
+                null,
+                false,
+                ContentType.MEDIA,
+                SyncDirection.UPLOAD
             )
+            val newId = dao.insert(syncProfile)
+            val path = SyncPath(null, newId.toInt(), "Pictures")
+            dao.insert(path)
         }
-
 
         composeTestRule.setContent {
             StartScreen(viewModel = StartViewModel(dao), { _,_ -> }, {})

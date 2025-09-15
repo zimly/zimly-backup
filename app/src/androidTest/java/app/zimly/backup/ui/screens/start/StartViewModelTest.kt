@@ -8,6 +8,7 @@ import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.sync.SyncProfile
 import app.zimly.backup.data.db.sync.SyncDao
 import app.zimly.backup.data.db.sync.SyncDirection
+import app.zimly.backup.data.db.sync.SyncPath
 import app.zimly.backup.data.media.ContentType
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -36,8 +37,8 @@ class StartViewModelTest {
         this.viewModel = StartViewModel(dao)
 
         runBlocking {
-            dao.insert(
-                SyncProfile(
+            runBlocking {
+                val syncProfile = SyncProfile(
                     null,
                     "Test 1",
                     "https://zimly.cloud",
@@ -47,12 +48,9 @@ class StartViewModelTest {
                     null,
                     false,
                     ContentType.MEDIA,
-                    "Pictures",
                     SyncDirection.UPLOAD
                 )
-            )
-            dao.insert(
-                SyncProfile(
+                val syncProfile2 = SyncProfile(
                     null,
                     "Test 2",
                     "https://zimly.cloud",
@@ -62,10 +60,16 @@ class StartViewModelTest {
                     null,
                     false,
                     ContentType.MEDIA,
-                    "Pictures",
                     SyncDirection.UPLOAD
                 )
-            )
+
+                val newId = dao.insert(syncProfile)
+                val newId2 = dao.insert(syncProfile2)
+                val path = SyncPath(null, newId.toInt(), "Pictures")
+                val path2 = SyncPath(null, newId2.toInt(), "Pictures")
+                dao.insert(path)
+                dao.insert(path2)
+            }
         }
     }
 
@@ -98,7 +102,7 @@ class StartViewModelTest {
         assertThat(syncProfiles.size, `is`(2))
 
         // WHEN
-        viewModel.select(syncProfiles[0].uid!!.toInt())
+        viewModel.select(syncProfiles[0].uid!!)
         runBlocking {
             viewModel.delete()
         }

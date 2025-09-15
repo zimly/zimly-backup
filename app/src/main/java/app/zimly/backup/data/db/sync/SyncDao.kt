@@ -13,7 +13,7 @@ interface SyncDao {
     suspend fun loadAllByIds(ids: IntArray): List<SyncProfile>
 
     @Query("SELECT * FROM sync_profile WHERE uid = :id")
-    suspend fun loadById(id: Int): SyncProfile
+    suspend fun loadById(id: Int): SyncDetails
 
     @Query("DELETE FROM sync_profile WHERE uid = :id")
     suspend fun deleteById(id: Int);
@@ -21,9 +21,19 @@ interface SyncDao {
     @Query("SELECT * FROM sync_path WHERE profile_Id = :profileId")
     suspend fun loadSyncPathsByProfileId(profileId: Int): List<SyncPath>
 
+    @Transaction
+    @Query("SELECT * FROM sync_profile")
+    suspend fun getAllSyncDetails(): List<SyncDetails>
+
     @Update
     suspend fun update(syncProfile: SyncProfile)
 
     @Insert
-    suspend fun insert(syncProfile: SyncProfile)
+    suspend fun insert(syncProfile: SyncProfile): Long
+
+    @Insert
+    suspend fun insert(path: SyncPath): Long
+
+    @Update
+    fun updatePath(syncPath: SyncPath)
 }

@@ -23,6 +23,7 @@ import app.zimly.backup.data.db.ZimlyDatabase
 import app.zimly.backup.data.db.sync.SyncProfile
 import app.zimly.backup.data.db.sync.SyncDao
 import app.zimly.backup.data.db.sync.SyncDirection
+import app.zimly.backup.data.db.sync.SyncPath
 import app.zimly.backup.data.media.ContentType
 import app.zimly.backup.permission.DocumentsPermissionService
 import app.zimly.backup.permission.MediaPermissionService
@@ -61,29 +62,30 @@ class EditorViewModel(
     init {
         syncProfileId?.let {
             viewModelScope.launch {
-                val syncProfile = syncDao.loadById(syncProfileId)
+                val syncDetails = syncDao.loadById(syncProfileId)
 
-                val writePermission = when (syncProfile.direction) {
+                val writePermission = when (syncDetails.profile.direction) {
                     SyncDirection.UPLOAD -> false
                     SyncDirection.DOWNLOAD -> true
                 }
-                val permissions = when(syncProfile.contentType) {
+                val permissions = when(syncDetails.profile.contentType) {
                     ContentType.MEDIA -> if (mediaPermissionService.permissionsGranted()) Permissions.GRANTED else Permissions.DENIED
-                    ContentType.FOLDER -> if (DocumentsPermissionService.permissionGranted(contentResolver, syncProfile.contentUri.toUri(), writePermission)) Permissions.GRANTED else Permissions.DENIED
+                    ContentType.FOLDER -> if (DocumentsPermissionService.permissionGranted(contentResolver, syncDetails.paths[0].uri.toUri(), writePermission)) Permissions.GRANTED else Permissions.DENIED
                 }
                 draft.value = Draft(
                     bucket = BucketForm.BucketConfiguration(
-                        url = syncProfile.url,
-                        name = syncProfile.name,
-                        key = syncProfile.key,
-                        secret = syncProfile.secret,
-                        bucket = syncProfile.bucket,
-                        region = syncProfile.region,
-                        virtualHostedStyle = syncProfile.virtualHostedStyle
+                        url = syncDetails.profile.url,
+                        name = syncDetails.profile.name,
+                        key = syncDetails.profile.key,
+                        secret = syncDetails.profile.secret,
+                        bucket = syncDetails.profile.bucket,
+                        region = syncDetails.profile.region,
+                        virtualHostedStyle = syncDetails.profile.virtualHostedStyle
                     ),
-                    direction = syncProfile.direction,
-                    contentType = syncProfile.contentType,
-                    contentUri = syncProfile.contentUri,
+                    direction = syncDetails.profile.direction,
+                    contentType = syncDetails.profile.contentType,
+                    pathId = syncDetails.paths[0].uid,
+                    pathUri = syncDetails.paths[0].uri,
                     permissions = permissions
                 )
             }
@@ -97,8 +99,8 @@ class EditorViewModel(
             draft.update {
                 it.copy(
                     contentType = value.contentType,
-                    contentUri = value.contentUri,
-                    permissions = value.permissions
+                    pathUri = value.contentUri,
+                    permissions = value.permissions,
                 )
             }
             callback(true)
@@ -106,15 +108,15 @@ class EditorViewModel(
 
         override fun load(): Flow<ContentState?> {
             return draft
-                .filter { it.contentType != null && it.contentUri != null }
-                .map { draft -> ContentState(draft.contentType!!, draft.contentUri!!, draft.permissions) }
+                .filter { it.contentType != null && it.pathUri != null }
+                .map { draft -> ContentState(draft.contentType!!, draft.pathUri!!, draft.permissions) }
         }
     }
 
     val directionStore = object : ValueStore<SyncDirection> {
         override fun persist(value: SyncDirection, callback: (Boolean) -> Unit) {
             draft.update {
-                it.copy(direction = value)
+                it.copy(direction = value,)
             }
             callback(true)
         }
@@ -127,7 +129,7 @@ class EditorViewModel(
     val bucketStore = object : ValueStore<BucketForm.BucketConfiguration> {
         override fun persist(value: BucketForm.BucketConfiguration, callback: (Boolean) -> Unit) {
             draft.update {
-                it.copy(bucket = value)
+                it.copy(bucket = value,)
             }
             viewModelScope.launch { persist(callback) }
 
@@ -145,12 +147,12 @@ class EditorViewModel(
 
         val draftValue = draft.value
 
-        if (draftValue.bucket != null && draftValue.direction != null && draftValue.contentType != null && draftValue.contentUri != null) {
+        if (draftValue.bucket != null && draftValue.direction != null && draftValue.contentType != null && draftValue.pathUri != null) {
 
             if (draftValue.contentType == ContentType.FOLDER) {
-                persistPermissions(draftValue.direction, draftValue.contentUri)
+                persistPermissions(draftValue.direction, draftValue.pathUri)
                 draft.update {
-                    it.copy(permissions = Permissions.GRANTED)
+                    it.copy(permissions = Permissions.GRANTED,)
                 }
             }
             val syncProfile = SyncProfile(
@@ -164,12 +166,15 @@ class EditorViewModel(
                 virtualHostedStyle = draftValue.bucket.virtualHostedStyle,
                 name = draftValue.bucket.name,
                 contentType = draftValue.contentType,
-                contentUri = draftValue.contentUri
             )
             if (syncProfile.uid == null) {
-                syncDao.insert(syncProfile)
+                val newId = syncDao.insert(syncProfile)
+                val syncPath = SyncPath(uid = null, profileId = newId.toInt(), uri = draftValue.pathUri)
+                syncDao.insert(syncPath)
             } else {
                 syncDao.update(syncProfile)
+                val syncPath = SyncPath(uid = draftValue.pathId, profileId = syncProfile.uid, uri = draftValue.pathUri)
+                syncDao.updatePath(syncPath)
             }
             success(true)
         } else {
@@ -203,7 +208,8 @@ class EditorViewModel(
         val direction: SyncDirection? = null,
         val bucket: BucketForm.BucketConfiguration? = null,
         val contentType: ContentType? = null,
-        val contentUri: String? = null,
+        val pathId: Int? = null,
+        val pathUri: String? = null,
         val permissions: Permissions = Permissions.PENDING
     )
 
