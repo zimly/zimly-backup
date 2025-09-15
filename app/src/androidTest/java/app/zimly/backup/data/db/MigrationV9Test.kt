@@ -46,8 +46,11 @@ class MigrationV9Test {
 
         val profileId = cursor.getInt(cursor.getColumnIndexOrThrow("profile_id"))
         val uri = cursor.getString(cursor.getColumnIndexOrThrow("uri"))
-
         assertTrue(profileId == 1)
         assertTrue(uri == "content://com.android.externalstorage.documents/tree/primary%3Atest")
+
+        val profileCursor = migrated.query("SELECT * FROM sync_profile")
+        assertTrue(profileCursor.columnNames.contains("content_uri"))
+
     }
 }
