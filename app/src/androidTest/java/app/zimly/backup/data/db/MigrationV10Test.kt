@@ -3,18 +3,19 @@ package app.zimly.backup.data.db
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+
 @RunWith(AndroidJUnit4::class)
-class MigrationV9Test {
+class MigrationV10Test {
 
     private val testDb = "migration-test"
     private val fromVersion = 7
-    private val toVersion = 9
-
+    private val toVersion = 10
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
@@ -22,7 +23,7 @@ class MigrationV9Test {
     )
 
     @Test
-    fun migrate7To9() {
+    fun migrate7To10() {
 
         helper.createDatabase(testDb, fromVersion).apply {
             // Database has schema version 7. Insert some data using SQL queries.
@@ -42,16 +43,9 @@ class MigrationV9Test {
         val migrated = helper.runMigrationsAndValidate(testDb, toVersion, true)
 
         // Verify migrated entries
-        val cursor = migrated.query("SELECT profile_id, uri FROM sync_path")
+        val cursor = migrated.query("SELECT * FROM sync_profile")
 
         assertTrue(cursor.moveToFirst())
-
-        val profileId = cursor.getInt(cursor.getColumnIndexOrThrow("profile_id"))
-        val uri = cursor.getString(cursor.getColumnIndexOrThrow("uri"))
-        assertTrue("sync_path has foreign key to profile", profileId == 1)
-        assertTrue("uri was migrated to new table", uri == "content://com.android.externalstorage.documents/tree/primary%3Atest")
-
-        val profileCursor = migrated.query("SELECT * FROM sync_profile")
-        assertTrue("content_uri should still be present", profileCursor.columnNames.contains("content_uri"))
+        assertFalse("content_uri column was removed", cursor.columnNames.contains("content_uri"))
     }
 }

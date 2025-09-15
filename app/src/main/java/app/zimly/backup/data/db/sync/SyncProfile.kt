@@ -7,7 +7,7 @@ import app.zimly.backup.data.media.ContentType
 
 @Entity(tableName = "sync_profile")
 data class SyncProfile(
-    @PrimaryKey val uid: Int?,
+    @PrimaryKey val uid: Int?, // TODO Long? Save the casts
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "url") val url: String,
     @ColumnInfo(name = "key") val key: String,
@@ -16,6 +16,5 @@ data class SyncProfile(
     @ColumnInfo(name = "region") val region: String?,
     @ColumnInfo(name = "virtual_hosted_style", defaultValue = "0") val virtualHostedStyle: Boolean,
     @ColumnInfo(name = "content_type", defaultValue = "MEDIA") val contentType: ContentType,
-    @ColumnInfo(name = "content_uri") val contentUri: String,
     @ColumnInfo(name = "direction", defaultValue = "UPLOAD") val direction: SyncDirection,
 )

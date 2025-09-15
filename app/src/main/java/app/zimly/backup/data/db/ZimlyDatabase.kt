@@ -3,6 +3,7 @@ package app.zimly.backup.data.db
 import android.content.Context
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
 import androidx.room.RenameColumn
 import androidx.room.RenameTable
 import androidx.room.Room
@@ -17,7 +18,7 @@ import app.zimly.backup.data.db.sync.SyncProfile
 
 @Database(
     entities = [SyncProfile::class, Notification::class, SyncPath::class],
-    version = 9,
+    version = 10,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = ZimlyDatabase.V3Migration::class),
@@ -26,7 +27,8 @@ import app.zimly.backup.data.db.sync.SyncProfile
         AutoMigration(from = 5, to = 6, spec = ZimlyDatabase.V6Migration::class),
         AutoMigration(from = 6, to = 7),
         AutoMigration(from = 7, to = 8, spec = ZimlyDatabase.V8Migration::class),
-        AutoMigration(from = 8, to = 9, spec = ZimlyDatabase.V9Migration::class)
+        AutoMigration(from = 8, to = 9, spec = ZimlyDatabase.V9Migration::class),
+        AutoMigration(from = 9, to = 10, spec = ZimlyDatabase.V10Migration::class)
     ]
 )
 abstract class ZimlyDatabase : RoomDatabase() {
@@ -45,7 +47,6 @@ abstract class ZimlyDatabase : RoomDatabase() {
     class V6Migration : AutoMigrationSpec
 
     @RenameTable(fromTableName = "Remote", toTableName = "sync_profile")
-    // @DeleteTable(tableName = "Remote") TODO
     class V8Migration : AutoMigrationSpec
 
     class V9Migration : AutoMigrationSpec {
@@ -59,6 +60,9 @@ abstract class ZimlyDatabase : RoomDatabase() {
             )
         }
     }
+
+    @DeleteColumn(tableName = "sync_profile", columnName = "content_uri")
+    class V10Migration : AutoMigrationSpec
 
     companion object {
 
