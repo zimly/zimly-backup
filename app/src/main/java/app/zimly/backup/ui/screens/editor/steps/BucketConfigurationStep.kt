@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -26,6 +29,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -60,6 +66,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.associateWith
+import kotlin.let
 
 class BucketViewModel(
     private val store: ValueStore<BucketForm.BucketConfiguration>,
@@ -188,8 +196,22 @@ fun BucketConfiguration(
                 modifier = Modifier.padding(top = 8.dp, end = 8.dp)
             )
         }
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier =
+                Modifier
+                    .padding(16.dp)
+                    //.imePadding() ?
+        ) {
             Column {
+                val focusRequesters = remember {
+                    bucketForm.fields.associateWith { FocusRequester() }
+                }
+
+                LaunchedEffect(Unit) {
+                    bucketForm.focusedField()?.let { field ->
+                        focusRequesters[field]?.requestFocus()
+                    }
+                }
                 // Consolidate into one StateFlow?
                 val nameState = bucketForm.name.state.collectAsState()
                 val urlState = bucketForm.url.state.collectAsState()
@@ -202,7 +224,11 @@ fun BucketConfiguration(
 
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { bucketForm.name.focus(it) }
+                        .onFocusChanged {
+                            bucketForm.name.focus(it)
+                            bucketForm.onFieldFocus(bucketForm.name, it)
+                        }
+                        .focusRequester(focusRequesters[bucketForm.name]!!)
                         .fillMaxWidth(),
                     label = { Text("Name") },
                     value = nameState.value.value,

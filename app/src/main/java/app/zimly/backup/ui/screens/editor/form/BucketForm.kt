@@ -1,6 +1,7 @@
 package app.zimly.backup.ui.screens.editor.form
 
 import android.webkit.URLUtil
+import androidx.compose.ui.focus.FocusState
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.ui.screens.editor.form.field.BooleanField
 import app.zimly.backup.ui.screens.editor.form.field.Field
@@ -25,6 +26,16 @@ class BucketForm : Form {
         errorMessage = "",
         validate = { true })
 
+    private var focusedField: Field<*>? = null
+
+    fun onFieldFocus(field: Field<*>, focus: FocusState) {
+        if (focus.isFocused) {
+            focusedField = field
+        }
+    }
+
+    fun focusedField(): Field<*>? = focusedField
+
     /**
      * Emits a warning in case virtual hosted style is enabled and the URL starts
      * with the bucket name.
@@ -44,7 +55,7 @@ class BucketForm : Form {
     }
 
     // Collect all fields into a list
-    private val fields: List<Field<*>> by lazy {
+    val fields: List<Field<*>> by lazy {
         listOf(name, url, key, secret, bucket, region, virtualHostedStyle)
     }
 
