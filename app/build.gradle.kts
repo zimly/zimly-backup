@@ -3,8 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
-    id("com.github.triplet.play") version "3.12.1"
-    kotlin("plugin.serialization") version "1.9.22" // Used for API calls in tests
+    id("com.github.triplet.play") version "3.13.0"
+    kotlin("plugin.serialization") version "2.3.0" // Used for API calls in tests
 }
 
 kotlin {
