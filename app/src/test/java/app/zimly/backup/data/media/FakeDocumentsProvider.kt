@@ -52,7 +52,7 @@ class FakeDocumentsProvider(private val authority: String, private val documentS
                     .filter { it.parentId == parentId }
                     .forEach {
                         cursor.addRow(
-                            arrayOf(
+                            arrayOf<Any?>(
                                 it.id,
                                 it.name,
                                 it.mimeType,
@@ -71,7 +71,7 @@ class FakeDocumentsProvider(private val authority: String, private val documentS
                 val doc = documentStore[docId] ?: return cursor
 
                 cursor.addRow(
-                    arrayOf(
+                    arrayOf<Any?>(
                         doc.id,
                         doc.name,
                         doc.mimeType,
@@ -87,7 +87,7 @@ class FakeDocumentsProvider(private val authority: String, private val documentS
     }
 
     // These can be no-op for read-only tests
-    override fun getType(uri: Uri): String? = "vnd.android.document"
+    override fun getType(uri: Uri): String = "vnd.android.document"
     override fun insert(uri: Uri, values: ContentValues?): Uri? = null
 
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int =
