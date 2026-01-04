@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -66,8 +64,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.associateWith
-import kotlin.let
 
 class BucketViewModel(
     private val store: ValueStore<BucketForm.BucketConfiguration>,
@@ -222,7 +218,16 @@ fun BucketConfiguration(
                 val virtualHostedStyleState =
                     bucketForm.virtualHostedStyle.state.collectAsState()
 
+                val nameFieldState = rememberTextFieldState(
+                    initialText = nameState.value.value
+                )
+
+                LaunchedEffect(nameFieldState.text) {
+                    bucketForm.name.update(nameFieldState.text.toString())
+                }
+
                 OutlinedTextField(
+                    state = nameFieldState,
                     modifier = Modifier
                         .onFocusChanged {
                             bucketForm.name.focus(it)
@@ -231,11 +236,7 @@ fun BucketConfiguration(
                         .focusRequester(focusRequesters[bucketForm.name]!!)
                         .fillMaxWidth(),
                     label = { Text("Name") },
-                    value = nameState.value.value,
-                    onValueChange = { bucketForm.name.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    isError = nameState.value.error != null,
-                    supportingText = { nameState.value.error?.let { Text(it) } }
                 )
                 OutlinedTextField(
                     modifier = Modifier
