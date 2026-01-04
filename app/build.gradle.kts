@@ -100,19 +100,19 @@ dependencies {
     androidTestImplementation(composeBom)
     debugImplementation(platform(composeBom))
 
-    val workManagerVersion = "2.10.3"
-    val roomVersion = "2.7.2"
-    val lifecycleVersion = "2.9.3"
+    val workManagerVersion = "2.11.0"
+    val roomVersion = "2.8.4"
+    val lifecycleVersion = "2.10.0"
 
     // minio / S3
-    implementation("io.minio:minio:8.5.17")
+    implementation("io.minio:minio:8.6.0")
 
     // needed for okhttp3/minio:
     // Match version from https://github.com/minio/minio-java/blob/master/build.gradle
     //noinspection GradleDependency
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.2")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.1")
     //noinspection GradleDependency
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.1")
     implementation("javax.xml.stream:stax-api:1.0-2")
 
     implementation("androidx.core:core-ktx:1.17.0")
@@ -129,8 +129,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
-    implementation("androidx.activity:activity-compose:1.10.1")
-    implementation("androidx.navigation:navigation-compose:2.9.3")
+    implementation("androidx.activity:activity-compose:1.12.2")
+    implementation("androidx.navigation:navigation-compose:2.9.6")
 
     implementation("androidx.documentfile:documentfile:1.1.0")
 
@@ -147,12 +147,12 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.16")
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.testcontainers:minio:1.21.3")
-    testImplementation("com.squareup.okhttp3:mockwebserver:5.1.0")
-    testImplementation("io.mockk:mockk:1.14.5")
+    testImplementation("org.testcontainers:minio:1.21.4")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+    testImplementation("io.mockk:mockk:1.14.7")
     testImplementation("androidx.test:core-ktx:1.7.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:2.2.10")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.2.20")
 
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 
@@ -160,7 +160,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
     androidTestImplementation("androidx.test:rules:1.7.0")
-    androidTestImplementation("io.mockk:mockk-android:1.14.5")
+    androidTestImplementation("io.mockk:mockk-android:1.14.7")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
