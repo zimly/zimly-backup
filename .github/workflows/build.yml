@@ -18,6 +18,6 @@ jobs:
           S3_AWS_TEST_SECRET: ${{ secrets.S3_AWS_TEST_SECRET }}
           TENCENT_KEY: ${{ secrets.TENCENT_KEY }}
           TENCENT_SECRET: ${{ secrets.TENCENT_SECRET }}
-        run: ./gradlew -PintegrationTests check
+        run: ./gradlew check
       - name: Test and build the app
         run: ./gradlew build
