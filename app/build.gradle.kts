@@ -7,6 +7,9 @@ plugins {
     kotlin("plugin.serialization") version "1.9.22" // Used for API calls in tests
 }
 
+kotlin {
+    jvmToolchain(21)
+}
 
 android {
     compileSdk = 36
@@ -56,12 +59,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     packaging {

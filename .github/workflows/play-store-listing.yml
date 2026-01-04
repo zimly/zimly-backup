@@ -10,7 +10,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: Patch applicationId for Play Store
         run: sed -i 's/applicationId = "app.zimly.backup"/applicationId = "io.zeitmaschine.zimzync"/g' app/build.gradle.kts
       - name: Publish listing
