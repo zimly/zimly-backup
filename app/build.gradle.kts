@@ -97,7 +97,7 @@ dependencies {
 
     // https://developer.android.com/develop/ui/compose/bom
     // Not very happy with this, feels like it's not fully thought through, e.g. androidx dependencies.
-    val composeBom = platform("androidx.compose:compose-bom:2025.08.01")
+    val composeBom = platform("androidx.compose:compose-bom:2025.12.00")
     implementation(composeBom)
     testImplementation(composeBom)
     androidTestImplementation(composeBom)
