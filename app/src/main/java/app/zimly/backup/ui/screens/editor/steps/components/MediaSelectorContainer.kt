@@ -143,7 +143,7 @@ fun MediaSelectorContainer(
         mediaField.update(it)
     }
     val focus: (state: FocusState) -> Unit = {
-        mediaField.focus(it)
+        mediaField.focus(it.hasFocus)
     }
 
     // TODO remember

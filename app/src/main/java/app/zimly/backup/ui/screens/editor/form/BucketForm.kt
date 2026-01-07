@@ -5,6 +5,7 @@ import androidx.compose.ui.focus.FocusState
 import app.zimly.backup.data.db.remote.Remote
 import app.zimly.backup.ui.screens.editor.form.field.BooleanField
 import app.zimly.backup.ui.screens.editor.form.field.Field
+import app.zimly.backup.ui.screens.editor.form.field.FocusableField
 import app.zimly.backup.ui.screens.editor.form.field.RegionField
 import app.zimly.backup.ui.screens.editor.form.field.TextField
 import kotlinx.coroutines.flow.Flow
@@ -26,15 +27,16 @@ class BucketForm : Form {
         errorMessage = "",
         validate = { true })
 
-    private var focusedField: Field<*>? = null
+    private var focusedField: FocusableField<*>? = null
 
-    fun onFieldFocus(field: Field<*>, focus: FocusState) {
-        if (focus.isFocused) {
+    fun onFieldFocus(field: FocusableField<*>, focusState: FocusState) {
+        field.focus(focusState.hasFocus)
+        if (focusState.isFocused) {
             focusedField = field
         }
     }
 
-    fun focusedField(): Field<*>? = focusedField
+    fun focusedField(): FocusableField<*>? = focusedField
 
     /**
      * Emits a warning in case virtual hosted style is enabled and the URL starts
