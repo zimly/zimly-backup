@@ -230,7 +230,6 @@ fun BucketConfiguration(
                     state = nameFieldState,
                     modifier = Modifier
                         .onFocusChanged {
-                            bucketForm.name.focus(it)
                             bucketForm.onFieldFocus(bucketForm.name, it)
                         }
                         .focusRequester(focusRequesters[bucketForm.name]!!)
@@ -240,7 +239,7 @@ fun BucketConfiguration(
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { bucketForm.url.focus(it) }
+                        .onFocusChanged { bucketForm.onFieldFocus(bucketForm.url, it) }
                         .fillMaxWidth(),
                     label = { Text("URL") },
                     value = urlState.value.value,
@@ -251,7 +250,7 @@ fun BucketConfiguration(
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { bucketForm.region.focus(it) }
+                        .onFocusChanged { bucketForm.onFieldFocus(bucketForm.region, it) }
                         .fillMaxWidth(),
                     label = { Text("Region (optional)") },
                     // Handle null case, should this go into field instead? value vs state representation.
@@ -267,7 +266,7 @@ fun BucketConfiguration(
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { bucketForm.key.focus(it) }
+                        .onFocusChanged { bucketForm.onFieldFocus(bucketForm.key, it) }
                         .fillMaxWidth(),
                     label = { Text("Key") },
                     value = keyState.value.value,
@@ -278,7 +277,7 @@ fun BucketConfiguration(
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { bucketForm.secret.focus(it) }
+                        .onFocusChanged { bucketForm.onFieldFocus(bucketForm.secret, it) }
                         .fillMaxWidth(),
                     label = { Text("Secret") },
                     value = secretState.value.value,
@@ -298,7 +297,7 @@ fun BucketConfiguration(
                 )
                 OutlinedTextField(
                     modifier = Modifier
-                        .onFocusChanged { bucketForm.bucket.focus(it) }
+                        .onFocusChanged { bucketForm.onFieldFocus(bucketForm.bucket, it) }
                         .fillMaxWidth(),
                     label = { Text("Bucket") },
                     value = bucketState.value.value,

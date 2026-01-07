@@ -1,9 +1,6 @@
 package app.zimly.backup.ui.screens.editor.form
 
-import androidx.compose.ui.focus.FocusState
 import app.zimly.backup.ui.screens.editor.form.field.RegionField
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -43,9 +40,6 @@ class RegionFieldTest {
     @Test
     fun validRegion() = runTest {
         // GIVEN
-        val focus = mockk<FocusState>()
-        every { focus.hasFocus } returns true andThen false
-
         val field = RegionField()
 
         val validations = mutableListOf<Boolean>()
@@ -57,9 +51,9 @@ class RegionFieldTest {
         }
 
         // WHEN
-        field.focus(focus)
+        field.focus(true)
         field.update("eu-central-1")
-        field.focus(focus)
+        field.focus(false)
 
         // THEN
         validations.forEach { assertTrue("Fields should be valid", it) }
@@ -74,9 +68,6 @@ class RegionFieldTest {
     @Test
     fun invalidRegion() = runTest {
         // GIVEN
-        val focus = mockk<FocusState>()
-        every { focus.hasFocus } returns true andThen false
-
         val field = RegionField()
 
         val validations = mutableListOf<Boolean>()
@@ -88,9 +79,9 @@ class RegionFieldTest {
         }
 
         // WHEN
-        field.focus(focus)
+        field.focus(true)
         field.update("!invalid")
-        field.focus(focus)
+        field.focus(false)
 
         // THEN
         assertTrue("Field should be valid first", validations.first())
@@ -107,9 +98,6 @@ class RegionFieldTest {
     @Test
     fun nullRegionValid() = runTest {
         // GIVEN
-        val focus = mockk<FocusState>()
-        every { focus.hasFocus } returns true andThen false
-
         val field = RegionField()
 
         val validations = mutableListOf<Boolean>()
@@ -121,9 +109,9 @@ class RegionFieldTest {
         }
 
         // WHEN
-        field.focus(focus)
+        field.focus(true)
         field.update(null)
-        field.focus(focus)
+        field.focus(false)
 
         job.cancel()
     }

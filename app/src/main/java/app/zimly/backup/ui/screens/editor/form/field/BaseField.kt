@@ -16,7 +16,7 @@ abstract class BaseField<T>(
     private val validate: (value: T) -> Boolean,
     defaultValue: T,
     initialValidation: Boolean = false
-): Field<T> {
+): FocusableField<T> {
     private var touched: Boolean? = null
     private var internal: MutableStateFlow<FieldState<T>> = MutableStateFlow(FieldState(defaultValue, initialValidation))
     val state: StateFlow<FieldState<T>> = internal.asStateFlow()
@@ -55,10 +55,10 @@ abstract class BaseField<T>(
      *
      * TODO: Move to a FocusableField interface?
      */
-    fun focus(focus: FocusState) {
-        if (touched == null && focus.hasFocus) {
+    override fun focus(hasFocus: Boolean) {
+        if (touched == null && hasFocus) {
             this.touched = false
-        } else if (touched == false && !focus.hasFocus) {
+        } else if (touched == false && !hasFocus) {
             this.touched = true
         }
         validate()

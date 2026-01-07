@@ -1,9 +1,6 @@
 package app.zimly.backup.ui.screens.editor.form
 
-import androidx.compose.ui.focus.FocusState
 import app.zimly.backup.ui.screens.editor.form.field.TextField
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -21,9 +18,6 @@ class TextFieldTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun validInput() = runTest {
-        val focus = mockk<FocusState>()
-        every { focus.hasFocus } returns true andThen false
-
         val errorMessage = "Fail!"
         val validInput = "test"
         val validator: (value: String) -> Boolean = { it == validInput }
@@ -37,9 +31,9 @@ class TextFieldTest {
             field.error().take(2).toList(errors)
         }
 
-        field.focus(focus)
+        field.focus(true)
         field.update(validInput)
-        field.focus(focus)
+        field.focus(false)
 
         assertFalse("Field should be invalid first", validations.first())
         assertTrue("Field should be valid after update", validations.last())
@@ -53,9 +47,6 @@ class TextFieldTest {
     @Test
     fun errorAfterInvalidUpdate() = runTest {
         // GIVEN
-        val focus = mockk<FocusState>()
-        every { focus.hasFocus } returns true andThen false
-
         val errorMessage = "Fail!"
         val validator: (value: String) -> Boolean = { false }
         val field = TextField(errorMessage, validator)
@@ -71,9 +62,9 @@ class TextFieldTest {
             field.error().take(3).toList(errors)
         }
 
-        field.focus(focus)
+        field.focus(true)
         field.update("whatever")
-        field.focus(focus)
+        field.focus(false)
 
         assertFalse("Field should be invalid first", validations.first())
         assertFalse("Field should be invalid after update", validations.last())

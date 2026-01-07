@@ -30,3 +30,7 @@ interface Field<T> {
      */
     fun touch()
 }
+
+interface FocusableField<T>: Field<T> {
+    fun focus(hasFocus: Boolean)
+}
