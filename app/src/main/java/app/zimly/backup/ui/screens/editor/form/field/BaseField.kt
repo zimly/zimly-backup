@@ -39,7 +39,7 @@ abstract class BaseField<T>(
         val showError = !valid && this.touched == true
         internal.update {
             it.copy(
-                value,
+                value = value,
                 valid = valid,
                 error = if (showError) errorMessage else null // setting this to null is important!
             )
@@ -52,8 +52,6 @@ abstract class BaseField<T>(
     /**
      * Handle [FocusState] changes on the field. The idea behind this is to not show errors
      * on first touch of the field, but rather when moving on to the next field.
-     *
-     * TODO: Move to a FocusableField interface?
      */
     override fun focus(hasFocus: Boolean) {
         if (touched == null && hasFocus) {
