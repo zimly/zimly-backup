@@ -19,7 +19,7 @@ abstract class BaseField<T>(
 ): FocusableField<T> {
     private var touched: Boolean? = null
     private var internal: MutableStateFlow<FieldState<T>> = MutableStateFlow(FieldState(defaultValue, initialValidation))
-    val state: StateFlow<FieldState<T>> = internal.asStateFlow()
+    override val state: StateFlow<FieldState<T>> = internal.asStateFlow()
 
     override fun update(value: T) {
         internalUpdate(value)
@@ -67,6 +67,4 @@ abstract class BaseField<T>(
     override fun touch() {
         this.touched = true
     }
-
-    data class FieldState<T>(val value: T, val valid: Boolean = false, val error: String? = null)
 }

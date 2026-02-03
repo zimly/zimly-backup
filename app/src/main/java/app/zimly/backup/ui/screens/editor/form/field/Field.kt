@@ -10,10 +10,11 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * The internal state is managed in the implementation as e.g. [StateFlow]
  *
- * TODO: Expose a #value(): Flow<T>?
- *
  */
 interface Field<T> {
+
+    val state: StateFlow<FieldState<T>>
+
     fun update(value: T)
     fun error(): Flow<String?>
     fun valid(): Flow<Boolean>
@@ -34,3 +35,5 @@ interface Field<T> {
 interface FocusableField<T>: Field<T> {
     fun focus(hasFocus: Boolean)
 }
+
+data class FieldState<T>(val value: T, val valid: Boolean = false, val error: String? = null)
