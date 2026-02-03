@@ -54,6 +54,7 @@ import app.zimly.backup.ui.components.Notification
 import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.form.BucketForm
 import app.zimly.backup.ui.screens.editor.form.field.BaseField
+import app.zimly.backup.ui.screens.editor.form.field.FieldState
 import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -174,7 +175,7 @@ fun BucketConfigurationStep(
 fun <T> BaseField<T>.rememberTextFieldState(
     toText: (T) -> String,
     fromText: (String) -> T
-): Pair<TextFieldState, BaseField.FieldState<T>> {
+): Pair<TextFieldState, FieldState<T>> {
 
     val fieldState by state.collectAsStateWithLifecycle()
 
