@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -39,8 +41,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -53,6 +53,7 @@ import app.zimly.backup.data.s3.MinioRepository
 import app.zimly.backup.ui.components.Notification
 import app.zimly.backup.ui.components.NotificationProvider
 import app.zimly.backup.ui.screens.editor.form.BucketForm
+import app.zimly.backup.ui.screens.editor.form.field.BaseField
 import app.zimly.backup.ui.screens.editor.steps.components.WizardStep
 import app.zimly.backup.ui.theme.ZimzyncTheme
 import app.zimly.backup.ui.theme.containerBackground
@@ -170,6 +171,37 @@ fun BucketConfigurationStep(
 }
 
 @Composable
+fun <T> BaseField<T>.rememberTextFieldState(
+    toText: (T) -> String,
+    fromText: (String) -> T
+): Pair<TextFieldState, BaseField.FieldState<T>> {
+
+    val fieldState by state.collectAsStateWithLifecycle()
+
+    val textFieldState = rememberTextFieldState(
+        initialText = toText(fieldState.value)
+    )
+
+    // UI → model
+    LaunchedEffect(textFieldState.text) {
+        val newValue = fromText(textFieldState.text.toString())
+        if (newValue != fieldState.value) {
+            update(newValue)
+        }
+    }
+
+    // model → UI
+    LaunchedEffect(fieldState.value) {
+        val text = toText(fieldState.value)
+        if (textFieldState.text.toString() != text) {
+            textFieldState.setTextAndPlaceCursorAtEnd(text)
+        }
+    }
+
+    return textFieldState to fieldState
+}
+
+@Composable
 fun BucketConfiguration(
     bucketForm: BucketForm,
     verify: () -> Unit
@@ -194,9 +226,9 @@ fun BucketConfiguration(
         }
         Column(
             modifier =
-                Modifier
-                    .padding(16.dp)
-                    //.imePadding() ?
+            Modifier
+                .padding(16.dp)
+            //.imePadding() ?
         ) {
             Column {
                 val focusRequesters = remember {
@@ -208,26 +240,14 @@ fun BucketConfiguration(
                         focusRequesters[field]?.requestFocus()
                     }
                 }
-                // Consolidate into one StateFlow?
-                val nameState = bucketForm.name.state.collectAsState()
-                val urlState = bucketForm.url.state.collectAsState()
-                val keyState = bucketForm.key.state.collectAsState()
-                val secretState = bucketForm.secret.state.collectAsState()
-                val bucketState = bucketForm.bucket.state.collectAsState()
-                val regionState = bucketForm.region.state.collectAsState()
-                val virtualHostedStyleState =
-                    bucketForm.virtualHostedStyle.state.collectAsState()
 
-                val nameFieldState = rememberTextFieldState(
-                    initialText = nameState.value.value
-                )
-
-                LaunchedEffect(nameFieldState.text) {
-                    bucketForm.name.update(nameFieldState.text.toString())
-                }
-
+                val (nameTextState, nameState) =
+                    bucketForm.name.rememberTextFieldState(
+                        toText = { it },
+                        fromText = { it }
+                    )
                 OutlinedTextField(
-                    state = nameFieldState,
+                    state = nameTextState,
                     modifier = Modifier
                         .onFocusChanged {
                             bucketForm.onFieldFocus(bucketForm.name, it)
@@ -236,54 +256,75 @@ fun BucketConfiguration(
                         .fillMaxWidth(),
                     label = { Text("Name") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    isError = nameState.error != null,
+                    supportingText = { nameState.error?.let { Text(it) } }
                 )
+
+                val (urlTextState, urlState) =
+                    bucketForm.url.rememberTextFieldState(
+                        toText = { it },
+                        fromText = { it }
+                    )
                 OutlinedTextField(
+                    state = urlTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.url, it) }
+                        .focusRequester(focusRequesters[bucketForm.url]!!)
                         .fillMaxWidth(),
                     label = { Text("URL") },
-                    value = urlState.value.value,
-                    onValueChange = { bucketForm.url.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                    isError = urlState.value.error != null,
-                    supportingText = { urlState.value.error?.let { Text(it) } }
+                    isError = urlState.error != null,
+                    supportingText = { urlState.error?.let { Text(it) } }
                 )
+
+                val (regionTextState, regionState) =
+                    bucketForm.region.rememberTextFieldState(
+                        toText = { it ?: "" },
+                        fromText = { it.ifBlank { null } }
+                    )
                 OutlinedTextField(
+                    state = regionTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.region, it) }
+                        .focusRequester(focusRequesters[bucketForm.region]!!)
                         .fillMaxWidth(),
                     label = { Text("Region (optional)") },
-                    // Handle null case, should this go into field instead? value vs state representation.
-                    value = regionState.value.value ?: "",
-                    onValueChange = {
-                        if (it.isEmpty()) bucketForm.region.update(null) else bucketForm.region.update(
-                            it
-                        )
-                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    isError = regionState.value.error != null,
-                    supportingText = { regionState.value.error?.let { Text(it) } }
+                    isError = regionState.error != null,
+                    supportingText = { regionState.error?.let { Text(it) } }
                 )
+
+                val (keyTextState, keyState) =
+                    bucketForm.key.rememberTextFieldState(
+                        toText = { it },
+                        fromText = { it }
+                    )
+
                 OutlinedTextField(
+                    state = keyTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.key, it) }
+                        .focusRequester(focusRequesters[bucketForm.key]!!)
                         .fillMaxWidth(),
                     label = { Text("Key") },
-                    value = keyState.value.value,
-                    onValueChange = { bucketForm.key.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    isError = keyState.value.error != null,
-                    supportingText = { keyState.value.error?.let { Text(it) } }
+                    isError = keyState.error != null,
+                    supportingText = { keyState.error?.let { Text(it) } }
                 )
+
+                val (secretTextState, secretState) =
+                    bucketForm.secret.rememberTextFieldState(
+                        toText = { it },
+                        fromText = { it }
+                    )
                 OutlinedTextField(
+                    state = secretTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.secret, it) }
+                        .focusRequester(focusRequesters[bucketForm.secret]!!)
                         .fillMaxWidth(),
                     label = { Text("Secret") },
-                    value = secretState.value.value,
-                    onValueChange = { bucketForm.secret.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
@@ -292,20 +333,28 @@ fun BucketConfiguration(
                             )
                         }
                     },
-                    isError = secretState.value.error != null,
-                    supportingText = { secretState.value.error?.let { Text(it) } }
+                    isError = secretState.error != null,
+                    supportingText = { secretState.error?.let { Text(it) } }
                 )
+
+                val (bucketTextState, bucketState) =
+                    bucketForm.bucket.rememberTextFieldState(
+                        toText = { it },
+                        fromText = { it }
+                    )
                 OutlinedTextField(
+                    state = bucketTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.bucket, it) }
+                        .focusRequester(focusRequesters[bucketForm.bucket]!!)
                         .fillMaxWidth(),
                     label = { Text("Bucket") },
-                    value = bucketState.value.value,
-                    onValueChange = { bucketForm.bucket.update(it) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    isError = bucketState.value.error != null,
-                    supportingText = { bucketState.value.error?.let { Text(it) } }
+                    isError = bucketState.error != null,
+                    supportingText = { bucketState.error?.let { Text(it) } }
                 )
+                val virtualHostedStyleState =
+                    bucketForm.virtualHostedStyle.state.collectAsState()
                 Column {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
