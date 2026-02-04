@@ -226,10 +226,7 @@ fun BucketConfiguration(
             )
         }
         Column(
-            modifier =
-            Modifier
-                .padding(16.dp)
-            //.imePadding() ?
+            modifier = Modifier.padding(16.dp)
         ) {
             Column {
                 val focusRequesters = remember {
