@@ -1,5 +1,5 @@
-3.4.0
-* Handle revoked folder permissions gracefully #37
+3.4.1
+* Restore keyboard visibility and field focus when rotating the device #60
 
 Full changelog:
 https://github.com/zimly/zimly-backup/releases
