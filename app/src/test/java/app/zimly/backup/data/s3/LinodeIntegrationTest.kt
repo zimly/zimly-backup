@@ -13,9 +13,9 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.After
 import org.junit.ClassRule
+import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.time.Instant
-import kotlin.test.Test
 import kotlin.time.TimeSource
 
 class LinodeIntegrationTest {

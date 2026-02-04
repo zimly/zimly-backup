@@ -1,17 +1,15 @@
+import com.android.build.api.dsl.ApplicationExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
-    id("com.github.triplet.play") version "3.13.0"
+    id("com.github.triplet.play") version "4.0.0"
     kotlin("plugin.serialization") version "2.3.0" // Used for API calls in tests
 }
 
-kotlin {
-    jvmToolchain(21)
-}
-
-android {
+extensions.configure<ApplicationExtension> {
     compileSdk = 36
 
     defaultConfig {
@@ -37,11 +35,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        // Room schema
-        ksp {
-            arg("room.schemaLocation", "$projectDir/schemas")
-        }
     }
+
 
     buildTypes {
         // To debug minified version, copy this block under a debug {} block
@@ -83,6 +78,14 @@ android {
     }
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
+// Room schema
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
 
 play {
     // https://github.com/Triple-T/gradle-play-publisher

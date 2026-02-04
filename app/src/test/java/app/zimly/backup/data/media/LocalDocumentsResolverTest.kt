@@ -3,14 +3,13 @@ package app.zimly.backup.data.media
 import android.content.Context
 import android.provider.DocumentsContract
 import androidx.test.core.app.ApplicationProvider
-import app.zimly.backup.data.media.FakeDocumentStore
 import app.zimly.backup.data.media.FakeDocumentsProvider.FakeDocument
 import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowContentResolver
-import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
