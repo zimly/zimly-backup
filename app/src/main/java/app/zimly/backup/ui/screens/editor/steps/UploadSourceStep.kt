@@ -50,7 +50,7 @@ class UploadSourceViewModel(private val store: ValueStore<EditorViewModel.Conten
     }
 
     fun persist(nextStep: () -> Unit) {
-        val sourceType = backupSource.state.value.type
+        val sourceType = backupSource.state.value.value
         val sourceUri = when (sourceType) {
             ContentType.MEDIA -> backupSource.mediaField.state.value.value
             ContentType.FOLDER -> backupSource.folderField.state.value.value.uri.toString()

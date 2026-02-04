@@ -78,7 +78,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
                     ),
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                     icon = {
-                        SegmentedButtonDefaults.Icon(active = sourceType == state.value.type) {
+                        SegmentedButtonDefaults.Icon(active = sourceType == state.value.value) {
                             Icon(
                                 imageVector = options[sourceType]!!,
                                 contentDescription = null,
@@ -87,7 +87,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
                         }
                     },
                     onCheckedChange = { if (it) sourceSelector(sourceType) },
-                    checked = sourceType == state.value.type
+                    checked = sourceType == state.value.value
                 ) {
                     Text(sourceType.name)
                 }
@@ -97,7 +97,7 @@ fun BackupSourceConfiguration(backupSource: BackupSourceField) {
             modifier = Modifier
                 .padding(16.dp)
         ) {
-            when (state.value.type) {
+            when (state.value.value) {
                 ContentType.MEDIA ->
                     MediaSelectorContainer(backupSource.mediaField)
                 ContentType.FOLDER ->

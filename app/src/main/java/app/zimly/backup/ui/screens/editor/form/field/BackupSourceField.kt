@@ -20,14 +20,14 @@ class BackupSourceField : Field<ContentType> {
     val mediaField = TextField("Select a collection for backup")
     val folderField = UriField("Select a folder and grant permissions for your data")
 
-    private val internal: MutableStateFlow<FieldState> =
+    private val internal: MutableStateFlow<FieldState<ContentType>> =
         MutableStateFlow(FieldState(ContentType.MEDIA))
 
-    val state: StateFlow<FieldState> = internal.asStateFlow()
+    override val state: StateFlow<FieldState<ContentType>> = internal.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun error(): Flow<String?> = state
-        .map { it.type }
+        .map { it.value }
         .flatMapLatest { type ->
             when (type) {
                 ContentType.MEDIA -> mediaField.error()
@@ -35,14 +35,13 @@ class BackupSourceField : Field<ContentType> {
             }
         }
 
-
     override fun update(value: ContentType) {
-        internal.update { it.copy(type = value) }
+        internal.update { it.copy(value = value) }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun valid(): Flow<Boolean> = state
-        .map { it.type }
+        .map { it.value }
         .flatMapLatest { type ->
             when (type) {
                 ContentType.MEDIA -> mediaField.valid()
@@ -60,7 +59,5 @@ class BackupSourceField : Field<ContentType> {
         mediaField.touch()
         folderField.touch()
     }
-
-    data class FieldState(val type: ContentType, val error: String? = null)
 
 }
