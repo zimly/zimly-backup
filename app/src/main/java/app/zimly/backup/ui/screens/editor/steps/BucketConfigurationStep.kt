@@ -229,10 +229,13 @@ fun BucketConfiguration(
             modifier = Modifier.padding(16.dp)
         ) {
             Column {
+
+                // Associate each field with a focus requester
                 val focusRequesters = remember {
                     bucketForm.fields.associateWith { FocusRequester() }
                 }
 
+                // On render, re-request focus for the formerly focussed field
                 LaunchedEffect(Unit) {
                     bucketForm.focusedField()?.let { field ->
                         focusRequesters[field]?.requestFocus()
@@ -250,7 +253,7 @@ fun BucketConfiguration(
                         .onFocusChanged {
                             bucketForm.onFieldFocus(bucketForm.name, it)
                         }
-                        .focusRequester(focusRequesters[bucketForm.name]!!)
+                        .focusRequester(focusRequesters.getValue(bucketForm.name))
                         .fillMaxWidth(),
                     label = { Text("Name") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
@@ -267,7 +270,7 @@ fun BucketConfiguration(
                     state = urlTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.url, it) }
-                        .focusRequester(focusRequesters[bucketForm.url]!!)
+                        .focusRequester(focusRequesters.getValue(bucketForm.url))
                         .fillMaxWidth(),
                     label = { Text("URL") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
@@ -284,7 +287,7 @@ fun BucketConfiguration(
                     state = regionTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.region, it) }
-                        .focusRequester(focusRequesters[bucketForm.region]!!)
+                        .focusRequester(focusRequesters.getValue(bucketForm.region))
                         .fillMaxWidth(),
                     label = { Text("Region (optional)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
@@ -302,7 +305,7 @@ fun BucketConfiguration(
                     state = keyTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.key, it) }
-                        .focusRequester(focusRequesters[bucketForm.key]!!)
+                        .focusRequester(focusRequesters.getValue(bucketForm.key))
                         .fillMaxWidth(),
                     label = { Text("Key") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
@@ -319,7 +322,7 @@ fun BucketConfiguration(
                     state = secretTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.secret, it) }
-                        .focusRequester(focusRequesters[bucketForm.secret]!!)
+                        .focusRequester(focusRequesters.getValue(bucketForm.secret))
                         .fillMaxWidth(),
                     label = { Text("Secret") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -344,7 +347,7 @@ fun BucketConfiguration(
                     state = bucketTextState,
                     modifier = Modifier
                         .onFocusChanged { bucketForm.onFieldFocus(bucketForm.bucket, it) }
-                        .focusRequester(focusRequesters[bucketForm.bucket]!!)
+                        .focusRequester(focusRequesters.getValue(bucketForm.bucket))
                         .fillMaxWidth(),
                     label = { Text("Bucket") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
