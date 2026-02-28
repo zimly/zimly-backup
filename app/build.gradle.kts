@@ -103,7 +103,7 @@ dependencies {
     androidTestImplementation(composeBom)
     debugImplementation(platform(composeBom))
 
-    val workManagerVersion = "2.11.0"
+    val workManagerVersion = "2.11.1"
     val roomVersion = "2.8.4"
     val lifecycleVersion = "2.10.0"
 
@@ -132,8 +132,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleVersion")
-    implementation("androidx.activity:activity-compose:1.12.2")
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+    implementation("androidx.activity:activity-compose:1.12.4")
+    implementation("androidx.navigation:navigation-compose:2.9.7")
 
     implementation("androidx.documentfile:documentfile:1.1.0")
 
@@ -147,15 +147,15 @@ dependencies {
     // To use Kotlin annotation processing tool (ksp)
     ksp("androidx.room:room-compiler:$roomVersion")
 
-    testImplementation("org.robolectric:robolectric:4.16")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.testcontainers:minio:1.21.4")
     testImplementation("com.squareup.okhttp3:mockwebserver:5.3.2")
-    testImplementation("io.mockk:mockk:1.14.7")
+    testImplementation("io.mockk:mockk:1.14.9")
     testImplementation("androidx.test:core-ktx:1.7.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
-    testImplementation("org.jetbrains.kotlin:kotlin-test:2.2.20")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.0")
 
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 
@@ -163,7 +163,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.work:work-testing:$workManagerVersion")
     androidTestImplementation("androidx.test:rules:1.7.0")
-    androidTestImplementation("io.mockk:mockk-android:1.14.7")
+    androidTestImplementation("io.mockk:mockk-android:1.14.9")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
