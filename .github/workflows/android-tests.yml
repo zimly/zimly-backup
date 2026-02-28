@@ -18,6 +18,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: 'gradle'
 
       - name: run tests
         uses: reactivecircus/android-emulator-runner@v2

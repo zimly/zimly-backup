@@ -13,6 +13,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: 'gradle'
       - name: Run AWS Repository tests
         env:
           TENCENT_KEY: ${{ secrets.TENCENT_KEY }}

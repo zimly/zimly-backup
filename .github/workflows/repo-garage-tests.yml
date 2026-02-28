@@ -13,5 +13,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: 'gradle'
       - name: Run Garage Repository tests
         run: ./gradlew -PintegrationTests=garage check --rerun-tasks

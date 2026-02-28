@@ -19,6 +19,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: 'gradle'
       - name: Read version from gradle.properties
         id: set_version
         run: echo "version=`./gradlew -q getVersion`" > $GITHUB_OUTPUT

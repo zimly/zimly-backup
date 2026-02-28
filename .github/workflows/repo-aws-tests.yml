@@ -13,6 +13,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: 'gradle'
       - name: Run AWS Repository tests
         env:
           S3_AWS_TEST_KEY: ${{ secrets.S3_AWS_TEST_KEY }}

@@ -13,5 +13,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: 'gradle'
       - name: Run Minio Repository tests
         run: ./gradlew -PintegrationTests=minio check --rerun-tasks
